@@ -1,225 +1,139 @@
 package com.packly.app.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FlightTakeoff
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.packly.app.model.Trip
+import com.packly.app.data.model.Trip
+import com.packly.app.data.repository.PacklyRepository
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-// ──────────────────────────────────────────────────────────────────────────
-// Screen 1: Trips List — the home/landing screen.
-// Shows all user's trips as cards, FAB to create new trip, empty state.
-// Navigation: Top search, scrollable trip cards, FAB → New Trip.
-// ──────────────────────────────────────────────────────────────────────────
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TripsListScreen(
-    trips: List<Trip>,
-    onTripClick: (Trip) -> Unit,
-    onCreateTrip: () -> Unit,
-    onSearch: () -> Unit,
+    repository: PacklyRepository,
+    onTripClick: (String) -> Unit,
+    onBack: () -> Unit
 ) {
+    val trips by repository.getTrips().collectAsState(initial = emptyList())
+    val lists by repository.getLists().collectAsState(initial = emptyList())
+    val scope = rememberCoroutineScope()
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var tripName by remember { mutableStateOf("") }
+    var selectedListId by remember { mutableStateOf("") }
+
     Scaffold(
         topBar = {
-            LargeTopAppBar(
-                title = {
-                    Column {
-                        Text("Packly")
-                        Text(
-                            text = "Your packing lists",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onSearch) {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = "Search trips",
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface,
-                ),
+            TopAppBar(
+                title = { Text("Trips") },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Back") } },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onCreateTrip,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "New trip")
-            }
-        },
+            ExtendedFloatingActionButton(
+                onClick = { showCreateDialog = true },
+                icon = { Icon(Icons.Filled.Add, null) },
+                text = { Text("New Trip") }
+            )
+        }
     ) { padding ->
         if (trips.isEmpty()) {
-            EmptyTripsState(modifier = Modifier.padding(padding))
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Text("No trips yet. Create one from a list!", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         } else {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(trips, key = { it.id }) { trip ->
-                    TripCard(
-                        trip = trip,
-                        onClick = { onTripClick(trip) },
-                    )
+                    ElevatedCard(
+                        onClick = { onTripClick(trip.id) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Filled.FlightTakeoff, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(trip.name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
+                                Text(trip.date.ifEmpty { "No date set" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            IconButton(onClick = { scope.launch { repository.deleteTrip(trip.id) } }) {
+                                Icon(Icons.Filled.Delete, "Delete", tint = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    }
                 }
             }
         }
     }
-}
 
-@Composable
-private fun TripCard(
-    trip: Trip,
-    onClick: () -> Unit,
-) {
-    val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())
-
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Trip icon
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(end = 12.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Default.FlightTakeoff,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(32.dp),
-                )
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = trip.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = trip.destination,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = buildString {
-                        append(dateFormat.format(Date(trip.startDate)))
-                        append(" — ")
-                        append(dateFormat.format(Date(trip.endDate)))
+    if (showCreateDialog) {
+        AlertDialog(
+            onDismissRequest = { showCreateDialog = false },
+            title = { Text("New Trip") },
+            text = {
+                Column {
+                    OutlinedTextField(value = tripName, onValueChange = { tripName = it }, label = { Text("Trip name") }, placeholder = { Text("e.g. Summer Greece 2026") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(12.dp))
+                    if (lists.isNotEmpty()) {
+                        lists.forEach { list ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(selected = selectedListId == list.id, onClick = { selectedListId = list.id })
+                                Text(list.name)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            val items = if (selectedListId.isNotBlank()) {
+                                lists.find { it.id == selectedListId }?.items?.map { entry ->
+                                    com.packly.app.data.model.TripEntry(itemId = entry.itemId, quantity = entry.quantity)
+                                } ?: emptyList()
+                            } else emptyList()
+                            repository.createTrip(Trip(
+                                id = UUID.randomUUID().toString(),
+                                name = tripName,
+                                date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
+                                listId = selectedListId.ifBlank { null },
+                                items = items,
+                                createdAt = System.currentTimeMillis()
+                            ))
+                        }
+                        showCreateDialog = false
+                        tripName = ""
+                        selectedListId = ""
                     },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                )
-            }
-
-            Spacer(Modifier.width(8.dp))
-
-            // Packed items count
-            val packed = trip.items.count { it.isPacked }
-            val total = trip.items.size
-            Text(
-                text = if (total > 0) "$packed/$total" else "",
-                style = MaterialTheme.typography.labelLarge,
-                color = if (packed == total && total > 0)
-                    MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun EmptyTripsState(
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                Icons.Default.Explore,
-                contentDescription = null,
-                modifier = Modifier.size(72.dp),
-                tint = MaterialTheme.colorScheme.outlineVariant,
-            )
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text = "No trips yet",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "Tap + to create your first packing list",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+                    enabled = tripName.isNotBlank()
+                ) { Text("Create") }
+            },
+            dismissButton = { TextButton(onClick = { showCreateDialog = false }) { Text("Cancel") } }
+        )
     }
 }
