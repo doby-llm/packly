@@ -126,6 +126,7 @@ private fun ItemRow(
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun AddItemDialog(
     categories: List<Category>,
     onDismiss: () -> Unit,
