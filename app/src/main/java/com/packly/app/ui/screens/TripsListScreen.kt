@@ -35,7 +35,7 @@ fun TripsListScreen(
     val scope = rememberCoroutineScope()
     var showCreateDialog by remember { mutableStateOf(false) }
     var tripName by remember { mutableStateOf("") }
-    var selectedListId by remember {{ mutableStateOf("") }}
+    var selectedListId by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -90,16 +90,14 @@ fun TripsListScreen(
     }
 
     if (showCreateDialog) {
-        var name by remember { mutableStateOf("") }
-        var selList by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
             title = { Text("New Trip") },
             text = {
                 Column {
                     OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
+                        value = tripName,
+                        onValueChange = { tripName = it },
                         label = { Text("Trip name") },
                         placeholder = { Text("e.g. Summer 2026") },
                         singleLine = true,
@@ -109,7 +107,7 @@ fun TripsListScreen(
                     Text("Materialize from list (optional):", style = MaterialTheme.typography.labelMedium)
                     lists.forEach { list ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(selected = selList == list.id, onClick = { selList = list.id })
+                            RadioButton(selected = selectedListId == list.id, onClick = { selectedListId = list.id })
                             Text("${list.name} (${list.items.size} items)")
                         }
                     }
@@ -119,21 +117,22 @@ fun TripsListScreen(
                 TextButton(
                     onClick = {
                         scope.launch {
-                            val tripItems = if (selList.isNotBlank()) {
-                                val src = lists.find { it.id == selList }
+                            val tripItems = if (selectedListId.isNotBlank()) {
+                                val src = lists.find { it.id == selectedListId }
                                 src?.items?.map { TripEntry(itemId = it.itemId, quantity = it.quantity) } ?: emptyList()
                             } else emptyList()
                             repository.createTrip(Trip(
                                 id = UUID.randomUUID().toString(),
-                                name = name,
+                                name = tripName,
                                 date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
+                                listId = selectedListId.ifBlank { null },
                                 items = tripItems,
                                 createdAt = System.currentTimeMillis()
                             ))
                         }
                         showCreateDialog = false
                     },
-                    enabled = name.isNotBlank()
+                    enabled = tripName.isNotBlank()
                 ) { Text("Create") }
             },
             dismissButton = { TextButton(onClick = { showCreateDialog = false }) { Text("Cancel") } }
