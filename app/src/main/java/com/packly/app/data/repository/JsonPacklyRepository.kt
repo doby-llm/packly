@@ -165,7 +165,7 @@ class JsonPacklyRepository(
     private suspend fun writeData(data: PacklyData) {
         writeMutex.withLock {
             withContext(Dispatchers.IO) {
-                dataFile.writeText(json.encodeToString(data))
+                dataFile.writeText(json.encodeToString(PacklyData.serializer(), data))
             }
         }
     }

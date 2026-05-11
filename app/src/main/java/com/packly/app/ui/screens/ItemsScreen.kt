@@ -126,7 +126,7 @@ private fun ItemRow(
 }
 
 @Composable
-private fun AddItemDialog(
+fun AddItemDialog(
     categories: List<Category>,
     onDismiss: () -> Unit,
     onConfirm: (String, String) -> Unit

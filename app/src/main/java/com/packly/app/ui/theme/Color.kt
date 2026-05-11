@@ -83,3 +83,5 @@ val CategoryAccessories = Color(0xFFF18F01)      // golden — sunglasses/cap
 val CategoryTech = Color(0xFF3B8EA5)              // teal-blue — charger/laptop
 val CategoryToiletries = Color(0xFF8CB369)        // green — toiletries
 val CategoryDocuments = Color(0xFFBC4A3C)         // brick red — documents
+val CategoryMisc = Color(0xFF9E9E9E)         // grey — miscellaneous
+val CategoryClothes = CategoryClothing
