@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.packly.app.data.model.Trip
+import com.packly.app.data.model.TripEntry
 import com.packly.app.data.repository.PacklyRepository
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -34,7 +35,7 @@ fun TripsListScreen(
     val scope = rememberCoroutineScope()
     var showCreateDialog by remember { mutableStateOf(false) }
     var tripName by remember { mutableStateOf("") }
-    var selectedListId by remember { mutableStateOf("") }
+    var selectedListId by remember {{ mutableStateOf("") }}
 
     Scaffold(
         topBar = {
@@ -66,10 +67,7 @@ fun TripsListScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(trips, key = { it.id }) { trip ->
-                    ElevatedCard(
-                        onClick = { onTripClick(trip.id) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    ElevatedCard(onClick = { onTripClick(trip.id) }, modifier = Modifier.fillMaxWidth()) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -79,6 +77,7 @@ fun TripsListScreen(
                             Column(Modifier.weight(1f)) {
                                 Text(trip.name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
                                 Text(trip.date.ifEmpty { "No date set" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("${trip.items.size} items", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             IconButton(onClick = { scope.launch { repository.deleteTrip(trip.id) } }) {
                                 Icon(Icons.Filled.Delete, "Delete", tint = MaterialTheme.colorScheme.error)
@@ -91,19 +90,27 @@ fun TripsListScreen(
     }
 
     if (showCreateDialog) {
+        var name by remember { mutableStateOf("") }
+        var selList by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
             title = { Text("New Trip") },
             text = {
                 Column {
-                    OutlinedTextField(value = tripName, onValueChange = { tripName = it }, label = { Text("Trip name") }, placeholder = { Text("e.g. Summer Greece 2026") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Trip name") },
+                        placeholder = { Text("e.g. Summer 2026") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     Spacer(Modifier.height(12.dp))
-                    if (lists.isNotEmpty()) {
-                        lists.forEach { list ->
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                RadioButton(selected = selectedListId == list.id, onClick = { selectedListId = list.id })
-                                Text(list.name)
-                            }
+                    Text("Materialize from list (optional):", style = MaterialTheme.typography.labelMedium)
+                    lists.forEach { list ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            RadioButton(selected = selList == list.id, onClick = { selList = list.id })
+                            Text("${list.name} (${list.items.size} items)")
                         }
                     }
                 }
@@ -112,25 +119,21 @@ fun TripsListScreen(
                 TextButton(
                     onClick = {
                         scope.launch {
-                            val items = if (selectedListId.isNotBlank()) {
-                                lists.find { it.id == selectedListId }?.items?.map { entry ->
-                                    com.packly.app.data.model.TripEntry(itemId = entry.itemId, quantity = entry.quantity)
-                                } ?: emptyList()
+                            val tripItems = if (selList.isNotBlank()) {
+                                val src = lists.find { it.id == selList }
+                                src?.items?.map { TripEntry(itemId = it.itemId, quantity = it.quantity) } ?: emptyList()
                             } else emptyList()
                             repository.createTrip(Trip(
                                 id = UUID.randomUUID().toString(),
-                                name = tripName,
+                                name = name,
                                 date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
-                                listId = selectedListId.ifBlank { null },
-                                items = items,
+                                items = tripItems,
                                 createdAt = System.currentTimeMillis()
                             ))
                         }
                         showCreateDialog = false
-                        tripName = ""
-                        selectedListId = ""
                     },
-                    enabled = tripName.isNotBlank()
+                    enabled = name.isNotBlank()
                 ) { Text("Create") }
             },
             dismissButton = { TextButton(onClick = { showCreateDialog = false }) { Text("Cancel") } }
