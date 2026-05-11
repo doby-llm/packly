@@ -6,6 +6,6 @@ import kotlinx.serialization.Serializable
 data class ItemList(
     val id: String,
     val name: String,
-    val items: List&lt;ListEntry&gt; = emptyList(),
+    val items: List<ListEntry> = emptyList(),
     val createdAt: Long
 )

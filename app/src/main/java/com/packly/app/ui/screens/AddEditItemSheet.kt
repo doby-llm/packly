@@ -168,7 +168,7 @@ fun AddEditItemSheet(
                 )
                 Spacer(Modifier.width(16.dp))
                 TextButton(
-                    onClick = { if (quantity &lt; 99) quantity++ },
+                    onClick = { if (quantity < 99) quantity++ },
                     shape = RoundedCornerShape(12.dp),
                 ) {
                     Text("+", style = MaterialTheme.typography.titleMedium)

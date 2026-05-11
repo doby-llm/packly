@@ -8,7 +8,7 @@ data class Trip(
     val name: String,
     val date: String,
     val listId: String? = null,
-    val items: List&lt;TripEntry&gt; = emptyList(),
+    val items: List<TripEntry> = emptyList(),
     val notes: String = "",
     val createdAt: Long
 )

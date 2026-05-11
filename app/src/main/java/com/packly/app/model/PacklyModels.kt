@@ -76,5 +76,5 @@ data class Trip(
     val destination: String,
     val startDate: Long,      // epoch millis
     val endDate: Long,        // epoch millis
-    val items: List&lt;PackingItem&gt; = emptyList(),
+    val items: List<PackingItem> = emptyList(),
 )

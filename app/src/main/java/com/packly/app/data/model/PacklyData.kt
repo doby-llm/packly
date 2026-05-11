@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PacklyData(
     val version: Int = 1,
-    val categories: List&lt;Category&gt; = emptyList(),
-    val items: List&lt;Item&gt; = emptyList(),
-    val lists: List&lt;ItemList&gt; = emptyList(),
-    val trips: List&lt;Trip&gt; = emptyList()
+    val categories: List<Category> = emptyList(),
+    val items: List<Item> = emptyList(),
+    val lists: List<ItemList> = emptyList(),
+    val trips: List<Trip> = emptyList()
 )

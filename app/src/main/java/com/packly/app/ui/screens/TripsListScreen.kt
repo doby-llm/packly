@@ -50,7 +50,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TripsListScreen(
-    trips: List&lt;Trip&gt;,
+    trips: List<Trip>,
     onTripClick: (Trip) -> Unit,
     onCreateTrip: () -> Unit,
     onSearch: () -> Unit,
