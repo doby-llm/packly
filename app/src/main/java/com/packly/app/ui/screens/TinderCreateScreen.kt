@@ -47,8 +47,8 @@ fun TinderCreateScreen(
     val categoryMap = remember(categories) { categories.associateBy { it.id } }
 
     var currentIndex by remember { mutableStateOf(0) }
-    var includedIds by remember { mutableStateOf(setOf()) }
-    var excludedIds by remember { mutableStateOf(setOf()) }
+    var includedIds by remember { mutableStateOf<Set>(emptySet())
+    var excludedIds by remember { mutableStateOf<Set>(emptySet())
     var finished by remember { mutableStateOf(false) }
 
     val totalItems = filteredItems.size
@@ -304,4 +304,20 @@ fun TinderCreateScreen(
                                         )
                                     }
                                 }
-                                if (dragOffset 
+                                if (dragOffset < -50f) {
+                                    Surface(
+                                        modifier = Modifier
+                                            .align(Alignment.CenterEnd)
+                                            .padding(16.dp),
+                                        color = Color(0xFFF44336).copy(alpha = excludeAlpha),
+                                        shape = MaterialTheme.shapes.medium
+                                    ) {
+                                        Text(
+                                            text = "EXCLUDE",
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp
+                                        )
+                                    }
+                                }

@@ -50,7 +50,7 @@ fun ChecklistCreateScreen(
     val itemsByCategory = remember(filteredItems, sortedCategories) {
         filteredItems.groupBy { it.categoryId }
             .mapValues { (_, v) -> v.sortedBy { it.name } }
-            .toSortedMap(compareBy { sortedCategories.indexOfFirst { c -> c.id == it } })
+            .toSortedMap(Comparator { a, b -> sortedCategories.indexOfFirst { it.id == a } - sortedCategories.indexOfFirst { it.id == b } })
     }
 
     val selectedCount = checkedIds.size
@@ -138,7 +138,7 @@ fun ChecklistCreateScreen(
                 Button(
                     onClick = {
                         val entries = checkedIds.map { itemId ->
-                            ListEntry(itemId = itemId, quantity = 1, checked = false)
+                            ListEntry(itemId = itemId, quantity = 1)
                         }
                         val newList = ItemList(
                             id = UUID.randomUUID().toString(),
