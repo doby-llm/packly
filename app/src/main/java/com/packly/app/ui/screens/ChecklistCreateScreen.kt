@@ -35,7 +35,7 @@ fun ChecklistCreateScreen(
     val items by repository.getItems().collectAsState(initial = emptyList())
     val categories by repository.getCategories().collectAsState(initial = emptyList())
     var searchQuery by remember { mutableStateOf("") }
-    var checkedIds by remember { mutableStateOf(setOf()) }
+    var checkedIds by remember { mutableStateOf<Set<String>>(setOf()) }
     val scope = rememberCoroutineScope()
 
     val sortedCategories = remember(categories) { categories.sortedBy { it.sortOrder } }
@@ -50,7 +50,7 @@ fun ChecklistCreateScreen(
     val itemsByCategory = remember(filteredItems, sortedCategories) {
         filteredItems.groupBy { it.categoryId }
             .mapValues { (_, v) -> v.sortedBy { it.name } }
-            .toSortedMap(Comparator { a, b -> sortedCategories.indexOfFirst { it.id == a } - sortedCategories.indexOfFirst { it.id == b } })
+            .toSortedMap(kotlin.comparisons.compareBy { key -> sortedCategories.indexOfFirst { it.id == key } })
     }
 
     val selectedCount = checkedIds.size

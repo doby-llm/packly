@@ -47,8 +47,8 @@ fun TinderCreateScreen(
     val categoryMap = remember(categories) { categories.associateBy { it.id } }
 
     var currentIndex by remember { mutableStateOf(0) }
-    var includedIds by remember { mutableStateOf<Set>(emptySet())
-    var excludedIds by remember { mutableStateOf<Set>(emptySet())
+    var includedIds by remember { mutableStateOf<Set<String>>(setOf()) }
+    var excludedIds by remember { mutableStateOf<Set<String>>(setOf()) }
     var finished by remember { mutableStateOf(false) }
 
     val totalItems = filteredItems.size
