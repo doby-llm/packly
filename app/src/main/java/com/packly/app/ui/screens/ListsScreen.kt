@@ -5,9 +5,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.FormatListBulleted
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,7 +25,8 @@ import java.util.UUID
 @Composable
 fun ListsScreen(
     repository: PacklyRepository,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onChecklistCreate: (String) -> Unit = {}
 ) {
     val lists by repository.getLists().collectAsState(initial = emptyList())
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -33,7 +36,7 @@ fun ListsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Item Lists") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Back") } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -64,7 +67,7 @@ fun ListsScreen(
                             modifier = Modifier.fillMaxWidth().padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Filled.FormatListBulleted, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
+                            Icon(Icons.AutoMirrored.Filled.FormatListBulleted, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
                             Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(list.name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
@@ -82,31 +85,50 @@ fun ListsScreen(
 
     if (showCreateDialog) {
         var listName by remember { mutableStateOf("") }
+        var selectedMode by remember { mutableStateOf("checklist") }
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
             title = { Text("Create New List") },
             text = {
-                OutlinedTextField(
-                    value = listName,
-                    onValueChange = { listName = it },
-                    label = { Text("List name") },
-                    placeholder = { Text("e.g. Beach Weekend") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column {
+                    OutlinedTextField(
+                        value = listName,
+                        onValueChange = { listName = it },
+                        label = { Text("List name") },
+                        placeholder = { Text("e.g. Beach Weekend") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text("Choose mode:", style = MaterialTheme.typography.labelLarge)
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        FilterChip(
+                            selected = selectedMode == "checklist",
+                            onClick = { selectedMode = "checklist" },
+                            label = { Text("Checklist") },
+                            leadingIcon = { Icon(Icons.Filled.CheckCircle, null, Modifier.size(18.dp)) }
+                        )
+                        FilterChip(
+                            selected = selectedMode == "tinder",
+                            onClick = { selectedMode = "tinder" },
+                            label = { Text("Tinder") },
+                            leadingIcon = { Icon(Icons.Filled.TouchApp, null, Modifier.size(18.dp)) }
+                        )
+                    }
+                }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    scope.launch {
-                        repository.createList(ItemList(
-                            id = UUID.randomUUID().toString(),
-                            name = listName,
-                            items = emptyList(),
-                            createdAt = System.currentTimeMillis()
-                        ))
-                    }
                     showCreateDialog = false
-                }, enabled = listName.isNotBlank()) { Text("Create") }
+                    if (listName.isNotBlank()) {
+                        if (selectedMode == "checklist") {
+                            onChecklistCreate(listName)
+                        } else {
+                            // Tinder mode — navigate to tinder screen
+                        }
+                    }
+                }, enabled = listName.isNotBlank()) { Text("Continue") }
             },
             dismissButton = { TextButton(onClick = { showCreateDialog = false }) { Text("Cancel") } }
         )

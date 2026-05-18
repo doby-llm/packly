@@ -3,7 +3,7 @@ package com.packly.app.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.FormatListBulleted
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Luggage
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -65,7 +65,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             HomeButton(
-                icon = Icons.Filled.FormatListBulleted,
+                icon = Icons.AutoMirrored.Filled.FormatListBulleted,
                 label = "Item Lists",
                 description = "Create and manage reusable packing lists",
                 onClick = onLists
