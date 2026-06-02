@@ -36,7 +36,7 @@ It runs on GitHub-hosted runners and performs:
 1. Gradle Wrapper validation.
 2. Android lint.
 3. JVM unit tests.
-4. Debug APK assembly on `workflow_dispatch` and pushes to `main`.
+4. Debug APK assembly on pull requests, pushes to `main`, and `workflow_dispatch`.
 5. Upload of the debug APK artifact named `packly-debug-apk`.
 
 After a successful workflow run with an uploaded APK:
