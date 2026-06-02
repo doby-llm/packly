@@ -1,60 +1,85 @@
 package com.dobyllm.packly.ui.theme
 
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 
-private val LightColors = lightColorScheme(
-    primary = PacklyOcean,
-    onPrimary = PacklySurface,
-    primaryContainer = PacklyOceanSoft,
-    onPrimaryContainer = OnPacklyOceanSoft,
-    secondary = PacklyMint,
-    secondaryContainer = PacklyMintSoft,
-    tertiary = PacklyCoral,
-    tertiaryContainer = PacklyCoralSoft,
-    background = PacklyCanvas,
+private val VibrantMinimalismColors = lightColorScheme(
+    primary = PacklyPrimary,
+    onPrimary = PacklyOnPrimary,
+    primaryContainer = PacklyPrimaryContainer,
+    onPrimaryContainer = PacklyOnPrimaryContainer,
+    inversePrimary = PacklyInversePrimary,
+    secondary = PacklySecondary,
+    onSecondary = PacklyOnSecondary,
+    secondaryContainer = PacklySecondaryContainer,
+    onSecondaryContainer = PacklyOnSecondaryContainer,
+    tertiary = PacklyTertiary,
+    onTertiary = PacklyOnTertiary,
+    tertiaryContainer = PacklyTertiaryContainer,
+    onTertiaryContainer = PacklyOnTertiaryContainer,
+    background = PacklyBackground,
+    onBackground = PacklyOnBackground,
     surface = PacklySurface,
-    surfaceVariant = PacklySurfaceTint,
-    outline = PacklyOutline,
+    onSurface = PacklyOnSurface,
+    surfaceVariant = PacklySurfaceVariant,
+    onSurfaceVariant = PacklyOnSurfaceVariant,
+    surfaceTint = PacklySurfaceTint,
+    inverseSurface = PacklyInverseSurface,
+    inverseOnSurface = PacklyInverseOnSurface,
     error = PacklyError,
+    onError = PacklyOnError,
+    errorContainer = PacklyErrorContainer,
+    onErrorContainer = PacklyOnErrorContainer,
+    outline = PacklyOutline,
+    outlineVariant = PacklyOutlineVariant,
+    surfaceBright = PacklySurfaceBright,
+    surfaceDim = PacklySurfaceDim,
+    surfaceContainer = PacklySurfaceContainer,
+    surfaceContainerHigh = PacklySurfaceContainerHigh,
+    surfaceContainerHighest = PacklySurfaceContainerHighest,
+    surfaceContainerLow = PacklySurfaceContainerLow,
+    surfaceContainerLowest = PacklySurfaceContainerLowest,
+    primaryFixed = PacklyPrimaryFixed,
+    primaryFixedDim = PacklyPrimaryFixedDim,
+    onPrimaryFixed = PacklyOnPrimaryFixed,
+    onPrimaryFixedVariant = PacklyOnPrimaryFixedVariant,
+    secondaryFixed = PacklySecondaryFixed,
+    secondaryFixedDim = PacklySecondaryFixedDim,
+    onSecondaryFixed = PacklyOnSecondaryFixed,
+    onSecondaryFixedVariant = PacklyOnSecondaryFixedVariant,
+    tertiaryFixed = PacklyTertiaryFixed,
+    tertiaryFixedDim = PacklyTertiaryFixedDim,
+    onTertiaryFixed = PacklyOnTertiaryFixed,
+    onTertiaryFixedVariant = PacklyOnTertiaryFixedVariant,
 )
 
-private val DarkColors = darkColorScheme(
-    primary = PacklyOceanSoft,
-    primaryContainer = PacklyOcean,
-    secondary = PacklyMint,
-    tertiary = PacklyCoral,
-    background = PacklyNight,
-    surface = PacklyNightSurface,
-    surfaceVariant = PacklyNightVariant,
-    outline = PacklyNightOutline,
+val PacklyShapes = Shapes(
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(12.dp),
+    large = RoundedCornerShape(16.dp),
+    extraLarge = RoundedCornerShape(24.dp),
 )
 
 @Composable
 fun PacklyTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColors
-        else -> LightColors
-    }
+    // Strict light-mode brand tokens: user settings are accepted for API compatibility,
+    // but dynamic/system colors must not override the Vibrant Minimalism palette.
+    @Suppress("UNUSED_VARIABLE")
+    val retainedSettings = darkTheme to dynamicColor
 
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = VibrantMinimalismColors,
         typography = PacklyTypography,
+        shapes = PacklyShapes,
         content = content,
     )
 }

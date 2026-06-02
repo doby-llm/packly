@@ -2,8 +2,8 @@
     <style name="Theme.Packly" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/packly_window_background</item>
         <item name="android:colorAccent">@color/packly_window_accent</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
         <item name="android:navigationBarColor">@color/packly_window_background</item>
         <item name="android:statusBarColor">@color/packly_window_background</item>
     </style>
