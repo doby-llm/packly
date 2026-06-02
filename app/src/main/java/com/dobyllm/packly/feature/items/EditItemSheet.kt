@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.CategoryId
 import com.dobyllm.packly.core.model.PacklyCategory
 import com.dobyllm.packly.core.model.PacklyItem
+import com.dobyllm.packly.ui.component.CategoryChip
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
@@ -43,7 +44,11 @@ fun EditItemSheet(
             Text("Category", style = MaterialTheme.typography.labelLarge)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 categories.filterNot { it.isArchived }.forEach { category ->
-                    FilterChip(selected = category.id == categoryId, onClick = { categoryId = category.id }, label = { Text(category.label) })
+                    CategoryChip(
+                        label = category.label,
+                        selected = category.id == categoryId,
+                        onClick = { categoryId = category.id },
+                    )
                 }
             }
             Button(

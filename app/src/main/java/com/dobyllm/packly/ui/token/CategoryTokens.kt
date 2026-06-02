@@ -32,18 +32,21 @@ object CategoryTokens {
     private const val LAVENDER = "#9c7afe"
     private const val SKY = "#94d2ff"
     private const val PEACH = "#ffdad6"
+    private const val PRIMARY_FIXED = "#42fdd3"
+    private const val SECONDARY_FIXED = "#e8ddff"
+    private const val TERTIARY_FIXED = "#c9e6ff"
 
-    // Category accents reuse Vibrant Minimalism containers at soft opacity values per DESIGN.md.
+    // Category accents mirror the Items references: Electronics/mint, Clothing/lavender, Toiletries/sky.
     val all = listOf(
-        CategoryToken("clothing", "Clothing", "checkroom", "#006b57", MINT),
-        CategoryToken("toiletries", "Toiletries", "soap", "#006b57", MINT),
-        CategoryToken("electronics", "Electronics", "devices", "#006591", SKY),
-        CategoryToken("documents", "Documents", "article", "#6844c7", LAVENDER),
+        CategoryToken("electronics", "Electronics", "devices", MINT, MINT),
+        CategoryToken("clothing", "Clothing", "checkroom", LAVENDER, LAVENDER),
+        CategoryToken("toiletries", "Toiletries", "soap", SKY, SKY),
+        CategoryToken("documents", "Documents", "article", "#6844c7", SECONDARY_FIXED),
         CategoryToken("health", "Health", "medical_services", "#ba1a1a", PEACH),
-        CategoryToken("comfort", "Travel Comfort", "flight_takeoff", "#6844c7", LAVENDER),
-        CategoryToken("weather", "Weather", "umbrella", "#006591", SKY),
-        CategoryToken("family", "Kids / Family", "family_restroom", "#6844c7", LAVENDER),
-        CategoryToken("food", "Food / Snacks", "lunch_dining", "#006b57", MINT),
+        CategoryToken("comfort", "Travel Comfort", "flight_takeoff", "#006b57", PRIMARY_FIXED),
+        CategoryToken("weather", "Weather", "umbrella", "#006591", TERTIARY_FIXED),
+        CategoryToken("family", "Kids / Family", "family_restroom", "#6844c7", SECONDARY_FIXED),
+        CategoryToken("food", "Food / Snacks", "lunch_dining", "#006b57", PRIMARY_FIXED),
         CategoryToken("misc", "Miscellaneous", "category", "#3b4a44", "#e1e3e4"),
     )
 
