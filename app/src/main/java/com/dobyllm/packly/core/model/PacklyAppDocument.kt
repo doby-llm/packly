@@ -2,7 +2,7 @@ package com.dobyllm.packly.core.model
 
 import kotlinx.serialization.Serializable
 
-const val CurrentSchemaVersion = 1
+const val CurrentSchemaVersion = 2
 
 @Serializable
 data class PacklyAppDocument(

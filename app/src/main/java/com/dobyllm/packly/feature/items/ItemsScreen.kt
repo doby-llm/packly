@@ -21,8 +21,8 @@ import com.dobyllm.packly.ui.component.ItemRow
 fun ItemsScreen(
     doc: PacklyAppDocument,
     onBack: () -> Unit,
-    onAdd: (String, CategoryId, Int, String) -> Unit,
-    onUpdate: (ItemId, String, CategoryId, Int, String) -> Unit,
+    onAdd: (String, CategoryId, String) -> Unit,
+    onUpdate: (ItemId, String, CategoryId, String) -> Unit,
     onDelete: (ItemId) -> Unit,
 ) {
     var query by remember { mutableStateOf("") }
@@ -71,7 +71,7 @@ fun ItemsScreen(
             item = item,
             existingNames = doc.items.filter { !it.isArchived && it.id != item.id }.map { it.name },
             onDismiss = { itemToEdit = null },
-            onSave = { name, categoryId, quantity, notes -> onUpdate(item.id, name, categoryId, quantity, notes) },
+            onSave = { name, categoryId, notes -> onUpdate(item.id, name, categoryId, notes) },
         )
     }
     itemToDelete?.let { item ->

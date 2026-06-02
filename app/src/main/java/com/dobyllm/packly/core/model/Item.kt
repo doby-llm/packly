@@ -7,7 +7,6 @@ data class PacklyItem(
     val id: ItemId,
     val name: String,
     val categoryId: CategoryId,
-    val defaultQuantity: Int = 1,
     val notes: String = "",
     val tags: List<String> = emptyList(),
     val isSeed: Boolean = false,

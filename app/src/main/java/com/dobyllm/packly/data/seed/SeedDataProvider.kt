@@ -14,7 +14,7 @@ object SeedDataProvider {
     }
 
     val items: List<PacklyItem> = listOf(
-        item("tshirts", "T-shirts", "clothing", 3), item("underwear", "Underwear", "clothing", 4), item("socks", "Socks", "clothing", 4), item("pants", "Pants / shorts", "clothing", 2), item("hoodie", "Sweater or hoodie", "clothing"), item("sleepwear", "Sleepwear", "clothing"), item("shoes", "Comfortable shoes", "clothing"),
+        item("tshirts", "T-shirts", "clothing"), item("underwear", "Underwear", "clothing"), item("socks", "Socks", "clothing"), item("pants", "Pants / shorts", "clothing"), item("hoodie", "Sweater or hoodie", "clothing"), item("sleepwear", "Sleepwear", "clothing"), item("shoes", "Comfortable shoes", "clothing"),
         item("toothbrush", "Toothbrush", "toiletries"), item("toothpaste", "Toothpaste", "toiletries"), item("shampoo", "Shampoo", "toiletries"), item("deodorant", "Deodorant", "toiletries"), item("hairbrush", "Hairbrush / comb", "toiletries"),
         item("phone_charger", "Phone charger", "electronics"), item("power_bank", "Power bank", "electronics"), item("headphones", "Headphones", "electronics"), item("laptop_charger", "Laptop charger", "electronics"), item("travel_adapter", "Travel adapter", "electronics"),
         item("passport", "Passport / ID", "documents"), item("tickets", "Tickets / boarding pass", "documents"), item("wallet", "Wallet", "documents"), item("insurance", "Travel insurance card", "documents"),
@@ -37,8 +37,8 @@ object SeedDataProvider {
         settings = PacklySettings(firstLaunchCompleted = true),
     )
 
-    private fun item(key: String, name: String, categoryKey: String, quantity: Int = 1) = PacklyItem(
-        id = "item_$key", name = name, categoryId = "cat_$categoryKey", defaultQuantity = quantity, isSeed = true,
+    private fun item(key: String, name: String, categoryKey: String) = PacklyItem(
+        id = "item_$key", name = name, categoryId = "cat_$categoryKey", isSeed = true,
         createdAt = seedTime, updatedAt = seedTime,
     )
 
@@ -46,7 +46,7 @@ object SeedDataProvider {
         id = "list_$key", name = name, description = description, isSeed = true, createdAt = seedTime, updatedAt = seedTime,
         entries = itemKeys.mapIndexed { index, itemKey ->
             val item = items.first { it.id == "item_$itemKey" }
-            PacklyListEntry("list_entry_${key}_$index", item.id, item.name, item.categoryId, item.defaultQuantity, sortOrder = index)
+            PacklyListEntry("list_entry_${key}_$index", item.id, item.name, item.categoryId, sortOrder = index)
         },
     )
 }

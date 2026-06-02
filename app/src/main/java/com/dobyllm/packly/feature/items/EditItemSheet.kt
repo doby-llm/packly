@@ -17,16 +17,14 @@ fun EditItemSheet(
     categories: List<PacklyCategory>,
     existingNames: List<String>,
     onDismiss: () -> Unit,
-    onSave: (String, CategoryId, Int, String) -> Unit,
+    onSave: (String, CategoryId, String) -> Unit,
     item: PacklyItem? = null,
 ) {
     var name by remember(item?.id) { mutableStateOf(item?.name.orEmpty()) }
-    var quantity by remember(item?.id) { mutableStateOf((item?.defaultQuantity ?: 1).toString()) }
     var notes by remember(item?.id) { mutableStateOf(item?.notes.orEmpty()) }
     var categoryId by remember(categories, item?.id) { mutableStateOf(item?.categoryId ?: categories.firstOrNull()?.id ?: "") }
     val trimmedName = name.trim()
     val duplicateName = existingNames.any { it.equals(trimmedName, ignoreCase = true) }
-    val quantityValue = quantity.toIntOrNull() ?: 1
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface,
@@ -41,7 +39,6 @@ fun EditItemSheet(
                 isError = duplicateName,
                 modifier = Modifier.fillMaxWidth(),
             )
-            OutlinedTextField(quantity, { quantity = it.filter(Char::isDigit).ifBlank { "1" } }, label = { Text("Default quantity") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(notes, { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth())
             Text("Category", style = MaterialTheme.typography.labelLarge)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -52,7 +49,7 @@ fun EditItemSheet(
             Button(
                 enabled = trimmedName.isNotEmpty() && categoryId.isNotBlank() && !duplicateName,
                 onClick = {
-                    onSave(trimmedName, categoryId, quantityValue, notes)
+                    onSave(trimmedName, categoryId, notes)
                     onDismiss()
                 },
                 modifier = Modifier.fillMaxWidth(),

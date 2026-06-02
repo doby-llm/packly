@@ -22,7 +22,7 @@ import com.dobyllm.packly.core.model.TripEntry
 fun ItemRow(item: PacklyItem, category: PacklyCategory?, onEdit: () -> Unit, onDelete: () -> Unit) {
     ListItem(
         headlineContent = { Text(item.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        supportingContent = { Text(listOfNotNull(category?.label, "Usually ${item.defaultQuantity}", item.notes.takeIf { it.isNotBlank() }).joinToString(" • ")) },
+        supportingContent = { Text(listOfNotNull(category?.label, item.notes.takeIf { it.isNotBlank() }).joinToString(" • ")) },
         trailingContent = {
             Row { IconButton(onClick = onEdit) { Icon(Icons.Rounded.Edit, contentDescription = "Edit ${item.name}") }; IconButton(onClick = onDelete) { Icon(Icons.Rounded.Delete, contentDescription = "Delete ${item.name}") } }
         },

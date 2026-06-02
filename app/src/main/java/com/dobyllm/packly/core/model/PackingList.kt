@@ -20,7 +20,6 @@ data class PacklyListEntry(
     val itemId: ItemId?,
     val itemNameSnapshot: String,
     val categoryIdSnapshot: CategoryId,
-    val quantity: Int = 1,
     val notes: String = "",
     val sortOrder: Int,
 )

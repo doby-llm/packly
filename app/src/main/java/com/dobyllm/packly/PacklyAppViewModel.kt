@@ -18,7 +18,7 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope, SharingStarted.WhileSubscribed(5_000), com.dobyllm.packly.data.seed.SeedDataProvider.initialDocument()
     )
 
-    fun addItem(name: String, categoryId: CategoryId, quantity: Int, notes: String = "") = viewModelScope.launch {
+    fun addItem(name: String, categoryId: CategoryId, notes: String = "") = viewModelScope.launch {
         val trimmedName = name.trim()
         if (trimmedName.isEmpty()) return@launch
         val now = PacklyClock.now()
@@ -27,11 +27,10 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 items
             } else {
                 items + PacklyItem(
-                    PacklyIds.item(),
-                    trimmedName,
-                    categoryId,
-                    quantity.coerceAtLeast(1),
-                    notes.trim(),
+                    id = PacklyIds.item(),
+                    name = trimmedName,
+                    categoryId = categoryId,
+                    notes = notes.trim(),
                     createdAt = now,
                     updatedAt = now,
                 )
@@ -39,7 +38,7 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun updateItem(itemId: ItemId, name: String, categoryId: CategoryId, quantity: Int, notes: String = "") = viewModelScope.launch {
+    fun updateItem(itemId: ItemId, name: String, categoryId: CategoryId, notes: String = "") = viewModelScope.launch {
         val trimmedName = name.trim()
         if (trimmedName.isEmpty()) return@launch
         val now = PacklyClock.now()
@@ -52,7 +51,6 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
                         item.copy(
                             name = trimmedName,
                             categoryId = categoryId,
-                            defaultQuantity = quantity.coerceAtLeast(1),
                             notes = notes.trim(),
                             updatedAt = now,
                         )
@@ -79,7 +77,14 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
             } else {
                 val selected = doc.items.filter { it.id in selectedItemIds && !it.isArchived }
                 val entries = selected.mapIndexed { index, item ->
-                    PacklyListEntry(PacklyIds.listEntry(), item.id, item.name, item.categoryId, item.defaultQuantity, item.notes, index)
+                    PacklyListEntry(
+                        id = PacklyIds.listEntry(),
+                        itemId = item.id,
+                        itemNameSnapshot = item.name,
+                        categoryIdSnapshot = item.categoryId,
+                        notes = item.notes,
+                        sortOrder = index,
+                    )
                 }
                 doc.copy(lists = doc.lists + PacklyList(PacklyIds.list(), trimmedName, description.trim(), entries, createdAt = now, updatedAt = now))
             }
@@ -98,7 +103,15 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
             doc.copy(lists = doc.lists.map { list ->
                 if (list.id != listId) list else {
                     val exists = list.entries.any { it.itemId == itemId }
-                    val entries = if (exists) list.entries.filterNot { it.itemId == itemId } else list.entries + PacklyListEntry(PacklyIds.listEntry(), item.id, item.name, item.categoryId, item.defaultQuantity, item.notes, list.entries.size)
+                    val newEntry = PacklyListEntry(
+                        id = PacklyIds.listEntry(),
+                        itemId = item.id,
+                        itemNameSnapshot = item.name,
+                        categoryIdSnapshot = item.categoryId,
+                        notes = item.notes,
+                        sortOrder = list.entries.size,
+                    )
+                    val entries = if (exists) list.entries.filterNot { it.itemId == itemId } else list.entries + newEntry
                     list.copy(entries = entries.mapIndexed { index, entry -> entry.copy(sortOrder = index) }, updatedAt = now)
                 }
             })
@@ -115,9 +128,26 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
             } else {
                 val fromList = sourceListId?.let { doc.lists.firstOrNull { list -> list.id == it } }?.entries ?: emptyList()
                 val fromItems = doc.items.filter { it.id in itemIds && fromList.none { entry -> entry.itemId == it.id } }
-                    .mapIndexed { index, item -> PacklyListEntry(PacklyIds.listEntry(), item.id, item.name, item.categoryId, item.defaultQuantity, item.notes, fromList.size + index) }
+                    .mapIndexed { index, item ->
+                        PacklyListEntry(
+                            id = PacklyIds.listEntry(),
+                            itemId = item.id,
+                            itemNameSnapshot = item.name,
+                            categoryIdSnapshot = item.categoryId,
+                            notes = item.notes,
+                            sortOrder = fromList.size + index,
+                        )
+                    }
                 val entries = (fromList + fromItems).distinctBy { it.itemId ?: it.itemNameSnapshot.lowercase() }.mapIndexed { index, entry ->
-                    TripEntry(PacklyIds.tripEntry(), entry.itemId, entry.id, entry.itemNameSnapshot, entry.categoryIdSnapshot, entry.quantity, entry.notes, sortOrder = index)
+                    TripEntry(
+                        id = PacklyIds.tripEntry(),
+                        sourceItemId = entry.itemId,
+                        sourceListEntryId = entry.id,
+                        nameSnapshot = entry.itemNameSnapshot,
+                        categoryIdSnapshot = entry.categoryIdSnapshot,
+                        notes = entry.notes,
+                        sortOrder = index,
+                    )
                 }
                 doc.copy(trips = doc.trips + PacklyTrip(PacklyIds.trip(), trimmedName, destination.trim(), sourceListId = sourceListId, entries = entries, createdAt = now, updatedAt = now))
             }
