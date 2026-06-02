@@ -1,28 +1,46 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 
 package com.dobyllm.packly.feature.lists
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.dobyllm.packly.core.model.*
+import com.dobyllm.packly.core.model.ItemId
+import com.dobyllm.packly.core.model.ListId
+import com.dobyllm.packly.core.model.PacklyAppDocument
+import com.dobyllm.packly.ui.token.PacklySpacing
 
 @Composable
-fun ListDetailScreen(doc: PacklyAppDocument, listId: ListId, onBack: () -> Unit, onToggle: (ItemId) -> Unit) {
+fun ListDetailScreen(
+    doc: PacklyAppDocument,
+    listId: ListId,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    onToggle: (ItemId) -> Unit,
+) {
     val list = doc.lists.firstOrNull { it.id == listId }
     val selected = list?.entries?.mapNotNull { it.itemId }?.toSet() ?: emptySet()
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = { TopAppBar(title = { Text(list?.name ?: "List") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Rounded.ArrowBack, contentDescription = "Back") } }) },
-    ) { padding ->
-        if (list == null) Text("List not found", Modifier.padding(padding).padding(20.dp)) else LazyColumn(Modifier.padding(padding), contentPadding = PaddingValues(16.dp)) {
-            item { Text("Select items from your library. Changes snapshot names and quantities into this template.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+
+    if (list == null) {
+        Text("List not found", Modifier.padding(contentPadding).padding(20.dp))
+    } else {
+        LazyColumn(
+            modifier = Modifier.padding(contentPadding),
+            contentPadding = PaddingValues(PacklySpacing.marginMobile),
+        ) {
+            item {
+                Text(
+                    "Select items from your library. Changes snapshot names and quantities into this template.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             items(doc.items.filterNot { it.isArchived }, key = { it.id }) { item ->
                 ListItem(
                     headlineContent = { Text(item.name) },
