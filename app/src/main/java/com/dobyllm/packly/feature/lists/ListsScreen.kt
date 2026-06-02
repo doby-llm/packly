@@ -3,6 +3,8 @@
 package com.dobyllm.packly.feature.lists
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -72,8 +74,16 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        Column(Modifier.padding(20.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Create list", style = MaterialTheme.typography.titleLarge)
+        Column(Modifier.fillMaxHeight(0.9f).navigationBarsPadding().imePadding()) {
+            Text(
+                "Create list",
+                modifier = Modifier.padding(horizontal = 20.dp).padding(top = 8.dp, bottom = 12.dp),
+                style = MaterialTheme.typography.titleLarge,
+            )
+            Column(
+                Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
             OutlinedTextField(
                 name,
                 { name = it },
@@ -95,13 +105,14 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
                 }
             }
             if (matchingItems.isEmpty()) Text("No items match this search.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             Button(
                 enabled = name.trim().isNotEmpty() && !duplicateName,
                 onClick = {
                     onCreate(name, description, selected.toSet())
                     onDismiss()
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.padding(20.dp).fillMaxWidth().defaultMinSize(minHeight = 48.dp),
             ) { Text("Save list") }
         }
     }

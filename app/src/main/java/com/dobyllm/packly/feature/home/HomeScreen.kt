@@ -3,6 +3,8 @@
 package com.dobyllm.packly.feature.home
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Backpack
@@ -45,12 +47,21 @@ fun HomeScreen(
             )
         },
     ) { padding ->
-        Column(Modifier.padding(padding).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("Ready to pack?", style = MaterialTheme.typography.headlineMedium)
-            Text("Saved on this device. Start with sample items or create your own trip.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            DestinationCard(Icons.Rounded.EditNote, "Edit items", "${doc.items.count { !it.isArchived }} reusable packing items", onItems)
-            DestinationCard(Icons.Rounded.Checklist, "Item Lists", "${doc.lists.count { !it.isArchived }} reusable templates", onLists)
-            DestinationCard(Icons.Rounded.Backpack, "Trips", "${doc.trips.count { it.status.name != "Archived" }} packing sessions", onTrips)
+        Box(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 24.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text("Ready to pack?", style = MaterialTheme.typography.headlineMedium)
+                Text("Choose what you want to prepare.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                DestinationCard(Icons.Rounded.Backpack, "Trips", "${doc.trips.count { it.status.name != "Archived" }} packing sessions", onTrips)
+                DestinationCard(Icons.Rounded.Checklist, "Lists", "${doc.lists.count { !it.isArchived }} reusable templates", onLists)
+                DestinationCard(Icons.Rounded.EditNote, "Items", "${doc.items.count { !it.isArchived }} reusable packing items", onItems)
+            }
         }
     }
 
@@ -112,10 +123,21 @@ private val ThemeMode.description: String
 
 @Composable
 private fun DestinationCard(icon: ImageVector, title: String, body: String, onClick: () -> Unit) {
-    ElevatedCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Row(Modifier.padding(18.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+    ElevatedCard(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        Row(
+            Modifier.padding(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp))
-            Column { Text(title, style = MaterialTheme.typography.titleLarge); Text(body, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleLarge)
+                Text(body, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
     }
 }
