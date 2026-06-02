@@ -36,6 +36,6 @@ fun PackingItemRow(entry: TripEntry, category: PacklyCategory?, onToggle: () -> 
         modifier = Modifier.clickable(role = Role.Checkbox) { onToggle() }.semantics { contentDescription = description },
         leadingContent = { Checkbox(checked = entry.isPacked, onCheckedChange = { onToggle() }) },
         headlineContent = { Text(entry.nameSnapshot) },
-        supportingContent = { Text("${category?.label ?: "Unknown"} • Qty ${entry.quantity}") },
+        supportingContent = { Text("${category?.label ?: "Unknown"} • ×${entry.quantity}") },
     )
 }

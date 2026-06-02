@@ -118,7 +118,13 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun createTrip(name: String, destination: String, sourceListId: ListId?, itemIds: Set<ItemId>) = viewModelScope.launch {
+    fun createTrip(
+        name: String,
+        destination: String,
+        sourceListId: ListId?,
+        itemIds: Set<ItemId>,
+        itemQuantities: Map<ItemId, Int> = emptyMap(),
+    ) = viewModelScope.launch {
         val trimmedName = name.trim()
         if (trimmedName.isEmpty()) return@launch
         val now = PacklyClock.now()
@@ -145,6 +151,7 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
                         sourceListEntryId = entry.id,
                         nameSnapshot = entry.itemNameSnapshot,
                         categoryIdSnapshot = entry.categoryIdSnapshot,
+                        quantity = entry.itemId?.let { itemQuantities[it] }?.coerceAtLeast(1) ?: 1,
                         notes = entry.notes,
                         sortOrder = index,
                     )
@@ -152,6 +159,18 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 doc.copy(trips = doc.trips + PacklyTrip(PacklyIds.trip(), trimmedName, destination.trim(), sourceListId = sourceListId, entries = entries, createdAt = now, updatedAt = now))
             }
         }
+    }
+
+    fun updateTripEntryQuantity(tripId: TripId, entryId: TripEntryId, quantity: Int) = viewModelScope.launch {
+        val now = PacklyClock.now()
+        repository.updateTrips { trips -> trips.map { trip ->
+            if (trip.id != tripId) trip else trip.copy(
+                entries = trip.entries.map { entry ->
+                    if (entry.id == entryId) entry.copy(quantity = quantity.coerceAtLeast(1)) else entry
+                },
+                updatedAt = now,
+            )
+        } }
     }
 
     fun deleteTrip(tripId: TripId) = viewModelScope.launch {

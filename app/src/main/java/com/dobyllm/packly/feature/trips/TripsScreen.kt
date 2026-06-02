@@ -17,7 +17,14 @@ import com.dobyllm.packly.ui.component.EmptyState
 import com.dobyllm.packly.ui.component.TripCard
 
 @Composable
-fun TripsScreen(doc: PacklyAppDocument, onBack: () -> Unit, onCreate: (String, String, ListId?, Set<ItemId>) -> Unit, onOpen: (TripId) -> Unit, onPack: (TripId) -> Unit, onDelete: (TripId) -> Unit) {
+fun TripsScreen(
+    doc: PacklyAppDocument,
+    onBack: () -> Unit,
+    onCreate: (String, String, ListId?, Set<ItemId>, Map<ItemId, Int>) -> Unit,
+    onOpen: (TripId) -> Unit,
+    onPack: (TripId) -> Unit,
+    onDelete: (TripId) -> Unit,
+) {
     var showCreate by remember { mutableStateOf(false) }
     var tripToDelete by remember { mutableStateOf<PacklyTrip?>(null) }
     Scaffold(
@@ -27,7 +34,7 @@ fun TripsScreen(doc: PacklyAppDocument, onBack: () -> Unit, onCreate: (String, S
     ) { padding ->
         val trips = doc.trips.filter { it.status != TripStatus.Archived }.sortedByDescending { it.updatedAt }
         LazyColumn(Modifier.padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (trips.isEmpty()) item { EmptyState("No trips planned.", "Turn a packing list into a trip checklist when you know where you’re going.", "Start trip") { showCreate = true } }
+            if (trips.isEmpty()) item { EmptyState("No trips planned.", "Build a trip checklist from a packing list or individual items.", "Start trip") { showCreate = true } }
             items(trips, key = { it.id }) { trip -> TripCard(trip, onOpen = { onOpen(trip.id) }, onPack = { onPack(trip.id) }, onDelete = { tripToDelete = trip }) }
         }
     }
