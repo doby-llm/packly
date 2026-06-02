@@ -2,7 +2,13 @@
 
 package com.dobyllm.packly.feature.trips
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Remove
@@ -10,21 +16,29 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.*
+import com.dobyllm.packly.core.time.PacklyDeadlineFormatter
+import com.dobyllm.packly.notification.canPostPacklyNotifications
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 fun CreateTripSheet(
     doc: PacklyAppDocument,
     onDismiss: () -> Unit,
-    onCreate: (String, String, ListId?, Set<ItemId>, Map<ItemId, Int>) -> Unit,
+    onCreate: (String, String, ListId?, Set<ItemId>, Map<ItemId, Int>, InstantString?) -> Unit,
 ) {
     var name by remember { mutableStateOf("") }
     var destination by remember { mutableStateOf("") }
     var showDestination by remember { mutableStateOf(false) }
+    var packByInput by remember { mutableStateOf("") }
     var sourceListId by remember { mutableStateOf<ListId?>(null) }
     var itemQuery by remember { mutableStateOf("") }
+    var notificationPermissionGranted by rememberNotificationPermissionState()
+    val requestNotificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        notificationPermissionGranted = granted
+    }
     val selectedItems = remember { mutableStateListOf<ItemId>() }
     val quantities = remember { mutableStateMapOf<ItemId, Int>() }
     val activeItems = doc.items.filterNot { it.isArchived }
@@ -33,12 +47,14 @@ fun CreateTripSheet(
     val sourceEntries = sourceListId
         ?.let { id -> doc.lists.firstOrNull { it.id == id }?.entries }
         ?: emptyList()
+    val selectedItemIds = remember(sourceEntries, selectedItems.toList()) { sourceEntries.mapNotNull { it.itemId }.toSet() + selectedItems }
     val sourceItemIds = sourceEntries.mapNotNull { it.itemId }.toSet()
-    val selectedItemIds = remember(sourceItemIds, selectedItems.toList()) { sourceItemIds + selectedItems }
     val duplicateSourceCount = selectedItems.count { it in sourceItemIds }
     val reviewItems = remember(selectedItemIds, doc.items, sourceEntries) {
         buildTripReviewItems(selectedItemIds, doc.items, sourceEntries)
     }
+    val parsedPackBy = remember(packByInput) { PacklyDeadlineFormatter.parseLocalInput(packByInput) }
+    val packByInvalid = packByInput.isNotBlank() && parsedPackBy == null
 
     LaunchedEffect(selectedItemIds) {
         selectedItemIds.forEach { itemId -> quantities.putIfAbsent(itemId, 1) }
@@ -49,8 +65,16 @@ fun CreateTripSheet(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        Column(Modifier.padding(20.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Start trip", style = MaterialTheme.typography.titleLarge)
+        Column(Modifier.fillMaxHeight(0.9f).navigationBarsPadding().imePadding()) {
+            Text(
+                "Start trip",
+                modifier = Modifier.padding(horizontal = 20.dp).padding(top = 8.dp, bottom = 12.dp),
+                style = MaterialTheme.typography.titleLarge,
+            )
+            Column(
+                Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
             OutlinedTextField(
                 name,
                 { name = it },
@@ -69,6 +93,24 @@ fun CreateTripSheet(
             } else {
                 TextButton(onClick = { showDestination = true }) { Text("Add destination (optional)") }
             }
+            OutlinedTextField(
+                value = packByInput,
+                onValueChange = { packByInput = it },
+                label = { Text("Pack by (optional)") },
+                placeholder = { Text(PacklyDeadlineFormatter.InputPattern) },
+                supportingText = {
+                    Text(
+                        when {
+                            packByInvalid -> "Use ${PacklyDeadlineFormatter.InputPattern}. We'll remind you if anything is still unpacked."
+                            packByInput.isNotBlank() && !notificationPermissionGranted -> "Notifications are off. We can still show the deadline in Packly."
+                            else -> "We'll remind you if anything is still unpacked."
+                        },
+                    )
+                },
+                isError = packByInvalid,
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
             Text("Use a list", style = MaterialTheme.typography.labelLarge)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(selected = sourceListId == null, onClick = { sourceListId = null }, label = { Text("Blank") })
@@ -107,16 +149,26 @@ fun CreateTripSheet(
                     }
                 }
             }
+            }
             Button(
-                enabled = name.trim().isNotEmpty() && !duplicateName,
+                enabled = name.trim().isNotEmpty() && !duplicateName && !packByInvalid,
                 onClick = {
-                    onCreate(name, destination, sourceListId, selectedItems.toSet(), quantities.toMap())
+                    if (packByInput.isNotBlank() && !notificationPermissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                    onCreate(name, destination, sourceListId, selectedItems.toSet(), quantities.toMap(), parsedPackBy)
                     onDismiss()
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.padding(20.dp).fillMaxWidth().defaultMinSize(minHeight = 48.dp),
             ) { Text("Save trip") }
         }
     }
+}
+
+@Composable
+fun rememberNotificationPermissionState(): MutableState<Boolean> {
+    val context = LocalContext.current
+    return remember { mutableStateOf(canPostPacklyNotifications(context)) }
 }
 
 private data class TripReviewItem(

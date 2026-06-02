@@ -7,16 +7,25 @@ import com.dobyllm.packly.core.model.*
 import com.dobyllm.packly.core.time.PacklyClock
 import com.dobyllm.packly.core.time.PacklyIds
 import com.dobyllm.packly.data.repository.DataStorePacklyRepository
+import com.dobyllm.packly.notification.DeadlineReminderScheduler
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class PacklyAppViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = DataStorePacklyRepository.get(application)
+    private val deadlineReminderScheduler = DeadlineReminderScheduler(application)
     val document: StateFlow<PacklyAppDocument> = repository.appState.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5_000), com.dobyllm.packly.data.seed.SeedDataProvider.initialDocument()
     )
+
+    init {
+        viewModelScope.launch {
+            document.collectLatest { doc -> deadlineReminderScheduler.syncAll(doc.trips) }
+        }
+    }
 
     fun addItem(name: String, categoryId: CategoryId, notes: String = "") = viewModelScope.launch {
         val trimmedName = name.trim()
@@ -124,6 +133,7 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
         sourceListId: ListId?,
         itemIds: Set<ItemId>,
         itemQuantities: Map<ItemId, Int> = emptyMap(),
+        packBy: InstantString? = null,
     ) = viewModelScope.launch {
         val trimmedName = name.trim()
         if (trimmedName.isEmpty()) return@launch
@@ -156,7 +166,16 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
                         sortOrder = index,
                     )
                 }
-                doc.copy(trips = doc.trips + PacklyTrip(PacklyIds.trip(), trimmedName, destination.trim(), sourceListId = sourceListId, entries = entries, createdAt = now, updatedAt = now))
+                doc.copy(trips = doc.trips + PacklyTrip(PacklyIds.trip(), trimmedName, destination.trim(), sourceListId = sourceListId, packBy = packBy, entries = entries, createdAt = now, updatedAt = now))
+            }
+        }
+    }
+
+    fun updateTripDeadline(tripId: TripId, packBy: InstantString?) = viewModelScope.launch {
+        val now = PacklyClock.now()
+        repository.updateTrips { trips ->
+            trips.map { trip ->
+                if (trip.id == tripId) trip.copy(packBy = packBy, updatedAt = now) else trip
             }
         }
     }

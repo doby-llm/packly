@@ -20,7 +20,7 @@ import com.dobyllm.packly.ui.component.TripCard
 fun TripsScreen(
     doc: PacklyAppDocument,
     onBack: () -> Unit,
-    onCreate: (String, String, ListId?, Set<ItemId>, Map<ItemId, Int>) -> Unit,
+    onCreate: (String, String, ListId?, Set<ItemId>, Map<ItemId, Int>, InstantString?) -> Unit,
     onOpen: (TripId) -> Unit,
     onPack: (TripId) -> Unit,
     onDelete: (TripId) -> Unit,

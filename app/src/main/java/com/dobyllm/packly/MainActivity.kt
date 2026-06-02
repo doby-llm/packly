@@ -20,11 +20,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dobyllm.packly.core.model.ThemeMode
 import com.dobyllm.packly.navigation.PacklyNavHost
+import com.dobyllm.packly.notification.EXTRA_TRIP_ID
+import com.dobyllm.packly.notification.createDeadlineReminderChannel
 import com.dobyllm.packly.ui.theme.PacklyTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        createDeadlineReminderChannel(this)
+        val notificationTripId = intent?.getStringExtra(EXTRA_TRIP_ID)
         setContent {
             val vm: PacklyAppViewModel = viewModel()
             val doc = vm.document.collectAsStateWithLifecycle().value
@@ -39,7 +43,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
-                    PacklyNavHost(vm = vm)
+                    PacklyNavHost(vm = vm, initialTripId = notificationTripId)
                 }
             }
         }

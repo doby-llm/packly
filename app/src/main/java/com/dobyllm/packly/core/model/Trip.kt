@@ -13,6 +13,7 @@ data class PacklyTrip(
     val startDate: LocalDateString? = null,
     val endDate: LocalDateString? = null,
     val sourceListId: ListId? = null,
+    val packBy: InstantString? = null,
     val status: TripStatus = TripStatus.Active,
     val entries: List<TripEntry> = emptyList(),
     val createdAt: InstantString,
