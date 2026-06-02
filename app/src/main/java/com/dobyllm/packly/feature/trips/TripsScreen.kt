@@ -3,8 +3,10 @@
 package com.dobyllm.packly.feature.trips
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.InstantString
 import com.dobyllm.packly.core.model.ItemId
@@ -45,10 +48,16 @@ fun TripsScreen(
 ) {
     var showCreate by remember { mutableStateOf(false) }
     var tripToDelete by remember { mutableStateOf<PacklyTrip?>(null) }
-    val trips = doc.trips.filter { it.status != TripStatus.Archived }.sortedByDescending { it.updatedAt }
+    val visibleTrips = doc.trips.filter { it.status != TripStatus.Archived }
+    val activeTrips = visibleTrips
+        .filter { it.status != TripStatus.Completed }
+        .sortedByDescending { it.updatedAt }
+    val completedTrips = visibleTrips
+        .filter { it.status == TripStatus.Completed }
+        .sortedByDescending { it.updatedAt }
 
     DisposableEffect(onFabActionChange) {
-        onFabActionChange?.invoke(PacklyFabAction(contentDescription = "Add trip", onClick = { showCreate = true }))
+        onFabActionChange?.invoke(PacklyFabAction(contentDescription = "Create trip", onClick = { showCreate = true }))
         onDispose { onFabActionChange?.invoke(null) }
     }
 
@@ -56,19 +65,42 @@ fun TripsScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding),
-        contentPadding = PaddingValues(PacklySpacing.marginMobile),
-        verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
+        contentPadding = PaddingValues(horizontal = PacklySpacing.marginMobile, vertical = PacklySpacing.md),
+        verticalArrangement = Arrangement.spacedBy(PacklySpacing.md),
     ) {
-        if (trips.isEmpty()) {
-            item { EmptyState("No trips planned.", "Build a trip checklist from a packing list or individual items.", "Start trip") { showCreate = true } }
-        }
-        items(trips, key = { it.id }) { trip ->
-            TripCard(
-                trip,
-                onOpen = { onOpen(trip.id) },
-                onPack = { onPack(trip.id) },
-                onDelete = { tripToDelete = trip },
-            )
+        item { TripsHeader(activeCount = activeTrips.size, completedCount = completedTrips.size) }
+        if (visibleTrips.isEmpty()) {
+            item {
+                EmptyState(
+                    title = "No trips planned",
+                    body = "Build a trip checklist from a packing list or individual items.",
+                    actionLabel = "Create trip",
+                    onAction = { showCreate = true },
+                )
+            }
+        } else {
+            if (activeTrips.isNotEmpty()) {
+                item { TripsSectionTitle("Active trips") }
+                items(activeTrips, key = { it.id }) { trip ->
+                    TripCard(
+                        trip,
+                        onOpen = { onOpen(trip.id) },
+                        onPack = { onPack(trip.id) },
+                        onDelete = { tripToDelete = trip },
+                    )
+                }
+            }
+            if (completedTrips.isNotEmpty()) {
+                item { TripsSectionTitle("Completed trips") }
+                items(completedTrips, key = { it.id }) { trip ->
+                    TripCard(
+                        trip,
+                        onOpen = { onOpen(trip.id) },
+                        onPack = { onPack(trip.id) },
+                        onDelete = { tripToDelete = trip },
+                    )
+                }
+            }
         }
     }
 
@@ -90,4 +122,36 @@ fun TripsScreen(
             dismissButton = { TextButton(onClick = { tripToDelete = null }) { Text("Cancel") } },
         )
     }
+}
+
+@Composable
+private fun TripsHeader(activeCount: Int, completedCount: Int) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = PacklySpacing.base),
+        verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
+    ) {
+        Text(
+            text = "Trips",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        val completedCopy = completedCount.takeIf { it > 0 }?.let { " Completed trips stay lower priority." } ?: ""
+        Text(
+            text = "Prepare ${activeCount.coerceAtLeast(0)} active ${if (activeCount == 1) "trip" else "trips"}.$completedCopy",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun TripsSectionTitle(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleLarge,
+        color = MaterialTheme.colorScheme.onSurface,
+    )
 }

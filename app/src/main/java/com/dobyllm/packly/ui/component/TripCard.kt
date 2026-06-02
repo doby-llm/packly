@@ -66,7 +66,7 @@ fun TripCard(trip: PacklyTrip, onOpen: () -> Unit, onPack: () -> Unit, onDelete:
         Row(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
             Button(onClick = onPack) { Text(if (summary.packedItems == 0) "Start packing" else "Continue packing") }
             OutlinedButton(onClick = onOpen) { Text("Details") }
-            TextButton(onClick = onDelete, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) { Text("Delete") }
+            TextButton(onClick = onDelete, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) { Text("Archive") }
         }
     }
 }

@@ -6,21 +6,64 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Remove
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.dobyllm.packly.core.model.*
+import com.dobyllm.packly.core.model.CategoryId
+import com.dobyllm.packly.core.model.InstantString
+import com.dobyllm.packly.core.model.ItemId
+import com.dobyllm.packly.core.model.ListId
+import com.dobyllm.packly.core.model.PacklyAppDocument
+import com.dobyllm.packly.core.model.PacklyItem
+import com.dobyllm.packly.core.model.PacklyListEntry
+import com.dobyllm.packly.core.model.TripStatus
 import com.dobyllm.packly.core.time.PacklyDeadlineFormatter
 import com.dobyllm.packly.notification.canPostPacklyNotifications
+import com.dobyllm.packly.ui.token.PacklyRadius
+import com.dobyllm.packly.ui.token.PacklySpacing
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
@@ -63,92 +106,114 @@ fun CreateTripSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        shape = RoundedCornerShape(topStart = PacklyRadius.xl, topEnd = PacklyRadius.xl),
     ) {
         Column(Modifier.fillMaxHeight(0.9f).navigationBarsPadding().imePadding()) {
             Text(
-                "Start trip",
-                modifier = Modifier.padding(horizontal = 20.dp).padding(top = 8.dp, bottom = 12.dp),
+                "Create trip",
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .widthIn(max = 560.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = PacklySpacing.md)
+                    .padding(top = PacklySpacing.base, bottom = PacklySpacing.sm),
                 style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
             )
             Column(
-                Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                Modifier
+                    .weight(1f)
+                    .align(Alignment.CenterHorizontally)
+                    .widthIn(max = 560.dp)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = PacklySpacing.md),
+                verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
             ) {
-            OutlinedTextField(
-                name,
-                { name = it },
-                label = { Text("Trip name") },
-                supportingText = { if (duplicateName) Text("An active trip with this name already exists.") },
-                isError = duplicateName,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (showDestination) {
-                OutlinedTextField(
-                    destination,
-                    { destination = it },
-                    label = { Text("Destination (optional)") },
-                    modifier = Modifier.fillMaxWidth(),
+                PacklyTripTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = "Trip name",
+                    supportingText = if (duplicateName) "An active trip with this name already exists." else null,
+                    isError = duplicateName,
                 )
-            } else {
-                TextButton(onClick = { showDestination = true }) { Text("Add destination (optional)") }
-            }
-            OutlinedTextField(
-                value = packByInput,
-                onValueChange = { packByInput = it },
-                label = { Text("Pack by (optional)") },
-                placeholder = { Text(PacklyDeadlineFormatter.InputPattern) },
-                supportingText = {
-                    Text(
-                        when {
-                            packByInvalid -> "Use ${PacklyDeadlineFormatter.InputPattern}. We'll remind you if anything is still unpacked."
-                            packByInput.isNotBlank() && !notificationPermissionGranted -> "Notifications are off. We can still show the deadline in Packly."
-                            else -> "We'll remind you if anything is still unpacked."
-                        },
+                if (showDestination) {
+                    PacklyTripTextField(
+                        value = destination,
+                        onValueChange = { destination = it },
+                        label = "Destination (optional)",
                     )
-                },
-                isError = packByInvalid,
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Text("Use a list", style = MaterialTheme.typography.labelLarge)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = sourceListId == null, onClick = { sourceListId = null }, label = { Text("Blank") })
-                doc.lists.filterNot { it.isArchived }.forEach { list -> FilterChip(selected = sourceListId == list.id, onClick = { sourceListId = list.id }, label = { Text(list.name) }) }
-            }
-            Text("Add isolated items", style = MaterialTheme.typography.labelLarge)
-            OutlinedTextField(itemQuery, { itemQuery = it }, label = { Text("Search all ${activeItems.size} items") }, modifier = Modifier.fillMaxWidth())
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                matchingItems.forEach { item ->
-                    FilterChip(
-                        selected = item.id in selectedItems,
-                        onClick = { if (item.id in selectedItems) selectedItems.remove(item.id) else selectedItems.add(item.id) },
-                        label = { Text(item.name) },
-                    )
+                } else {
+                    TextButton(onClick = { showDestination = true }) { Text("Add destination (optional)") }
                 }
-            }
-            if (matchingItems.isEmpty()) Text("No items match this search.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (duplicateSourceCount > 0) {
-                Text(
-                    "$duplicateSourceCount selected item(s) already exist in the source list and will be included only once.",
-                    color = MaterialTheme.colorScheme.tertiary,
-                    style = MaterialTheme.typography.bodySmall,
+                PacklyTripTextField(
+                    value = packByInput,
+                    onValueChange = { packByInput = it },
+                    label = "Pack by (optional)",
+                    placeholder = PacklyDeadlineFormatter.InputPattern,
+                    supportingText = when {
+                        packByInvalid -> "Use ${PacklyDeadlineFormatter.InputPattern}. We'll remind you if anything is still unpacked."
+                        packByInput.isNotBlank() && !notificationPermissionGranted -> "Notifications are off. We can still show the deadline in Packly."
+                        else -> "We'll remind you if anything is still unpacked."
+                    },
+                    isError = packByInvalid,
+                    singleLine = true,
                 )
-            }
-            if (reviewItems.isNotEmpty()) {
-                Text("Review quantities", style = MaterialTheme.typography.labelLarge)
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    reviewItems.forEach { reviewItem ->
-                        val category = doc.categories.firstOrNull { it.id == reviewItem.categoryId }?.label ?: "Unknown"
-                        QuantityReviewRow(
-                            name = reviewItem.name,
-                            category = category,
-                            quantity = quantities[reviewItem.itemId] ?: 1,
-                            onQuantityChange = { quantity -> quantities[reviewItem.itemId] = quantity.coerceAtLeast(1) },
+                Text("Use a list", style = MaterialTheme.typography.labelLarge)
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+                    verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
+                ) {
+                    PacklyTripFilterChip(selected = sourceListId == null, onClick = { sourceListId = null }, label = "Blank")
+                    doc.lists.filterNot { it.isArchived }.forEach { list ->
+                        PacklyTripFilterChip(
+                            selected = sourceListId == list.id,
+                            onClick = { sourceListId = list.id },
+                            label = list.name,
                         )
                     }
                 }
-            }
+                Text("Add isolated items", style = MaterialTheme.typography.labelLarge)
+                PacklyTripTextField(
+                    value = itemQuery,
+                    onValueChange = { itemQuery = it },
+                    label = "Search all ${activeItems.size} items",
+                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+                    verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
+                ) {
+                    matchingItems.forEach { item ->
+                        PacklyTripFilterChip(
+                            selected = item.id in selectedItems,
+                            onClick = { if (item.id in selectedItems) selectedItems.remove(item.id) else selectedItems.add(item.id) },
+                            label = item.name,
+                        )
+                    }
+                }
+                if (matchingItems.isEmpty()) Text("No items match this search.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (duplicateSourceCount > 0) {
+                    Text(
+                        "$duplicateSourceCount selected item(s) already exist in the source list and will be included only once.",
+                        color = MaterialTheme.colorScheme.tertiary,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                if (reviewItems.isNotEmpty()) {
+                    Text("Review quantities", style = MaterialTheme.typography.labelLarge)
+                    Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
+                        reviewItems.forEach { reviewItem ->
+                            val category = doc.categories.firstOrNull { it.id == reviewItem.categoryId }?.label ?: "Unknown"
+                            QuantityReviewRow(
+                                name = reviewItem.name,
+                                category = category,
+                                quantity = quantities[reviewItem.itemId] ?: 1,
+                                onQuantityChange = { quantity -> quantities[reviewItem.itemId] = quantity.coerceAtLeast(1) },
+                            )
+                        }
+                    }
+                }
             }
             Button(
                 enabled = name.trim().isNotEmpty() && !duplicateName && !packByInvalid,
@@ -159,7 +224,14 @@ fun CreateTripSheet(
                     onCreate(name, destination, sourceListId, selectedItems.toSet(), quantities.toMap(), parsedPackBy)
                     onDismiss()
                 },
-                modifier = Modifier.padding(20.dp).fillMaxWidth().defaultMinSize(minHeight = 48.dp),
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .widthIn(max = 560.dp)
+                    .padding(PacklySpacing.md)
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 48.dp),
+                shape = RoundedCornerShape(PacklyRadius.default),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             ) { Text("Save trip") }
         }
     }
@@ -197,9 +269,15 @@ private fun buildTripReviewItems(
 
 @Composable
 private fun QuantityReviewRow(name: String, category: String, quantity: Int, onQuantityChange: (Int) -> Unit) {
-    ElevatedCard(Modifier.fillMaxWidth()) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(PacklyRadius.lg),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHigh),
+        shadowElevation = 2.dp,
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.base),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -207,7 +285,7 @@ private fun QuantityReviewRow(name: String, category: String, quantity: Int, onQ
                 Text(name, style = MaterialTheme.typography.bodyLarge)
                 Text(category, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
                 IconButton(onClick = { onQuantityChange(quantity - 1) }, enabled = quantity > 1) {
                     Icon(Icons.Rounded.Remove, contentDescription = "Decrease $name quantity")
                 }
@@ -218,4 +296,56 @@ private fun QuantityReviewRow(name: String, category: String, quantity: Int, onQ
             }
         }
     }
+}
+
+@Composable
+internal fun PacklyTripTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    placeholder: String? = null,
+    supportingText: String? = null,
+    isError: Boolean = false,
+    singleLine: Boolean = false,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        placeholder = placeholder?.let { { Text(it) } },
+        supportingText = supportingText?.let { { Text(it) } },
+        isError = isError,
+        singleLine = singleLine,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(PacklyRadius.default),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            errorContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ),
+    )
+}
+
+@Composable
+internal fun PacklyTripFilterChip(selected: Boolean, onClick: () -> Unit, label: String) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(label) },
+        shape = RoundedCornerShape(PacklyRadius.default),
+        border = FilterChipDefaults.filterChipBorder(
+            enabled = true,
+            selected = selected,
+            borderColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            selectedBorderColor = MaterialTheme.colorScheme.primary,
+        ),
+        colors = FilterChipDefaults.filterChipColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            selectedContainerColor = MaterialTheme.colorScheme.primaryFixed,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryFixedVariant,
+        ),
+    )
 }
