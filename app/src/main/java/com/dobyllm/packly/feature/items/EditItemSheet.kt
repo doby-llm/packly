@@ -9,18 +9,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.CategoryId
 import com.dobyllm.packly.core.model.PacklyCategory
+import com.dobyllm.packly.core.model.PacklyItem
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-fun EditItemSheet(categories: List<PacklyCategory>, onDismiss: () -> Unit, onSave: (String, CategoryId, Int, String) -> Unit) {
-    var name by remember { mutableStateOf("") }
-    var quantity by remember { mutableStateOf("1") }
-    var notes by remember { mutableStateOf("") }
-    var categoryId by remember(categories) { mutableStateOf(categories.firstOrNull()?.id ?: "") }
+fun EditItemSheet(
+    categories: List<PacklyCategory>,
+    existingNames: List<String>,
+    onDismiss: () -> Unit,
+    onSave: (String, CategoryId, Int, String) -> Unit,
+    item: PacklyItem? = null,
+) {
+    var name by remember(item?.id) { mutableStateOf(item?.name.orEmpty()) }
+    var quantity by remember(item?.id) { mutableStateOf((item?.defaultQuantity ?: 1).toString()) }
+    var notes by remember(item?.id) { mutableStateOf(item?.notes.orEmpty()) }
+    var categoryId by remember(categories, item?.id) { mutableStateOf(item?.categoryId ?: categories.firstOrNull()?.id ?: "") }
+    val trimmedName = name.trim()
+    val duplicateName = existingNames.any { it.equals(trimmedName, ignoreCase = true) }
+    val quantityValue = quantity.toIntOrNull() ?: 1
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(20.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Add item", style = MaterialTheme.typography.titleLarge)
-            OutlinedTextField(name, { name = it }, label = { Text("Name (required)") }, modifier = Modifier.fillMaxWidth())
+            Text(if (item == null) "Add item" else "Edit item", style = MaterialTheme.typography.titleLarge)
+            OutlinedTextField(
+                name,
+                { name = it },
+                label = { Text("Name (required)") },
+                supportingText = { if (duplicateName) Text("An active item with this name already exists.") },
+                isError = duplicateName,
+                modifier = Modifier.fillMaxWidth(),
+            )
             OutlinedTextField(quantity, { quantity = it.filter(Char::isDigit).ifBlank { "1" } }, label = { Text("Default quantity") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(notes, { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth())
             Text("Category", style = MaterialTheme.typography.labelLarge)
@@ -29,7 +46,14 @@ fun EditItemSheet(categories: List<PacklyCategory>, onDismiss: () -> Unit, onSav
                     FilterChip(selected = category.id == categoryId, onClick = { categoryId = category.id }, label = { Text(category.label) })
                 }
             }
-            Button(enabled = name.trim().isNotEmpty() && categoryId.isNotBlank(), onClick = { onSave(name, categoryId, quantity.toIntOrNull() ?: 1, notes); onDismiss() }, modifier = Modifier.fillMaxWidth()) { Text("Save item") }
+            Button(
+                enabled = trimmedName.isNotEmpty() && categoryId.isNotBlank() && !duplicateName,
+                onClick = {
+                    onSave(trimmedName, categoryId, quantityValue, notes)
+                    onDismiss()
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(if (item == null) "Save item" else "Update item") }
         }
     }
 }

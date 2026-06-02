@@ -89,6 +89,8 @@ If JSON is unreadable:
 - Show a human-readable error such as “Couldn’t load saved packing data. A safe starter workspace was opened.”
 - Do not silently erase user data without a backup attempt.
 
+Current MVP limitation: `PacklySerializer` still falls back to the seeded document when DataStore cannot decode `packly.json`. This keeps first-launch and corrupt-file startup safe enough for the prototype, but it does not yet preserve the bad payload or surface a user-visible recovery banner. Treat a dedicated corruption handler, backup copy, and UI warning as required follow-up before release validation.
+
 ## Seeding strategy
 
 Seed in data layer through SeedDataProvider.

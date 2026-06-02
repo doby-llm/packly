@@ -21,7 +21,7 @@ fun PacklyNavHost(navController: NavHostController = rememberNavController(), vm
     val doc = vm.document.collectAsStateWithLifecycle().value
     NavHost(navController = navController, startDestination = PacklyRoute.Home) {
         composable(PacklyRoute.Home) { HomeScreen(doc, onItems = { navController.navigate(PacklyRoute.Items) }, onLists = { navController.navigate(PacklyRoute.Lists) }, onTrips = { navController.navigate(PacklyRoute.Trips) }) }
-        composable(PacklyRoute.Items) { ItemsScreen(doc, onBack = { navController.popBackStack() }, onAdd = vm::addItem, onDelete = vm::archiveItem) }
+        composable(PacklyRoute.Items) { ItemsScreen(doc, onBack = { navController.popBackStack() }, onAdd = vm::addItem, onUpdate = vm::updateItem, onDelete = vm::archiveItem) }
         composable(PacklyRoute.Lists) { ListsScreen(doc, onBack = { navController.popBackStack() }, onCreate = vm::createList, onOpen = { navController.navigate(PacklyRoute.listDetail(it)) }, onUseForTrip = { listId -> vm.createTrip("Trip from list", "", listId, emptySet()); navController.navigate(PacklyRoute.Trips) }, onDelete = vm::deleteList) }
         composable(PacklyRoute.ListDetail) { backStack -> val id = backStack.arguments?.getString("listId") ?: ""; ListDetailScreen(doc, id, onBack = { navController.popBackStack() }, onToggle = { itemId -> vm.toggleListItem(id, itemId) }) }
         composable(PacklyRoute.Trips) { TripsScreen(doc, onBack = { navController.popBackStack() }, onCreate = vm::createTrip, onOpen = { navController.navigate(PacklyRoute.tripDetail(it)) }, onPack = { navController.navigate(PacklyRoute.packingMode(it)) }, onDelete = vm::deleteTrip) }

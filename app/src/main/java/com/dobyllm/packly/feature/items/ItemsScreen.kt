@@ -18,9 +18,17 @@ import com.dobyllm.packly.ui.component.EmptyState
 import com.dobyllm.packly.ui.component.ItemRow
 
 @Composable
-fun ItemsScreen(doc: PacklyAppDocument, onBack: () -> Unit, onAdd: (String, CategoryId, Int, String) -> Unit, onDelete: (ItemId) -> Unit) {
+fun ItemsScreen(
+    doc: PacklyAppDocument,
+    onBack: () -> Unit,
+    onAdd: (String, CategoryId, Int, String) -> Unit,
+    onUpdate: (ItemId, String, CategoryId, Int, String) -> Unit,
+    onDelete: (ItemId) -> Unit,
+) {
     var query by remember { mutableStateOf("") }
     var showAdd by remember { mutableStateOf(false) }
+    var itemToEdit by remember { mutableStateOf<PacklyItem?>(null) }
+    var itemToDelete by remember { mutableStateOf<PacklyItem?>(null) }
     val categories = doc.categories.sortedBy { it.sortOrder }
     val items = doc.items.filter { !it.isArchived && it.name.contains(query, ignoreCase = true) }
     Scaffold(
@@ -34,12 +42,52 @@ fun ItemsScreen(doc: PacklyAppDocument, onBack: () -> Unit, onAdd: (String, Cate
                     val sectionItems = items.filter { it.categoryId == category.id }
                     if (sectionItems.isNotEmpty()) {
                         item(key = "header_${category.key}") { CategoryHeader(category, "${sectionItems.size}") }
-                        items(sectionItems, key = { it.id }) { item -> ItemRow(item, category, onEdit = {}, onDelete = { onDelete(item.id) }) }
+                        items(sectionItems, key = { it.id }) { item ->
+                            ItemRow(
+                                item,
+                                category,
+                                onEdit = { itemToEdit = item },
+                                onDelete = { itemToDelete = item },
+                            )
+                        }
                     }
                 }
                 if (items.isEmpty()) item { EmptyState("No matches", "Try another word or add a reusable item.", "Add item") { showAdd = true } }
             }
         }
     }
-    if (showAdd) EditItemSheet(categories, onDismiss = { showAdd = false }, onSave = onAdd)
+    if (showAdd) {
+        EditItemSheet(
+            categories = categories,
+            existingNames = doc.items.filterNot { it.isArchived }.map { it.name },
+            onDismiss = { showAdd = false },
+            onSave = onAdd,
+        )
+    }
+    itemToEdit?.let { item ->
+        EditItemSheet(
+            categories = categories,
+            item = item,
+            existingNames = doc.items.filter { !it.isArchived && it.id != item.id }.map { it.name },
+            onDismiss = { itemToEdit = null },
+            onSave = { name, categoryId, quantity, notes -> onUpdate(item.id, name, categoryId, quantity, notes) },
+        )
+    }
+    itemToDelete?.let { item ->
+        AlertDialog(
+            onDismissRequest = { itemToDelete = null },
+            title = { Text("Archive ${item.name}?") },
+            text = { Text("The item will be hidden from new lists and trips. Existing list and trip snapshots stay unchanged.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDelete(item.id)
+                        itemToDelete = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                ) { Text("Archive") }
+            },
+            dismissButton = { TextButton(onClick = { itemToDelete = null }) { Text("Cancel") } },
+        )
+    }
 }
