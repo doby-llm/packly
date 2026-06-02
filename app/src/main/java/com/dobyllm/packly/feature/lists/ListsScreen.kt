@@ -1,4 +1,7 @@
-@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@file:OptIn(
+    androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
+    androidx.compose.material3.ExperimentalMaterial3Api::class,
+)
 
 package com.dobyllm.packly.feature.lists
 
@@ -13,18 +16,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,6 +41,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.ItemId
 import com.dobyllm.packly.core.model.ListId
@@ -43,6 +50,7 @@ import com.dobyllm.packly.core.model.PacklyList
 import com.dobyllm.packly.ui.component.EmptyState
 import com.dobyllm.packly.ui.component.ListCard
 import com.dobyllm.packly.ui.component.PacklyFabAction
+import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
 
 @Composable
@@ -60,23 +68,36 @@ fun ListsScreen(
     val lists = doc.lists.filterNot { it.isArchived }
 
     DisposableEffect(onFabActionChange) {
-        onFabActionChange?.invoke(PacklyFabAction(contentDescription = "Add list", onClick = { showCreate = true }))
+        onFabActionChange?.invoke(PacklyFabAction(contentDescription = "Create list", onClick = { showCreate = true }))
         onDispose { onFabActionChange?.invoke(null) }
     }
 
-    LazyColumn(
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 320.dp),
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding),
         contentPadding = PaddingValues(PacklySpacing.marginMobile),
+        horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
         verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
     ) {
+        item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+            ListsHeader()
+        }
         if (lists.isEmpty()) {
-            item { EmptyState("No packing lists yet.", "Create a reusable list for weekends, work trips, or holidays.", "Create list") { showCreate = true } }
+            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                EmptyState(
+                    title = "No packing lists yet",
+                    body = "Start with a reusable template for trips you take often.",
+                    actionLabel = "Create list",
+                    onAction = { showCreate = true },
+                )
+            }
         }
         items(lists, key = { it.id }) { list ->
             ListCard(
-                list,
+                list = list,
+                categories = doc.categories,
                 onOpen = { onOpen(list.id) },
                 onUseForTrip = { onUseForTrip(list.id) },
                 onDelete = { listToDelete = list },
@@ -105,7 +126,28 @@ fun ListsScreen(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
+private fun ListsHeader() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = PacklySpacing.base),
+        verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
+    ) {
+        Text(
+            text = "My Lists",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = "Manage your packing templates and upcoming trips.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
 private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCreate: (String, String, Set<ItemId>) -> Unit) {
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -114,37 +156,59 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
     val activeItems = doc.items.filterNot { it.isArchived }
     val matchingItems = activeItems.filter { it.name.contains(itemQuery, ignoreCase = true) }
     val duplicateName = doc.lists.any { !it.isArchived && it.name.equals(name.trim(), ignoreCase = true) }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        shape = RoundedCornerShape(topStart = PacklyRadius.xl, topEnd = PacklyRadius.xl),
     ) {
         Column(Modifier.fillMaxHeight(0.9f).navigationBarsPadding().imePadding()) {
             Text(
                 "Create list",
-                modifier = Modifier.padding(horizontal = 20.dp).padding(top = 8.dp, bottom = 12.dp),
+                modifier = Modifier.padding(horizontal = PacklySpacing.md).padding(top = PacklySpacing.base, bottom = PacklySpacing.sm),
                 style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
             )
             Column(
-                Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = PacklySpacing.md),
+                verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
             ) {
-                OutlinedTextField(
-                    name,
-                    { name = it },
-                    label = { Text("List name") },
-                    supportingText = { if (duplicateName) Text("An active list with this name already exists.") },
+                PacklyTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = "List name",
+                    supportingText = if (duplicateName) "An active list with this name already exists." else null,
                     isError = duplicateName,
-                    modifier = Modifier.fillMaxWidth(),
                 )
-                OutlinedTextField(description, { description = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth())
+                PacklyTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = "Description",
+                )
                 Text("Checklist items", style = MaterialTheme.typography.labelLarge)
-                OutlinedTextField(itemQuery, { itemQuery = it }, label = { Text("Search all ${activeItems.size} items") }, modifier = Modifier.fillMaxWidth())
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                PacklyTextField(
+                    value = itemQuery,
+                    onValueChange = { itemQuery = it },
+                    label = "Search all ${activeItems.size} items",
+                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base), verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
                     matchingItems.forEach { item ->
                         FilterChip(
                             selected = item.id in selected,
                             onClick = { if (item.id in selected) selected.remove(item.id) else selected.add(item.id) },
                             label = { Text(item.name) },
+                            shape = RoundedCornerShape(PacklyRadius.default),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = item.id in selected,
+                                borderColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                selectedBorderColor = MaterialTheme.colorScheme.primary,
+                            ),
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryFixed,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryFixedVariant,
+                            ),
                         )
                     }
                 }
@@ -156,8 +220,37 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
                     onCreate(name, description, selected.toSet())
                     onDismiss()
                 },
-                modifier = Modifier.padding(20.dp).fillMaxWidth().defaultMinSize(minHeight = 48.dp),
+                modifier = Modifier.padding(PacklySpacing.md).fillMaxWidth().defaultMinSize(minHeight = 48.dp),
+                shape = RoundedCornerShape(PacklyRadius.default),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             ) { Text("Save list") }
         }
     }
+}
+
+@Composable
+private fun PacklyTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    supportingText: String? = null,
+    isError: Boolean = false,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        supportingText = supportingText?.let { { Text(it) } },
+        isError = isError,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(PacklyRadius.default),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            errorContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ),
+    )
 }
