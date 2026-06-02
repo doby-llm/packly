@@ -89,9 +89,8 @@ fun PacklyNavHost(
                 HomeScreen(
                     doc = doc,
                     contentPadding = shellPadding,
-                    onItems = { navController.navigate(PacklyRoute.Items) },
-                    onLists = { navController.navigate(PacklyRoute.Lists) },
-                    onTrips = { navController.navigate(PacklyRoute.Trips) },
+                    onCreateTrip = vm::createTrip,
+                    onOpenTrip = { tripId -> navController.navigate(PacklyRoute.tripDetail(tripId)) },
                 )
             }
             composable(PacklyRoute.Items) {

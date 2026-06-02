@@ -1,93 +1,135 @@
-@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-
 package com.dobyllm.packly.feature.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Backpack
-import androidx.compose.material.icons.rounded.Checklist
-import androidx.compose.material.icons.rounded.EditNote
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dobyllm.packly.core.model.InstantString
+import com.dobyllm.packly.core.model.ItemId
+import com.dobyllm.packly.core.model.ListId
 import com.dobyllm.packly.core.model.PacklyAppDocument
+import com.dobyllm.packly.core.model.TripId
+import com.dobyllm.packly.core.model.TripStatus
+import com.dobyllm.packly.core.time.PacklyDeadlineFormatter
+import com.dobyllm.packly.feature.trips.CreateTripSheet
+import com.dobyllm.packly.ui.component.EmptyState
+import com.dobyllm.packly.ui.component.TripSummaryCard
 import com.dobyllm.packly.ui.token.PacklySpacing
+import kotlin.math.roundToInt
 
 @Composable
 fun HomeScreen(
     doc: PacklyAppDocument,
     contentPadding: PaddingValues = PaddingValues(0.dp),
-    onItems: () -> Unit,
-    onLists: () -> Unit,
-    onTrips: () -> Unit,
+    onCreateTrip: (String, String, ListId?, Set<ItemId>, Map<ItemId, Int>, InstantString?) -> Unit,
+    onOpenTrip: (TripId) -> Unit,
 ) {
-    Box(
+    var showCreateTrip by remember { mutableStateOf(false) }
+    val activeTrips = doc.trips
+        .filter { it.status != TripStatus.Archived }
+        .sortedByDescending { it.updatedAt }
+
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(contentPadding)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = PacklySpacing.marginMobile, vertical = PacklySpacing.md),
-        contentAlignment = Alignment.Center,
+            .padding(contentPadding),
+        contentPadding = PaddingValues(horizontal = PacklySpacing.marginMobile, vertical = PacklySpacing.md),
+        verticalArrangement = Arrangement.spacedBy(PacklySpacing.md),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.marginMobile)) {
-            Text("Ready to pack?", style = MaterialTheme.typography.headlineMedium)
-            Text("Choose what you want to prepare.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            DestinationCard(
-                icon = Icons.Rounded.Backpack,
-                title = "Trips",
-                body = "${doc.trips.count { it.status.name != "Archived" }} packing sessions",
-                onClick = onTrips,
-            )
-            DestinationCard(
-                icon = Icons.Rounded.Checklist,
-                title = "Lists",
-                body = "${doc.lists.count { !it.isArchived }} reusable templates",
-                onClick = onLists,
-            )
-            DestinationCard(
-                icon = Icons.Rounded.EditNote,
-                title = "Items",
-                body = "${doc.items.count { !it.isArchived }} reusable packing items",
-                onClick = onItems,
-            )
+        item { HomeHero(activeTripCount = activeTrips.size) }
+        item { SectionTitle("Active Trips") }
+        if (activeTrips.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    EmptyState(
+                        title = "No trips yet",
+                        body = "Create your first trip and Packly will keep you ready.",
+                        actionLabel = "Create trip",
+                        onAction = { showCreateTrip = true },
+                    )
+                }
+            }
+        } else {
+            items(activeTrips, key = { it.id }) { trip ->
+                val packed = trip.entries.count { it.isPacked }
+                val total = trip.entries.size.coerceAtLeast(1)
+                val progress = packed / total.toFloat()
+                val packBy = PacklyDeadlineFormatter.formatDisplay(trip.packBy)
+                val metadata = listOfNotNull(
+                    trip.startDate?.let { start -> trip.endDate?.let { end -> "$start - $end" } ?: start },
+                    trip.destination.takeIf { it.isNotBlank() },
+                    "$packed/${trip.entries.size} packed",
+                    packBy?.let { "Pack by $it" },
+                ).joinToString(" • ")
+                val chips = listOfNotNull(
+                    trip.destination.takeIf { it.isNotBlank() },
+                    packBy?.let { "Pack by $it" },
+                    trip.entries.size.takeIf { it > 0 }?.let { "$it items" },
+                )
+
+                TripSummaryCard(
+                    title = trip.name,
+                    metadata = metadata,
+                    percentLabel = "${(progress * 100).roundToInt()}% Packed",
+                    progress = progress,
+                    chips = chips,
+                    accentColor = MaterialTheme.colorScheme.primaryContainer,
+                    onClick = { onOpenTrip(trip.id) },
+                )
+            }
         }
+    }
+
+    if (showCreateTrip) {
+        CreateTripSheet(
+            doc = doc,
+            onDismiss = { showCreateTrip = false },
+            onCreate = onCreateTrip,
+        )
     }
 }
 
 @Composable
-private fun DestinationCard(icon: ImageVector, title: String, body: String, onClick: () -> Unit) {
-    ElevatedCard(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-    ) {
-        Row(
-            Modifier.padding(20.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp))
-            Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleLarge)
-                Text(body, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
+private fun HomeHero(activeTripCount: Int) {
+    Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm)) {
+        Text(
+            text = "Good Morning.",
+            style = MaterialTheme.typography.displayLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.ExtraBold,
+        )
+        Text(
+            text = "You have $activeTripCount upcoming ${if (activeTripCount == 1) "trip" else "trips"}. Let's get you prepared and ready to go.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
+}
+
+@Composable
+private fun SectionTitle(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleLarge,
+        color = MaterialTheme.colorScheme.onSurface,
+    )
 }
