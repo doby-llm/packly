@@ -13,7 +13,10 @@ import com.dobyllm.packly.core.model.PacklyAppDocument
 
 @Composable
 fun AddItemsToListSheet(doc: PacklyAppDocument, selectedIds: Set<String>, onToggle: (String) -> Unit, onDismiss: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
         LazyColumn(Modifier.navigationBarsPadding(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             item { Text("Select items", style = MaterialTheme.typography.titleLarge) }
             items(doc.items.filterNot { it.isArchived }, key = { it.id }) { item ->

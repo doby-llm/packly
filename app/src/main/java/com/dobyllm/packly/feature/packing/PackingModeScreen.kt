@@ -24,7 +24,10 @@ private enum class PackingFilter { All, Unpacked, Packed }
 fun PackingModeScreen(doc: PacklyAppDocument, tripId: TripId, onBack: () -> Unit, onToggle: (TripEntryId) -> Unit) {
     val trip = doc.trips.firstOrNull { it.id == tripId }
     var filter by remember { mutableStateOf(PackingFilter.All) }
-    Scaffold(topBar = { TopAppBar(title = { Text("Packing") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Rounded.ArrowBack, contentDescription = "Back") } }) }) { padding ->
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = { TopAppBar(title = { Text("Packing") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Rounded.ArrowBack, contentDescription = "Back") } }) },
+    ) { padding ->
         if (trip == null) Text("Trip not found", Modifier.padding(padding).padding(20.dp)) else {
             val visible = trip.entries.filter { when (filter) { PackingFilter.All -> true; PackingFilter.Unpacked -> !it.isPacked; PackingFilter.Packed -> it.isPacked } }
             LazyColumn(Modifier.padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

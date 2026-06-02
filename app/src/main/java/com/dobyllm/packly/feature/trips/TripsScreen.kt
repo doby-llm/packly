@@ -21,6 +21,7 @@ fun TripsScreen(doc: PacklyAppDocument, onBack: () -> Unit, onCreate: (String, S
     var showCreate by remember { mutableStateOf(false) }
     var tripToDelete by remember { mutableStateOf<PacklyTrip?>(null) }
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = { TopAppBar(title = { Text("Trips") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Rounded.ArrowBack, contentDescription = "Back") } }) },
         floatingActionButton = { FloatingActionButton(onClick = { showCreate = true }) { Icon(Icons.Rounded.Add, contentDescription = "Start trip") } },
     ) { padding ->

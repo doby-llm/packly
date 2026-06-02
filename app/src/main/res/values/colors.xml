@@ -1,3 +1,5 @@
 <resources>
     <color name="ic_launcher_background">#2F6FED</color>
+    <color name="packly_window_background">#10131A</color>
+    <color name="packly_window_accent">#78A8FF</color>
 </resources>

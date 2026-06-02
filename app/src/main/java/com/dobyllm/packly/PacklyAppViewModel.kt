@@ -143,6 +143,10 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
         val now = PacklyClock.now()
         repository.updateTrips { trips -> trips.map { if (it.id == tripId) it.copy(entries = it.entries.map { e -> e.copy(isPacked = false, packedAt = null) }, updatedAt = now) else it } }
     }
+
+    fun updateThemeMode(themeMode: ThemeMode) = viewModelScope.launch {
+        repository.updateSettings { settings -> settings.copy(themeMode = themeMode) }
+    }
 }
 
 private fun Iterable<PacklyItem>.hasActiveItemName(name: String, exceptId: ItemId? = null): Boolean =

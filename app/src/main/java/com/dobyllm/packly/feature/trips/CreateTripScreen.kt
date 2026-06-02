@@ -24,7 +24,10 @@ fun CreateTripSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCreate: (St
         ?.let { id -> doc.lists.firstOrNull { it.id == id }?.entries?.mapNotNull { it.itemId }?.toSet() }
         ?: emptySet()
     val duplicateSourceCount = selectedItems.count { it in sourceItemIds }
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
         Column(Modifier.padding(20.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Start trip", style = MaterialTheme.typography.titleLarge)
             OutlinedTextField(

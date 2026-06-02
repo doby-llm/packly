@@ -18,7 +18,10 @@ import com.dobyllm.packly.ui.component.PacklyProgress
 fun TripDetailScreen(doc: PacklyAppDocument, tripId: TripId, onBack: () -> Unit, onPack: () -> Unit, onReset: () -> Unit) {
     val trip = doc.trips.firstOrNull { it.id == tripId }
     var showResetConfirm by remember(tripId) { mutableStateOf(false) }
-    Scaffold(topBar = { TopAppBar(title = { Text(trip?.name ?: "Trip") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Rounded.ArrowBack, contentDescription = "Back") } }) }) { padding ->
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = { TopAppBar(title = { Text(trip?.name ?: "Trip") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Rounded.ArrowBack, contentDescription = "Back") } }) },
+    ) { padding ->
         if (trip == null) Text("Trip not found", Modifier.padding(padding).padding(20.dp)) else LazyColumn(Modifier.padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item { Text(trip.destination.ifBlank { "No destination" }, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             item { PacklyProgress(trip.entries.count { it.isPacked }, trip.entries.size) }

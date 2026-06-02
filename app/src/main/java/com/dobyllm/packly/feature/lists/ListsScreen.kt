@@ -21,6 +21,7 @@ fun ListsScreen(doc: PacklyAppDocument, onBack: () -> Unit, onCreate: (String, S
     var showCreate by remember { mutableStateOf(false) }
     var listToDelete by remember { mutableStateOf<PacklyList?>(null) }
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = { TopAppBar(title = { Text("Lists") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Rounded.ArrowBack, contentDescription = "Back") } }) },
         floatingActionButton = { FloatingActionButton(onClick = { showCreate = true }) { Icon(Icons.Rounded.Add, contentDescription = "Create list") } },
     ) { padding ->
@@ -67,7 +68,10 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
     val activeItems = doc.items.filterNot { it.isArchived }
     val matchingItems = activeItems.filter { it.name.contains(itemQuery, ignoreCase = true) }
     val duplicateName = doc.lists.any { !it.isArchived && it.name.equals(name.trim(), ignoreCase = true) }
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
         Column(Modifier.padding(20.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Create list", style = MaterialTheme.typography.titleLarge)
             OutlinedTextField(

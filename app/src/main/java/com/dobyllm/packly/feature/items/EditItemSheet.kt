@@ -27,7 +27,10 @@ fun EditItemSheet(
     val trimmedName = name.trim()
     val duplicateName = existingNames.any { it.equals(trimmedName, ignoreCase = true) }
     val quantityValue = quantity.toIntOrNull() ?: 1
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
         Column(Modifier.padding(20.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(if (item == null) "Add item" else "Edit item", style = MaterialTheme.typography.titleLarge)
             OutlinedTextField(

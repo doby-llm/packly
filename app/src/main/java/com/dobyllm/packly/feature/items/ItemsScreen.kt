@@ -32,6 +32,7 @@ fun ItemsScreen(
     val categories = doc.categories.sortedBy { it.sortOrder }
     val items = doc.items.filter { !it.isArchived && it.name.contains(query, ignoreCase = true) }
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = { TopAppBar(title = { Text("Items") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Rounded.ArrowBack, contentDescription = "Back") } }) },
         floatingActionButton = { FloatingActionButton(onClick = { showAdd = true }) { Icon(Icons.Rounded.Add, contentDescription = "Add item") } },
     ) { padding ->
