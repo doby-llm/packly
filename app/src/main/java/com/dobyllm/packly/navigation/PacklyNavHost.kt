@@ -110,10 +110,8 @@ fun PacklyNavHost(
                     onFabActionChange = { fabAction = it },
                     onCreate = vm::createList,
                     onOpen = { navController.navigate(PacklyRoute.listDetail(it)) },
-                    onUseForTrip = { listId ->
-                        vm.createTrip("Trip from list", "", listId, emptySet())
-                        navController.navigate(PacklyRoute.Trips)
-                    },
+                    onRename = vm::renameList,
+                    onDuplicate = vm::duplicateList,
                     onDelete = vm::deleteList,
                 )
             }
@@ -124,6 +122,10 @@ fun PacklyNavHost(
                     listId = id,
                     contentPadding = shellPadding,
                     onToggle = { itemId -> vm.toggleListItem(id, itemId) },
+                    onUseForTrip = { listId ->
+                        vm.createTrip("Trip from list", "", listId, emptySet())
+                        navController.navigate(PacklyRoute.Trips)
+                    },
                 )
             }
             composable(PacklyRoute.Trips) {

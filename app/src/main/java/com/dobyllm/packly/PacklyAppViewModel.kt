@@ -100,6 +100,33 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun renameList(listId: ListId, name: String) = viewModelScope.launch {
+        val trimmedName = name.trim()
+        if (trimmedName.isEmpty()) return@launch
+        val now = PacklyClock.now()
+        repository.updateLists { lists ->
+            if (lists.hasActiveListName(trimmedName, exceptId = listId)) {
+                lists
+            } else {
+                lists.map { list ->
+                    if (list.id == listId) list.renamedForListAction(trimmedName, now) else list
+                }
+            }
+        }
+    }
+
+    fun duplicateList(listId: ListId) = viewModelScope.launch {
+        val now = PacklyClock.now()
+        repository.updateLists { lists ->
+            val source = lists.firstOrNull { it.id == listId && !it.isArchived } ?: return@updateLists lists
+            lists + source.duplicatedForListAction(
+                newListId = PacklyIds.list(),
+                now = now,
+                existingNames = lists.filterNot { it.isArchived }.map { it.name }.toSet(),
+            )
+        }
+    }
+
     fun deleteList(listId: ListId) = viewModelScope.launch {
         val now = PacklyClock.now()
         repository.updateLists { lists -> lists.map { if (it.id == listId) it.copy(isArchived = true, updatedAt = now) else it } }
@@ -233,11 +260,39 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
     }
 }
 
+internal fun PacklyList.renamedForListAction(name: String, now: InstantString): PacklyList =
+    copy(name = name.trim(), updatedAt = now)
+
+internal fun PacklyList.duplicatedForListAction(
+    newListId: ListId,
+    now: InstantString,
+    existingNames: Set<String>,
+    newEntryId: () -> ListEntryId = PacklyIds::listEntry,
+): PacklyList = copy(
+    id = newListId,
+    name = nextListCopyName(name, existingNames),
+    entries = entries.map { it.copy(id = newEntryId()) },
+    isSeed = false,
+    isArchived = false,
+    createdAt = now,
+    updatedAt = now,
+)
+
+private fun nextListCopyName(baseName: String, existingNames: Set<String>): String {
+    val normalizedNames = existingNames.map { it.lowercase() }.toSet()
+    val copyName = "$baseName copy"
+    if (copyName.lowercase() !in normalizedNames) return copyName
+
+    var suffix = 2
+    while ("$copyName $suffix".lowercase() in normalizedNames) suffix += 1
+    return "$copyName $suffix"
+}
+
 private fun Iterable<PacklyItem>.hasActiveItemName(name: String, exceptId: ItemId? = null): Boolean =
     any { item -> !item.isArchived && item.id != exceptId && item.name.equals(name, ignoreCase = true) }
 
-private fun Iterable<PacklyList>.hasActiveListName(name: String): Boolean =
-    any { list -> !list.isArchived && list.name.equals(name, ignoreCase = true) }
+private fun Iterable<PacklyList>.hasActiveListName(name: String, exceptId: ListId? = null): Boolean =
+    any { list -> !list.isArchived && list.id != exceptId && list.name.equals(name, ignoreCase = true) }
 
 private fun Iterable<PacklyTrip>.hasActiveTripName(name: String): Boolean =
     any { trip -> trip.status != TripStatus.Archived && trip.name.equals(name, ignoreCase = true) }

@@ -6,6 +6,7 @@
 package com.dobyllm.packly.feature.lists
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,6 +32,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -39,7 +42,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -52,6 +57,7 @@ import com.dobyllm.packly.ui.component.ListCard
 import com.dobyllm.packly.ui.component.PacklyFabAction
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
+import kotlinx.coroutines.launch
 
 @Composable
 fun ListsScreen(
@@ -60,11 +66,15 @@ fun ListsScreen(
     onFabActionChange: ((PacklyFabAction?) -> Unit)? = null,
     onCreate: (String, String, Set<ItemId>) -> Unit,
     onOpen: (ListId) -> Unit,
-    onUseForTrip: (ListId) -> Unit,
+    onRename: (ListId, String) -> Unit,
+    onDuplicate: (ListId) -> Unit,
     onDelete: (ListId) -> Unit,
 ) {
     var showCreate by remember { mutableStateOf(false) }
+    var listToRename by remember { mutableStateOf<PacklyList?>(null) }
     var listToDelete by remember { mutableStateOf<PacklyList?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     val lists = doc.lists.filterNot { it.isArchived }
 
     DisposableEffect(onFabActionChange) {
@@ -72,40 +82,64 @@ fun ListsScreen(
         onDispose { onFabActionChange?.invoke(null) }
     }
 
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 320.dp),
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(contentPadding),
-        contentPadding = PaddingValues(PacklySpacing.marginMobile),
-        horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
-        verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
-    ) {
-        item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-            ListsHeader()
-        }
-        if (lists.isEmpty()) {
+    Box(Modifier.fillMaxSize()) {
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 320.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding),
+            contentPadding = PaddingValues(PacklySpacing.marginMobile),
+            horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
+        ) {
             item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-                EmptyState(
-                    title = "No packing lists yet",
-                    body = "Start with a reusable template for trips you take often.",
-                    actionLabel = "Create list",
-                    onAction = { showCreate = true },
+                ListsHeader()
+            }
+            if (lists.isEmpty()) {
+                item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                    EmptyState(
+                        title = "No packing lists yet",
+                        body = "Start with a reusable template for trips you take often.",
+                        actionLabel = "Create list",
+                        onAction = { showCreate = true },
+                    )
+                }
+            }
+            items(lists, key = { it.id }) { list ->
+                ListCard(
+                    list = list,
+                    categories = doc.categories,
+                    onOpen = { onOpen(list.id) },
+                    onRename = { listToRename = list },
+                    onDuplicate = {
+                        onDuplicate(list.id)
+                        scope.launch { snackbarHostState.showSnackbar("${list.name} duplicated") }
+                    },
+                    onDelete = { listToDelete = list },
                 )
             }
         }
-        items(lists, key = { it.id }) { list ->
-            ListCard(
-                list = list,
-                categories = doc.categories,
-                onOpen = { onOpen(list.id) },
-                onUseForTrip = { onUseForTrip(list.id) },
-                onDelete = { listToDelete = list },
-            )
-        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(contentPadding)
+                .padding(PacklySpacing.md),
+        )
     }
 
     if (showCreate) CreateListSheet(doc, onDismiss = { showCreate = false }, onCreate = onCreate)
+    listToRename?.let { list ->
+        RenameListDialog(
+            list = list,
+            existingNames = lists.filter { it.id != list.id }.map { it.name },
+            onDismiss = { listToRename = null },
+            onRename = { name ->
+                onRename(list.id, name)
+                listToRename = null
+            },
+        )
+    }
     listToDelete?.let { list ->
         AlertDialog(
             onDismissRequest = { listToDelete = null },
@@ -145,6 +179,39 @@ private fun ListsHeader() {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+}
+
+@Composable
+private fun RenameListDialog(
+    list: PacklyList,
+    existingNames: List<String>,
+    onDismiss: () -> Unit,
+    onRename: (String) -> Unit,
+) {
+    var name by remember(list.id) { mutableStateOf(list.name) }
+    val trimmedName = name.trim()
+    val duplicateName = existingNames.any { it.equals(trimmedName, ignoreCase = true) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Rename ${list.name}") },
+        text = {
+            PacklyTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = "List name",
+                supportingText = if (duplicateName) "An active list with this name already exists." else null,
+                isError = duplicateName,
+            )
+        },
+        confirmButton = {
+            TextButton(
+                enabled = trimmedName.isNotEmpty() && !duplicateName,
+                onClick = { onRename(trimmedName) },
+            ) { Text("Rename") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
 
 @Composable

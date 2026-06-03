@@ -17,7 +17,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Archive
-import androidx.compose.material.icons.rounded.Backpack
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -50,7 +51,8 @@ fun ListCard(
     list: PacklyList,
     categories: List<PacklyCategory>,
     onOpen: () -> Unit,
-    onUseForTrip: () -> Unit,
+    onRename: () -> Unit,
+    onDuplicate: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -123,12 +125,17 @@ fun ListCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     TextButton(
-                        onClick = onUseForTrip,
+                        onClick = onRename,
                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                     ) {
-                        Icon(Icons.Rounded.Backpack, contentDescription = null)
+                        Icon(Icons.Rounded.Edit, contentDescription = null)
                         Spacer(Modifier.width(PacklySpacing.xs))
-                        Text("Use for trip")
+                        Text("Rename")
+                    }
+                    TextButton(onClick = onDuplicate) {
+                        Icon(Icons.Rounded.ContentCopy, contentDescription = null)
+                        Spacer(Modifier.width(PacklySpacing.xs))
+                        Text("Duplicate")
                     }
                     Spacer(Modifier.weight(1f))
                     TextButton(
