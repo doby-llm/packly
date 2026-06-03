@@ -24,7 +24,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -188,15 +187,7 @@ private fun TripSummaryCardContent(
                     }
                     ProgressPill(percentLabel)
                 }
-                LinearProgressIndicator(
-                    progress = { progress.coerceIn(0f, 1f) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(PacklyRadius.full)),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                )
+                PacklyProgressBar(progress = progress)
                 if (chips.isNotEmpty()) {
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
@@ -213,6 +204,25 @@ private fun TripSummaryCardContent(
                 actions()
             }
         }
+}
+
+@Composable
+private fun PacklyProgressBar(progress: Float) {
+    val clampedProgress = progress.coerceIn(0f, 1f)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(6.dp)
+            .clip(RoundedCornerShape(PacklyRadius.full))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(clampedProgress)
+                .height(6.dp)
+                .background(MaterialTheme.colorScheme.primary),
+        )
+    }
 }
 
 @Composable

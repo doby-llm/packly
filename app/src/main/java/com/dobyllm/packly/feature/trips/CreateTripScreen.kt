@@ -108,6 +108,9 @@ fun CreateTripSheet(
     val reviewItems = remember(selectedItemIds, doc.items, sourceEntries) {
         buildTripReviewItems(selectedItemIds, doc.items, sourceEntries)
     }
+    val trimmedName = name.trim()
+    val isTripNameMissing = trimmedName.isEmpty()
+    val canSaveTrip = !isTripNameMissing && !duplicateName
 
     LaunchedEffect(selectedItemIds) {
         selectedItemIds.forEach { itemId -> quantities.putIfAbsent(itemId, 1) }
@@ -144,9 +147,14 @@ fun CreateTripSheet(
                 PacklyTripTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = "Trip name",
-                    supportingText = if (duplicateName) "An active trip with this name already exists." else null,
+                    label = "Trip name *",
+                    supportingText = when {
+                        duplicateName -> "An active trip with this name already exists."
+                        isTripNameMissing -> "Required. Enter a trip name to enable Create trip."
+                        else -> "Required."
+                    },
                     isError = duplicateName,
+                    singleLine = true,
                 )
                 if (showDestination) {
                     PacklyTripTextField(
@@ -220,8 +228,24 @@ fun CreateTripSheet(
                     }
                 }
             }
+            if (!canSaveTrip) {
+                Text(
+                    text = if (isTripNameMissing) {
+                        "Create trip is disabled until you enter a trip name."
+                    } else {
+                        "Create trip is disabled until the trip name is unique."
+                    },
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .widthIn(max = 560.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = PacklySpacing.md),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Button(
-                enabled = name.trim().isNotEmpty() && !duplicateName,
+                enabled = canSaveTrip,
                 onClick = {
                     if (packByDeadline != null && !notificationPermissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -237,7 +261,7 @@ fun CreateTripSheet(
                     .defaultMinSize(minHeight = 48.dp),
                 shape = RoundedCornerShape(PacklyRadius.default),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-            ) { Text("Save trip") }
+            ) { Text("Create trip") }
         }
     }
 }
@@ -290,7 +314,11 @@ internal fun PacklyDeadlinePickerField(
                     shape = RoundedCornerShape(PacklyRadius.default),
                 ) { Text("Time ${PacklyDeadlineFormatter.formatTime(deadline) ?: "18:00"}") }
                 Spacer(Modifier.weight(1f))
-                TextButton(enabled = deadline != null, onClick = { onDeadlineChange(null) }) { Text("Clear") }
+                TextButton(
+                    enabled = deadline != null,
+                    onClick = { onDeadlineChange(null) },
+                    modifier = Modifier.widthIn(min = 72.dp),
+                ) { Text("Clear", maxLines = 1, softWrap = false) }
             }
         }
     }

@@ -247,8 +247,9 @@ private fun DeadlineCard(
                 OutlinedButton(
                     enabled = canClearDeadline,
                     onClick = onClearDeadline,
+                    modifier = Modifier.widthIn(min = 72.dp),
                     shape = RoundedCornerShape(PacklyRadius.default),
-                ) { Text("Clear") }
+                ) { Text("Clear", maxLines = 1, softWrap = false) }
             }
         }
     }
