@@ -1,146 +1,177 @@
-# Strict Kanban Reporting Architecture
+# Project-Agnostic Kanban Reporting Architecture
 
 ## Goal
 
-Replace prose-only Packly Kanban status updates with a deterministic reporting pipeline that emits:
+Create a reusable Hermes Kanban reporting mini-project that can be used by any repository, board, or cron job. The first consumer is the Packly cron job, but the schema, CLI, generator, and PDF renderer must not contain Packly-specific branding, Android assumptions, product fields, or board names.
 
-1. a strict machine-readable JSON report for the `packly-fresh` board;
-2. a polished PDF rendered from the same JSON contract;
-3. the existing human summary, with the PDF attached by the cron job.
+The reporting pipeline emits:
 
-The design should be reusable from `/home/mflova/packly`, run with `uv`, and avoid hidden state in ad-hoc `~/.hermes` scripts.
+1. a strict machine-readable JSON report for a Hermes Kanban board;
+2. a polished operational-dashboard PDF rendered from the same JSON contract;
+3. a concise delivery summary that can attach the PDF on media-capable channels such as Telegram.
 
-## Recommendation
+Use `uv` for all Python dependency management and execution. Do not use OpenHands. Keep the solution deterministic, repo-friendly, and reusable across future projects.
 
-Use deterministic extraction from the Hermes Kanban board plus Pydantic models and JSON Schema validation. Do not introduce Pydantic AI for the first version.
+## Architectural recommendation
 
-Preferred pattern: Clean Architecture with a small Hexagonal boundary around Hermes/Kanban IO.
+Use deterministic extraction from Hermes Kanban data plus strict Pydantic models. Do not introduce Pydantic AI for the first version.
+
+Preferred pattern: Clean Architecture with Hexagonal adapters around external IO.
 
 ```text
 Cron job / Hermes prompt
-  -> scripts/kanban_report/collect_board.py       # adapter: board/session/cron inputs
-  -> packly_tools/kanban_reporting/models.py      # Pydantic contract
-  -> packly_tools/kanban_reporting/generator.py   # deterministic aggregation
-  -> packly_tools/kanban_reporting/pdf.py         # PDF renderer
-  -> reports/kanban/YYYYMMDD-HHMM/                # JSON + PDF artifacts
+  -> scripts/kanban_report/generate.py          # thin launcher, optional
+  -> kanban_reporting/adapters/                 # Hermes board, git, CI, artifact inputs
+  -> kanban_reporting/models.py                 # strict Pydantic contract + JSON Schema
+  -> kanban_reporting/generator.py              # deterministic aggregation policies
+  -> kanban_reporting/pdf.py                    # ReportLab renderer
+  -> /tmp/kanban-report-*/                      # JSON + PDF runtime artifacts
 ```
 
-This keeps the LLM out of the correctness path. The LLM may still write the short narrative summary after reading the validated JSON, but it should not invent report data.
+The LLM can write a short human summary after reading validated JSON, but it must not invent counts, blockers, CI state, commits, or artifact paths. Correctness belongs to deterministic code and schema validation.
 
-## Why not Pydantic AI initially
+## Why Pydantic AI is not needed initially
 
-Pydantic AI is not needed for the core report because the inputs are already structured enough: Kanban task rows, events, comments, run handoffs, git commits, CI status, and artifact metadata. The high-value requirement is repeatability, not semantic interpretation.
+Pydantic AI is not required for the core report because the primary inputs are already structured or can be normalized deterministically: Kanban task rows, status events, comments, run handoffs, git commits, CI status, and artifact metadata.
 
-Use deterministic extraction plus Pydantic models because it provides:
+Use deterministic extraction plus Pydantic models because it gives:
 
 - stable schema enforcement and generated JSON Schema;
 - predictable diffs between report runs;
-- easy cron/script testing without model calls;
-- lower latency and no LLM failure mode on Raspberry Pi/Linux;
-- lower cost and no prompt-injection surface from task comments.
+- fixture-based testing without model calls;
+- lower latency and fewer moving parts on Raspberry Pi/Linux cron runs;
+- lower cost and less prompt-injection exposure from task comments.
 
-Consider Pydantic AI later only for an optional `insights` enrichment stage, for example clustering vague risks from free-form comments. If added, it must write into a separate optional field such as `llm_insights` and never be required to produce valid counts, blockers, CI status, commits, or artifact links.
+Consider Pydantic AI later only as an optional enrichment stage, for example grouping vague free-form risks. If added, it must write to optional fields such as `insights.llm_observations[]` and never be required to produce valid counts, blocker state, CI status, commits, or artifact links.
 
-## Storage location
+## Storage location recommendation
 
-Recommended: keep the reusable reporting package in the Packly repository.
+Recommended: keep the reusable reporting package in the consuming repository, under neutral package names.
 
 ```text
-/home/mflova/packly/
-  pyproject.toml                         # uv-managed Python tool project
-  packly_tools/
-    kanban_reporting/
-      __init__.py
-      models.py                          # Pydantic models + JSON Schema export
-      generator.py                       # aggregation from normalized inputs
-      pdf.py                             # ReportLab rendering
-      cli.py                             # `uv run python -m ...`
+<repo>/
+  pyproject.toml
+  kanban_reporting/
+    __init__.py
+    models.py
+    generator.py
+    pdf.py
+    cli.py
+    adapters/
+      hermes_kanban.py
+      git.py
+      ci.py
+      artifacts.py
   scripts/
     kanban_report/
-      generate.py                        # cron-friendly entrypoint
+      generate.py
+  tests/
+    kanban_reporting/
+      test_models.py
+      test_generator.py
+      test_cli_fixture.py
+    fixtures/
+      kanban_reporting/
+        sample_board.json
   docs/
     kanban-reporting/
-      architecture.md                    # this spec
-      schema.md                          # optional generated schema docs
-  reports/
-    kanban/                              # gitignored runtime artifacts
+      architecture.md
+      pdf-design.md
+      schema/board-report.schema.json
 ```
 
-Tradeoffs:
+Runtime JSON/PDF output does not need durable storage. Prefer timestamped temp directories, for example `/tmp/kanban-report-{board_slug}-{run_id}/`, and return absolute paths in the CLI envelope. Commit fixtures and docs, not generated reports.
 
 | Location | Pros | Cons | Decision |
 | --- | --- | --- | --- |
-| Packly repo | Versioned with the app, reviewable, testable, reusable by CI/cron, easy to evolve with board conventions | Adds Python tooling to an Android repo | Preferred |
-| `~/.hermes/scripts` | Quick to wire into one cron job | Hidden from repo review, hard to reproduce, profile-specific, easy to drift | Avoid except for a tiny launcher if cron cannot call repo scripts directly |
-| Hermes skill | Good for reusable agent procedure | Bad place for production report code or artifacts; skills are procedural memory, not app-owned tooling | Document process only, do not store generator here |
-
-Add `reports/kanban/` to `.gitignore`; commit sample fixtures under `tests/fixtures/kanban_reporting/` instead of committing generated reports.
+| Consuming repo | Versioned, reviewable, testable, works in CI/cron, easy to customize through config | Adds Python tooling to projects that may not otherwise use Python | Preferred |
+| Shared standalone repo/package | Best long-term reuse across many projects | More packaging/release overhead before first consumer exists | Good future extraction once two projects use it |
+| `~/.hermes/scripts` | Fast one-off wiring | Hidden from repo review, profile-specific, hard to reproduce, easy to drift | Avoid except for tiny wrappers |
+| Hermes skill | Good for documenting agent procedure | Bad place for production code or artifacts | Do not store generator here |
 
 ## Separation of concerns
 
 ```text
-packly_tools/kanban_reporting/
+kanban_reporting/
   models.py
-    BoardReport, TaskSummary, StatusCounts, ChangedSinceLastUpdate,
-    HumanAction, CiStatus, ArtifactRef, CommitRef, Risk, Blocker
+    Owns strict schema and validation. No shell calls or IO.
 
-  extractors/
-    kanban.py
-      Reads Hermes Kanban task/export data and normalizes it.
+  adapters/
+    hermes_kanban.py
+      Reads board exports/tool output/CLI JSON and normalizes it.
     git.py
-      Reads commits since a baseline ref/time.
+      Reads commits since a time, ref, or previous report state.
     ci.py
-      Reads GitHub Actions status/artifacts via `gh` or provided JSON.
+      Reads CI status and artifacts from provider-neutral inputs.
+    artifacts.py
+      Normalizes build/report artifact references.
 
   generator.py
     Pure transformation from normalized inputs to BoardReport.
-    No file IO except through explicit parameters.
+    Owns deterministic aggregation and risk policies.
 
   pdf.py
-    Pure renderer from BoardReport to PDF path.
+    Presentation-only renderer from BoardReport to PDF path.
+    Must not recalculate counts or reinterpret task state.
 
   cli.py
-    Argument parsing, path handling, JSON/PDF write orchestration.
+    Argument parsing, path handling, output writing, envelope printing.
 ```
 
-Boundary rules:
+Module boundaries:
 
-- `models.py` owns schema and validation only; no shell calls.
-- Extractors depend on external tools (`hermes`, `gh`, `git`) but return typed intermediate objects.
-- `generator.py` contains aggregation policy and is covered by fixture tests.
-- `pdf.py` does presentation only; it must not recalculate counts.
-- The cron job calls the CLI and attaches artifacts; it does not parse board data itself.
+- `models.py` forbids extra properties and exposes JSON Schema.
+- Adapters may depend on external tools (`hermes`, `git`, `gh`, provider APIs), but return typed neutral inputs.
+- `generator.py` has no network access and should be covered by fixture tests.
+- `pdf.py` renders only validated `BoardReport` data.
+- The cron job calls the CLI, reads the envelope/JSON, and attaches the PDF. It does not scrape or parse board data itself.
 
 ## Strict JSON schema shape
 
-The canonical schema should be generated from Pydantic models and committed as a generated artifact only if useful for review. Use JSON Schema draft 2020-12 and forbid additional properties on all objects.
+Generate the canonical schema from Pydantic models using JSON Schema draft 2020-12. Forbid additional properties on all objects. Use generic names so the same schema works for any Hermes board.
 
-Top-level shape:
+Top-level example:
 
 ```json
 {
   "schema_version": "1.0.0",
   "generated_at": "2026-06-03T15:20:00+02:00",
-  "board": {
-    "name": "packly-fresh",
+  "report": {
+    "title": "Kanban status report",
+    "project_name": "Example Project",
+    "board_name": "example-board",
     "source": "hermes-kanban",
-    "repo_path": "/home/mflova/packly",
-    "git_branch": "main",
-    "git_head": "abc1234",
-    "report_window": {
+    "timezone": "Europe/Zurich",
+    "window": {
       "since": "2026-06-03T14:40:00+02:00",
-      "until": "2026-06-03T15:20:00+02:00"
+      "until": "2026-06-03T15:20:00+02:00",
+      "label": "Since previous run"
+    },
+    "generator": {
+      "name": "kanban-reporting",
+      "version": "1.0.0",
+      "run_id": "20260603-152000"
     }
   },
-  "status_counts": {
-    "triage": 0,
-    "todo": 3,
-    "ready": 2,
-    "running": 1,
-    "blocked": 1,
-    "done": 8,
-    "archived": 0,
-    "total_active": 7
+  "board": {
+    "metadata": {
+      "board_id": "example-board",
+      "board_name": "example-board",
+      "tenant": null,
+      "repo_path": "/path/to/repo",
+      "git_branch": "main",
+      "git_head": "abc1234"
+    },
+    "status_counts": {
+      "triage": 0,
+      "todo": 3,
+      "ready": 2,
+      "running": 1,
+      "blocked": 1,
+      "done": 8,
+      "archived": 0,
+      "total_active": 7
+    }
   },
   "changed_since_last_update": {
     "new_tasks": [],
@@ -156,45 +187,39 @@ Top-level shape:
   "pending_next": [],
   "blockers": [],
   "human_action_required": [],
-  "ci": {
-    "provider": "github-actions",
-    "workflow": "android-ci.yml",
-    "latest_run_id": null,
-    "status": "unknown",
-    "conclusion": null,
-    "url": null,
-    "checked_at": "2026-06-03T15:20:00+02:00"
-  },
+  "ci": [],
   "artifacts": [],
   "commits": [],
   "risks": [],
-  "summary_metrics": {
-    "completion_delta": 0,
-    "blocked_delta": 0,
-    "tasks_touched": 0,
-    "requires_human": true
+  "delivery": {
+    "summary_line": "1 running, 2 ready, 1 blocked; reviewer action required.",
+    "attachment_path": "/tmp/kanban-report-example/report.pdf",
+    "attachment_media_tag": "MEDIA:/tmp/kanban-report-example/report.pdf",
+    "filename": "kanban-example-board-20260603-1520-Europe-Zurich.pdf"
   }
 }
 ```
 
-Required model details:
+Required model set:
 
-- `schema_version`: semantic version string. Increment minor for additive optional fields, major for breaking changes.
-- `generated_at`: timezone-aware ISO-8601 string; use Europe/Zurich for human reports.
-- `board`: board metadata, source, repo path, branch/head, and report window.
-- `status_counts`: one integer per Kanban status plus `total_active` excluding archived.
-- `changed_since_last_update`: arrays of task/event references since the previous report window.
-- `running`: tasks currently claimed/running, including assignee, started time, latest heartbeat, and stale flag.
-- `recently_done`: tasks completed inside the report window with summary and changed files if provided.
-- `pending_next`: ready/todo tasks ordered by priority and dependency readiness.
-- `blockers`: blocked tasks with reason, owner/assignee, age, and whether human input is required.
-- `human_action_required`: normalized action list for Manu/reviewer/orchestrator, such as review, push, unblock, credential, or decision.
-- `ci`: latest workflow status, conclusion, URL, checked time, and warnings.
-- `artifacts`: generated APK/report artifacts with path/name/url/type/created_at.
-- `commits`: commits in the report window with sha, subject, author, timestamp, and touched paths.
-- `risks`: deterministic risk list with severity, source, description, mitigation, and related task IDs.
+- `BoardReport`: root object and schema version.
+- `ReportMetadata`: project/board names, timezone, report window, generator identity.
+- `BoardMetadata`: board id/name, optional tenant, optional repo/git context.
+- `StatusCounts`: one integer per Kanban status plus `total_active`.
+- `ChangedSinceLastUpdate`: new/completed/blocked/unblocked/status/comment/commit deltas.
+- `TaskRef`: reusable normalized task reference.
+- `RunningTask`: running task plus assignee, started time, latest heartbeat, stale flag.
+- `CompletedTask`: completion time, summary, changed files or artifact highlights when available.
+- `PendingTask`: priority/dependency readiness and recommended next step.
+- `Blocker`: blocked task, reason, age, owner, severity, and whether human input is required.
+- `HumanActionRequired`: normalized action list for reviewer/operator/orchestrator decisions.
+- `CiStatus`: provider-neutral CI status, conclusion, URL, checked time, warnings.
+- `ArtifactRef`: local path or URL, type, label, creation time, safety flag.
+- `CommitRef`: sha, subject, author, timestamp, touched paths.
+- `Risk`: deterministic risk, severity, source, mitigation, related task IDs.
+- `Delivery`: concise summary line, PDF path, optional media tag, filename, next run label.
 
-Representative Pydantic model skeleton:
+Representative Pydantic skeleton:
 
 ```python
 from datetime import datetime
@@ -219,35 +244,55 @@ class TaskRef(StrictModel):
     status: KanbanStatus
     assignee: str | None = None
     priority: int | None = None
-    url: str | None = None
 
-class BoardMetadata(StrictModel):
-    name: str
+class ReportWindow(StrictModel):
+    since: datetime | None = None
+    until: datetime
+    label: str
+
+class ReportMetadata(StrictModel):
+    title: str = "Kanban status report"
+    project_name: str | None = None
+    board_name: str
     source: str = "hermes-kanban"
-    repo_path: str
-    git_branch: str
-    git_head: str
-    report_window: dict[str, datetime]
+    timezone: str
+    window: ReportWindow
+
+class StatusCounts(StrictModel):
+    triage: int = 0
+    todo: int = 0
+    ready: int = 0
+    running: int = 0
+    blocked: int = 0
+    done: int = 0
+    archived: int = 0
+    total_active: int
+
+class Delivery(StrictModel):
+    summary_line: str
+    attachment_path: str | None = None
+    attachment_media_tag: str | None = None
+    filename: str | None = None
 
 class BoardReport(StrictModel):
     schema_version: str = "1.0.0"
     generated_at: datetime
-    board: BoardMetadata
-    status_counts: dict[KanbanStatus, int]
-    changed_since_last_update: dict[str, list[TaskRef]]
+    report: ReportMetadata
+    board: dict
+    changed_since_last_update: dict
     running: list[TaskRef]
     recently_done: list[TaskRef]
     pending_next: list[TaskRef]
     blockers: list[dict]
     human_action_required: list[dict]
-    ci: dict
+    ci: list[dict]
     artifacts: list[dict]
     commits: list[dict]
     risks: list[dict]
-    summary_metrics: dict[str, int | bool]
+    delivery: Delivery
 ```
 
-The production implementation should replace generic `dict` fields with dedicated strict models before release. The skeleton above is only to show boundaries and naming.
+The production implementation should replace remaining generic `dict` fields with dedicated strict models before release. The skeleton illustrates boundaries and naming, not the final type coverage.
 
 ## PDF library recommendation
 
@@ -255,108 +300,138 @@ Use ReportLab for the first implementation.
 
 Rationale:
 
-- Pure Python wheel availability is good on Linux/aarch64; it is easier to run via `uv` on Raspberry Pi than browser-backed or system-library-heavy renderers.
-- Tables, headings, page breaks, colors, and simple charts are enough for a Kanban status report.
-- It avoids WeasyPrint's Cairo/Pango/native dependency chain and avoids headless Chromium.
-- It is deterministic and works in cron without a display server.
-
-Alternatives:
+- It works well in cron without a display server.
+- It has good Linux/aarch64 viability when installed and run via `uv`.
+- Tables, headings, page breaks, badges, simple charts, and document metadata are enough for an operational Kanban report.
+- It avoids WeasyPrint's Cairo/Pango/native dependency chain and avoids Playwright/Chromium weight on a Raspberry Pi.
 
 | Library | Fit | Concern |
 | --- | --- | --- |
-| ReportLab | Best first choice | Imperative layout API, less CSS-like |
-| WeasyPrint | Best visual HTML/CSS output | Native deps can be painful on Raspberry Pi; larger cron surface |
-| xhtml2pdf | Simple HTML-to-PDF | Lower fidelity, older CSS support, frequent layout surprises |
-| Playwright/Chromium print | High fidelity | Heavy install, browser lifecycle, not ideal for small Pi cron |
-| FPDF/fpdf2 | Lightweight | Weaker table/page-flow primitives for polished operational reports |
+| ReportLab | Best first choice for deterministic operational PDFs | Imperative layout API, less CSS-like |
+| WeasyPrint | Best HTML/CSS visual fidelity | Native dependencies can be painful on Raspberry Pi/Linux cron hosts |
+| xhtml2pdf | Simple HTML-to-PDF | Lower fidelity and frequent CSS/layout surprises |
+| Playwright/Chromium print | High fidelity | Heavy install and browser lifecycle overhead |
+| fpdf2 | Lightweight | Weaker table/page-flow primitives for polished reports |
 
-PDF sections should mirror the JSON contract: Executive Summary, Human Action Required, Board Counts, Changed Since Last Update, Running Work, Recently Done, Pending Next, Blockers/Risks, CI/Artifacts, Commits, Appendix.
+PDF style should be generic operational dashboard style: clean typography, neutral palette, status/risk badges with text labels, KPI cards, clear page headers, and mobile-readable tables. Do not use project-specific branding unless passed explicitly through optional configuration.
+
+Recommended sections: Cover Summary, Human Action Required, Board Counts, Changed Since Last Update, Running Work, Recently Done, Pending/Next, Blockers/Risks, CI/Artifacts, Commits, Appendix.
 
 ## Cron/script contract
 
-The cron job should become a thin orchestrator. It should call a repo-owned script and then include both artifacts in its final response.
+The cron job should be a thin orchestrator. It calls the repo-owned CLI, then sends the concise summary and attaches the generated PDF when the delivery channel supports attachments.
 
-Recommended command:
+Generic command shape:
 
 ```bash
-cd /home/mflova/packly
-uv run python -m packly_tools.kanban_reporting.cli \
-  --board packly-fresh \
-  --since-state .hermes/kanban-report-state.json \
-  --out-dir reports/kanban/$(date +%Y%m%d-%H%M%S) \
+cd /path/to/repo
+uv run python -m kanban_reporting.cli \
+  --board <board-slug> \
+  --project-name "<optional display name>" \
+  --since-state /tmp/kanban-report-state-<board-slug>.json \
+  --out-dir /tmp/kanban-report-<board-slug>-$(date +%Y%m%d-%H%M%S) \
   --format json,pdf
 ```
 
-The CLI should print a strict one-line JSON envelope to stdout:
+The CLI prints a strict one-line JSON envelope to stdout:
 
 ```json
 {
   "ok": true,
   "schema_version": "1.0.0",
-  "json_path": "/home/mflova/packly/reports/kanban/20260603-152000/report.json",
-  "pdf_path": "/home/mflova/packly/reports/kanban/20260603-152000/report.pdf",
+  "json_path": "/tmp/kanban-report-example/report.json",
+  "pdf_path": "/tmp/kanban-report-example/report.pdf",
   "requires_human": true,
-  "headline": "1 running, 2 ready, 1 blocked; reviewer action required"
+  "headline": "1 running, 2 ready, 1 blocked; reviewer action required",
+  "delivery_text": "Kanban report: 1 running, 2 ready, 1 blocked. PDF attached.",
+  "media_tag": "MEDIA:/tmp/kanban-report-example/report.pdf"
 }
 ```
 
 Contract rules:
 
 - Exit code `0`: JSON and PDF were written and schema validation passed.
-- Exit code `2`: input/board extraction failed; cron should report failure and not invent data.
-- Exit code `3`: schema validation failed; cron should attach logs if available and block for investigation.
-- Exit code `4`: PDF rendering failed after valid JSON; cron should send JSON summary and flag PDF failure.
-- stdout must be the envelope only; logs go to stderr.
-- The cron final answer may summarize the envelope, but any attachment path must come from `pdf_path`.
-- The generator updates the `--since-state` file only after successful JSON and PDF writes.
+- Exit code `2`: input/board extraction failed; cron reports failure and does not invent data.
+- Exit code `3`: schema validation failed; cron reports validation failure and blocks for investigation.
+- Exit code `4`: PDF rendering failed after valid JSON; cron may send JSON-derived text and flag missing PDF.
+- stdout is the envelope only; logs go to stderr.
+- `pdf_path` must be an absolute path.
+- `media_tag` is included only for platforms that support `MEDIA:` attachment interception, especially Telegram. CLI/terminal logs should show the plain path.
+- The generator updates `--since-state` only after successful JSON and PDF writes.
 
 ## Migration path for cron job `6b9b2fb0665a`
 
-1. Add and commit this architecture spec.
-2. Implement `pyproject.toml`, Pydantic models, fixture tests, generator, ReportLab renderer, and CLI in the Packly repo using `uv` only.
-3. Add `.gitignore` entries for `reports/kanban/` and `.hermes/kanban-report-state.json` if they are not meant to be committed.
-4. Run local non-Android validation only:
+1. Commit this project-agnostic architecture spec.
+2. Implement neutral package paths (`kanban_reporting/...`), Pydantic models, fixture tests, deterministic generator, ReportLab renderer, and CLI using `uv` only.
+3. Use `/tmp` for generated JSON/PDF by default. Keep persistent state either in `/tmp` for ephemeral reporting or in a repo/gitignored path only if deltas must survive reboot.
+4. Run local validation:
    - `uv run pytest tests/kanban_reporting -q`
-   - `uv run python -m packly_tools.kanban_reporting.cli --fixture tests/fixtures/kanban_reporting/sample_board.json --out-dir /tmp/packly-kanban-report --format json,pdf`
+   - `uv run python -m kanban_reporting.cli --fixture tests/fixtures/kanban_reporting/sample_board.json --out-dir /tmp/kanban-report-fixture --format json,pdf`
    - `git diff --check`
-5. Update cron job `6b9b2fb0665a` so its prompt says: run the report CLI first, read the validated JSON, write the normal human summary from the JSON, and include the generated PDF path in the delivered message.
-6. Keep the cron schedule and workdir unchanged initially: every 40 minutes, workdir `/home/mflova/packly`, board `packly-fresh`.
-7. Run the cron job once manually and verify delivery includes both prose and PDF.
-8. After two successful runs, remove any old prose-only extraction instructions from the cron prompt.
+5. Update cron job `6b9b2fb0665a` so its prompt/script runs the CLI first, reads the validated JSON/envelope, writes the normal concise summary from the JSON, and includes the PDF media tag in Telegram delivery.
+6. Keep the existing schedule and Packly workdir initially because Packly is the first consumer: every 40 minutes, workdir `/home/mflova/packly`, board `packly-fresh`.
+7. Run the cron job once manually and verify Telegram receives concise text plus the PDF attachment.
+8. After two successful runs, remove old prose-only extraction instructions from the cron prompt.
 
-Because `cronjob(action="list")` from this profile returned no jobs during this spec task, the implementation worker or orchestrator should confirm whether job `6b9b2fb0665a` lives in another Hermes profile before editing it.
+Note: `cronjob(action="list")` returned no matching job in this profile during the first spec attempt, so the implementation worker or orchestrator should confirm whether job `6b9b2fb0665a` lives under another Hermes profile before editing it.
 
 ## Scalability and bottlenecks
 
-- Board size: use pagination/export snapshots instead of repeatedly rendering full event history in prompts. The generator should calculate deltas from stored state.
-- Data volume: keep raw snapshots separate from compact reports; prune or archive `reports/kanban/` by age.
-- Concurrency: write reports into timestamped directories and update the since-state file with an atomic rename to avoid overlapping cron runs corrupting state.
-- CI/API limits: cache latest `gh run` response per report run; do not call GitHub once per task.
-- PDF growth: cap free-form comment excerpts and move long details to appendix pages.
-- LLM reliability: the LLM consumes validated JSON only; it does not determine counts or blocker state.
+- Board size: consume exported/paginated board snapshots instead of rendering full event history in prompts.
+- Data volume: keep raw snapshots separate from compact reports; cap comments and move long evidence to appendices.
+- Concurrency: write into unique `/tmp/kanban-report-*` directories and update since-state with atomic rename.
+- CI/API limits: query CI once per report run, not once per task.
+- PDF growth: cap routine reports to a small page count and omit low-signal completed/archived detail by default.
+- Multi-project reuse: keep all project-specific labels in CLI options/config, never hardcoded in schema or renderer.
+- LLM reliability: the LLM consumes validated JSON only; deterministic code owns counts and risk rules.
 
 ## Implementation plan
 
-1. Create the Python tool skeleton and uv config.
-2. Add strict Pydantic models and export JSON Schema.
-3. Add fixtures representing empty, active, blocked, and recently-completed boards.
+1. Create the neutral Python package and `uv` configuration.
+2. Add strict Pydantic models and JSON Schema export.
+3. Add fixtures for empty, active, blocked, and recently completed boards.
 4. Build deterministic generator tests before implementation.
-5. Add Kanban/git/CI extractors behind interfaces.
-6. Add ReportLab PDF renderer with golden smoke checks: file exists, non-empty, at least one page.
-7. Add CLI and cron envelope behavior.
-8. Update cron job `6b9b2fb0665a` only after a fixture run succeeds.
+5. Add Hermes Kanban, git, CI, and artifact adapters behind interfaces.
+6. Add ReportLab PDF renderer with smoke checks: file exists, non-empty, at least one page/text marker.
+7. Add CLI envelope behavior and Telegram media-tag support.
+8. Update cron job `6b9b2fb0665a` only after fixture generation succeeds.
 
 ## Recommended committed paths and modules
 
+Recommended paths:
+
 - `pyproject.toml`
-- `packly_tools/kanban_reporting/models.py`
-- `packly_tools/kanban_reporting/generator.py`
-- `packly_tools/kanban_reporting/pdf.py`
-- `packly_tools/kanban_reporting/cli.py`
+- `kanban_reporting/models.py`
+- `kanban_reporting/generator.py`
+- `kanban_reporting/pdf.py`
+- `kanban_reporting/cli.py`
+- `kanban_reporting/adapters/hermes_kanban.py`
+- `kanban_reporting/adapters/git.py`
+- `kanban_reporting/adapters/ci.py`
+- `kanban_reporting/adapters/artifacts.py`
 - `scripts/kanban_report/generate.py`
 - `tests/kanban_reporting/test_models.py`
 - `tests/kanban_reporting/test_generator.py`
 - `tests/kanban_reporting/test_cli_fixture.py`
 - `tests/fixtures/kanban_reporting/sample_board.json`
 - `docs/kanban-reporting/architecture.md`
-- optional generated schema: `docs/kanban-reporting/schema/board-report.schema.json`
+- `docs/kanban-reporting/schema/board-report.schema.json`
+
+Schema modules:
+
+- `BoardReport`
+- `ReportMetadata`
+- `BoardMetadata`
+- `StatusCounts`
+- `ChangedSinceLastUpdate`
+- `TaskRef`
+- `RunningTask`
+- `CompletedTask`
+- `PendingTask`
+- `Blocker`
+- `HumanActionRequired`
+- `CiStatus`
+- `ArtifactRef`
+- `CommitRef`
+- `Risk`
+- `Delivery`

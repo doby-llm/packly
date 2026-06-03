@@ -1,21 +1,22 @@
-# Packly Kanban PDF Report Design
+# Project-Agnostic Kanban PDF Report Design
 
 ## Purpose
 
-Create a Telegram-friendly PDF companion to the Packly Kanban status summary. The PDF should let Manu quickly answer four questions from a phone screen:
+Create a Telegram-friendly PDF companion to a Hermes Kanban status summary. The PDF should let an operator quickly answer four questions from a phone screen:
 
 1. What changed since the last report?
 2. What is blocked or risky right now?
 3. Which work is ready, running, or done?
 4. What should happen next?
 
-The prose Telegram message remains the fast notification. The PDF is the structured, scannable artifact for deeper review and forwarding.
+The prose message remains the fast notification. The PDF is the structured, scannable artifact for deeper review and forwarding. The design is intentionally project-agnostic: no Packly branding, Android assumptions, product-specific fields, or fixed board names. Packly can use it as the first consumer through configuration values only.
 
 ## Design principles
 
 - Mobile-first reading: assume the PDF opens in Telegram's viewer on a narrow phone screen.
-- Skimmable before detailed: top-level health, blockers, and next actions must appear before full task tables.
-- Statuses must work without color: every badge includes text, and risk is reinforced by icons or labels.
+- Skimmable before detailed: health, blockers, and next actions must appear before full task tables.
+- Operational dashboard aesthetic: clean, professional, neutral, and moderately polished without product branding.
+- Statuses must work without color: every badge includes text, and risk is reinforced by labels or icons.
 - Dense but not cramped: prefer short rows, grouped sections, and page breaks over tiny type.
 - Reusable schema: every visual section maps to explicit required JSON fields so the generator can fail fast when data is missing.
 
@@ -24,14 +25,14 @@ The prose Telegram message remains the fast notification. The PDF is the structu
 - Page size: A4 portrait.
 - Margins: 18 mm top, 16 mm left/right, 18 mm bottom.
 - Header height: 26-32 mm on page 1; 12-16 mm on continuation pages.
-- Footer: page number, board name, report timestamp, and compact confidentiality label if needed.
-- Recommended maximum: 6 pages for routine reports. If more than 6 pages are needed, collapse done/archived task detail into summary counts and include only the most recent completed items.
+- Footer: page number, board name, report timestamp, and optional confidentiality label.
+- Recommended maximum: 6 pages for routine reports. If more than 6 pages are needed, collapse done/archived detail and include only the most recent completed items.
 
 ## Visual treatment
 
 ### Typography
 
-Use a clean sans-serif stack that renders reliably in PDF generation:
+Use a reliable sans-serif stack for PDF generation:
 
 - Primary: Inter, Plus Jakarta Sans, Noto Sans, or DejaVu Sans.
 - Title: 20-22 pt, 700 weight, line-height 1.2.
@@ -40,24 +41,24 @@ Use a clean sans-serif stack that renders reliably in PDF generation:
 - Small metadata: 8-9 pt, 500 weight, line-height 1.3.
 - Badge text: 8-9 pt, 700 weight, uppercase or title case.
 
-Avoid body text below 9 pt. Telegram's PDF preview compresses pages; tiny type becomes unreadable quickly.
+Avoid body text below 9 pt because Telegram's PDF preview compresses pages.
 
 ### Color palette
 
-Base colors should feel aligned with Packly's vibrant minimal design while remaining readable in print/PDF:
+Use neutral operational colors that remain readable in print/PDF and do not imply any product brand.
 
 | Token | Use | Color | Text |
 | --- | --- | --- | --- |
-| `ink` | Primary text | `#191C1D` | n/a |
-| `muted_ink` | Secondary text | `#52615C` | n/a |
-| `surface` | Page background | `#F8F9FA` | `#191C1D` |
-| `card` | Section cards | `#FFFFFF` | `#191C1D` |
-| `outline` | Rules/borders | `#D6E1DD` | n/a |
-| `brand` | Primary accent | `#006B57` | `#FFFFFF` |
-| `brand_soft` | Soft primary chip | `#DDFBF3` | `#005141` |
+| `ink` | Primary text | `#172026` | n/a |
+| `muted_ink` | Secondary text | `#5B6870` | n/a |
+| `surface` | Page background | `#F6F8FA` | `#172026` |
+| `card` | Section cards | `#FFFFFF` | `#172026` |
+| `outline` | Rules/borders | `#DDE3EA` | n/a |
+| `accent` | Primary operational accent | `#2457C5` | `#FFFFFF` |
+| `accent_soft` | Soft accent chip | `#E8F0FF` | `#163B87` |
 | `info` | Informational | `#006591` | `#FFFFFF` |
 | `info_soft` | Soft info chip | `#E2F3FF` | `#004C6E` |
-| `warning` | At risk / needs attention | `#B26A00` | `#FFFFFF` |
+| `warning` | At risk / needs attention | `#A15C00` | `#FFFFFF` |
 | `warning_soft` | Soft warning chip | `#FFF1D6` | `#6B4100` |
 | `danger` | Blocked / failed | `#BA1A1A` | `#FFFFFF` |
 | `danger_soft` | Soft danger chip | `#FFDAD6` | `#93000A` |
@@ -66,14 +67,14 @@ Base colors should feel aligned with Packly's vibrant minimal design while remai
 
 ### Status badges
 
-Badges should be rounded pills with 4-5 px vertical padding and 8-10 px horizontal padding. Always include readable text. Do not rely on color alone.
+Badges should be rounded pills with 4-5 px vertical padding and 8-10 px horizontal padding. Always include readable text.
 
 | Status | Label | Background | Text color | Optional icon |
 | --- | --- | --- | --- | --- |
-| `triage` | Triage | `#E8DDFF` | `#310082` | `?` |
-| `todo` | Todo | `#E1E3E4` | `#3B4A44` | `•` |
+| `triage` | Triage | `#EEE7FF` | `#3D1A78` | `?` |
+| `todo` | Todo | `#E8ECEF` | `#3F4D56` | `•` |
 | `ready` | Ready | `#E2F3FF` | `#004C6E` | `→` |
-| `running` | Running | `#DDFBF3` | `#005141` | `▶` |
+| `running` | Running | `#E8F0FF` | `#163B87` | `▶` |
 | `blocked` | Blocked | `#FFDAD6` | `#93000A` | `!` |
 | `done` | Done | `#DDF8E7` | `#084B27` | `✓` |
 | `archived` | Archived | `#F0F1F2` | `#52615C` | `×` |
@@ -96,17 +97,18 @@ Layout:
 
 - Left: title block.
 - Right: generated timestamp and run metadata.
-- Under title: 3-5 KPI cards in a single row on desktop/PDF page; allow wrapping to two rows.
+- Under title: 3-5 KPI cards.
 - Health banner below KPI cards: one sentence summary with severity styling.
 
 Required fields:
 
 - `report.title`
+- `report.project_name` optional
 - `report.board_name`
 - `report.generated_at_local`
 - `report.timezone`
-- `report.window_label` such as `Since previous 40m run` or `Daily summary`
-- `report.job_id`
+- `report.window_label`
+- `report.job_id` optional
 - `report.run_id` or stable generation identifier
 - `health.level`: `ok | attention | blocked | critical`
 - `health.summary`
@@ -122,14 +124,14 @@ KPI card layout:
 | Card | Primary number | Secondary label | Styling |
 | --- | --- | --- | --- |
 | Board total | `total_tasks` | `tasks tracked` | neutral |
-| Running | `running_count` | `in progress` | brand soft |
+| Running | `running_count` | `in progress` | accent soft |
 | Blocked | `blocked_count` | `need input` | danger if > 0, neutral if 0 |
 | Ready | `ready_count` | `ready to pick up` | info soft |
 | Done | `done_since_last_report_count` | `completed this window` | success soft |
 
 ### 2. Executive summary
 
-Goal: provide the human-readable digest that pairs with the Telegram prose.
+Goal: provide the human-readable digest that pairs with the message body.
 
 Layout:
 
@@ -143,7 +145,7 @@ Required fields:
   - `label`
   - `text`
   - `severity`: `info | success | warning | danger`
-- `summary.next_update_at_local` if the cron job has another scheduled run.
+- `summary.next_update_at_local` if another scheduled run is known.
 
 ### 3. Blockers and decisions needed
 
@@ -151,9 +153,9 @@ Goal: make human intervention obvious. This section appears even when empty.
 
 Layout:
 
-- If blocked items exist: a table grouped by severity, highest first.
-- If none: a quiet empty-state card: `No blocked tasks right now.`
-- Each blocker row should use generous vertical spacing because block reasons can be long.
+- If blocked items exist: table grouped by severity, highest first.
+- If none: quiet empty-state card: `No blocked tasks right now.`
+- Each blocker row gets enough vertical spacing for a one-sentence reason.
 
 Table columns:
 
@@ -176,21 +178,18 @@ Required fields:
   - `blocked_reason`
   - `blocked_since_local` or `blocked_age_label`
   - `needed_next`
-  - `last_comment_excerpt` optional but recommended
-
-Empty state fields:
-
+  - `last_comment_excerpt` optional
 - `blockers.empty_message`
 
 ### 4. Changes since last report
 
-Goal: answer what changed during the cron window.
+Goal: answer what changed during the report window.
 
 Layout:
 
 - Timeline-style list for up to 12 high-signal events.
 - If there are more, include a compact `+N more low-signal events` footer.
-- Use event-type chips to distinguish completed, blocked, unblocked, created, reassigned, and failed.
+- Use event-type chips for completed, blocked, unblocked, created, reassigned, and failed.
 
 Required fields:
 
@@ -213,9 +212,9 @@ Goal: show current running/ready/todo work in a compact operational view.
 Layout:
 
 - Sort order: blocked, running, ready, todo, triage.
-- Split into separate subsections if there are more than 18 active rows.
+- Split into subsections if there are more than 18 active rows.
 - Repeat header row after page breaks.
-- Keep task titles to two lines; include details in the notes column only when critical.
+- Keep task titles to two lines; include details in notes only when critical.
 
 Table columns:
 
@@ -243,22 +242,13 @@ Required fields:
 
 ### 6. Completed work
 
-Goal: celebrate progress while keeping the report short.
+Goal: show progress while keeping the report short.
 
 Layout:
 
 - Table of tasks completed during the reporting window.
 - Limit to the most recent 10 by default.
 - If no completed work: compact empty state.
-
-Table columns:
-
-| Column | Width guidance | Content |
-| --- | --- | --- |
-| Done at | 16% | Local completion time |
-| Task | 30% | Title + ID |
-| Assignee | 14% | Profile/person |
-| Result | 40% | Completion summary, max 3 lines |
 
 Required fields:
 
@@ -276,12 +266,7 @@ Required fields:
 
 Goal: surface tasks that may not be blocked yet but need attention.
 
-Layout:
-
-- 2-column card grid if few items; table if many.
-- Include clear thresholds in the section intro so users understand why an item appears.
-
-Suggested risk rules:
+Suggested deterministic risk rules:
 
 - Running for more than 60 minutes without heartbeat: high.
 - Ready for more than 2 reporting windows: medium.
@@ -304,13 +289,13 @@ Required fields:
 
 ### 8. Dependency snapshot
 
-Goal: show whether the board flow is logically moving.
+Goal: show whether board flow is logically moving.
 
 Layout:
 
 - Small summary row with counts: root tasks, tasks with children, waiting on parents.
-- Optional compact dependency table for tasks that are blocked by parent/child relationships.
-- Avoid full graph rendering in the PDF unless the board is tiny; graph images become unreadable on mobile.
+- Optional compact dependency table for tasks waiting on relationships.
+- Avoid full graph rendering unless the board is tiny.
 
 Required fields:
 
@@ -325,12 +310,7 @@ Required fields:
 
 ### 9. Appendix: raw board counts
 
-Goal: give the schema/generator a predictable place for complete counts without cluttering the main narrative.
-
-Layout:
-
-- Compact table by status and assignee.
-- Include only if there is enough data or if debug mode is enabled.
+Goal: provide complete counts without cluttering the main narrative.
 
 Required fields:
 
@@ -350,34 +330,26 @@ Required fields:
 
 - Use portrait pages and single-column content except for KPI cards and small risk cards.
 - Avoid landscape tables. If a table needs more columns, remove lower-value columns or move details into a second line inside the same cell.
-- Keep line length around 55-75 characters in prose blocks.
-- Use row striping with subtle contrast (`#FFFFFF` / `#F3F7F5`) for tables over 6 rows.
+- Keep prose line length around 55-75 characters.
+- Use row striping with subtle contrast (`#FFFFFF` / `#F3F6FA`) for tables over 6 rows.
 - Repeat table headers after page breaks.
-- Never split a task row across pages if the PDF library supports `keepTogether`/`page-break-inside: avoid`.
+- Avoid splitting a task row across pages when the PDF library supports it.
 - Keep first page self-contained: the reader should understand overall health without scrolling.
 - Put IDs in muted smaller text below titles, not as the primary label.
 
 ## Accessibility and readability constraints
 
 - Text contrast should meet WCAG AA: 4.5:1 for body text and 3:1 for large/bold text.
-- Badge foreground/background pairs must meet at least 3:1, with text labels so color is not the only cue.
-- Do not encode status by icon alone.
+- Badge foreground/background pairs must meet at least 3:1 and include text labels.
+- Do not encode status by icon or color alone.
 - Use semantic headings in the PDF generation layer if the renderer supports tagged PDFs.
 - Include document metadata: title, author/tool, creation date, and board name.
 - Avoid red/green-only comparisons; pair status with labels like `Blocked` and `Done`.
 - Avoid dense all-caps outside short badges.
 - Ensure every generated PDF has a text layer, not screenshot-only pages.
-- Use local timezone labels explicitly, e.g. `Europe/Zurich`, so report timing is unambiguous.
+- Use local timezone labels explicitly, e.g. `Europe/Zurich`.
 
 ## Visual states for the generator
-
-### Loading state
-
-The cron job should send the text summary first only if PDF generation is expected to take more than a few seconds. Otherwise send summary and PDF together.
-
-Suggested temporary message:
-
-`Preparing Packly Kanban PDF report… summary will follow with the attachment.`
 
 ### Empty board state
 
@@ -385,7 +357,7 @@ If no tasks exist:
 
 - Header health: `ok`.
 - KPI cards show zero counts.
-- Executive summary states: `No Kanban tasks are currently tracked on board packly-fresh.`
+- Executive summary states: `No Kanban tasks are currently tracked on board <board_name>.`
 - Hide blockers, changes, active, completed, risks, and dependencies behind compact empty cards.
 
 ### No-change state
@@ -394,15 +366,15 @@ If the board exists but nothing changed since the last report:
 
 - Keep KPI cards and active work table.
 - Changes section empty card: `No task events during this reporting window.`
-- Telegram summary should still state the next scheduled run.
+- Delivery summary should still state the next scheduled run when known.
 
 ### Error state
 
 If report generation fails:
 
 - Do not attach a broken or partial PDF.
-- Telegram text should include: board name, timestamp, failure reason category, and fallback prose summary if available.
-- Save the failing JSON payload and generator logs locally for debugging when safe.
+- Delivery text should include board name, timestamp, failure category, and fallback prose summary if available.
+- Save failing JSON payload and generator logs locally when safe.
 
 Required error fields for a fallback summary:
 
@@ -411,26 +383,26 @@ Required error fields for a fallback summary:
 - `error.error_type`
 - `error.error_message_safe`
 - `error.fallback_summary`
-- `error.debug_artifact_path` optional local path only, never a Telegram MEDIA tag unless intentionally attaching a safe log.
+- `error.debug_artifact_path` optional local path only, never a media tag unless intentionally attaching a safe log.
 
 ### Success state
 
 Telegram delivery should include:
 
-- concise prose summary
-- PDF attachment
-- filename that makes the board and run window obvious
-- note about the next scheduled run when relevant
+- concise prose summary;
+- PDF attachment;
+- filename that makes board and run window obvious;
+- next scheduled run when relevant.
 
 ## Suggested PDF filename
 
 Use a stable, sortable, human-readable filename:
 
-`packly-kanban-{board_slug}-{YYYYMMDD-HHMM}-{timezone_slug}.pdf`
+`kanban-{board_slug}-{YYYYMMDD-HHMM}-{timezone_slug}.pdf`
 
 Example:
 
-`packly-kanban-packly-fresh-20260603-1730-Europe-Zurich.pdf`
+`kanban-example-board-20260603-1730-Europe-Zurich.pdf`
 
 Rules:
 
@@ -443,21 +415,22 @@ Rules:
 
 Short format:
 
-`Packly Kanban report: 2 running, 1 blocked, 3 ready, 4 done since last update. Main risk: packaging QA is blocked on release approval. Next run around 18:10 Europe/Zurich.`
+`Kanban report for example-board: 2 running, 1 blocked, 3 ready, 4 done since last update. Main risk: release approval is blocking a review task. Next run around 18:10 Europe/Zurich.`
 
 With PDF attachment:
 
-`MEDIA:/path/to/packly-kanban-packly-fresh-20260603-1730-Europe-Zurich.pdf`
+`MEDIA:/tmp/kanban-report-example-board/report.pdf`
 
-In the cron implementation, the MEDIA line should be included only on messaging platforms that intercept `MEDIA:` attachments. For CLI logs or non-media channels, send the plain file path instead.
+In the cron implementation, the media line should be included only on messaging platforms that intercept `MEDIA:` attachments. For CLI logs or non-media channels, use the plain absolute file path instead.
 
-Required Telegram summary fields:
+Required delivery fields:
 
-- `telegram.summary_line`
-- `telegram.primary_risk_line`
-- `telegram.next_run_line`
-- `telegram.attachment_path`
-- `telegram.filename`
+- `delivery.summary_line`
+- `delivery.primary_risk_line`
+- `delivery.next_run_line`
+- `delivery.attachment_path`
+- `delivery.media_tag`
+- `delivery.filename`
 
 ## Recommended JSON coverage checklist
 
@@ -474,19 +447,19 @@ The schema worker should ensure the payload can populate these top-level objects
 - `risks`
 - `dependencies`
 - `appendix`
-- `telegram`
+- `delivery`
 
-Minimum viable PDF requires: `report`, `health`, `metrics`, `summary`, `blockers`, `changes`, `active`, and `telegram`.
+Minimum viable PDF requires: `report`, `health`, `metrics`, `summary`, `blockers`, `changes`, `active`, and `delivery`.
 
 ## Acceptance criteria for the coder
 
 - The PDF first page includes header metadata, health banner, KPI cards, executive summary, and blockers or blocker empty state.
 - The generator maps every section to explicit JSON fields and fails with a clear validation error when minimum viable fields are missing.
-- Status and risk badges use the labels and color tokens above, with non-color text/icon cues.
-- Tables repeat headers across page breaks and avoid splitting task rows when supported by the PDF library.
+- Status and risk badges use text labels with non-color cues.
+- Tables repeat headers across page breaks and avoid splitting task rows when supported.
 - Routine reports remain readable in Telegram mobile preview: body text is at least 9 pt, margins are not excessive, and important content appears on page 1.
-- Empty, no-change, error, and success states are handled intentionally rather than producing blank sections.
-- PDF filename follows `packly-kanban-{board_slug}-{YYYYMMDD-HHMM}-{timezone_slug}.pdf` and the Telegram summary references the attachment clearly.
+- Empty, no-change, error, and success states are handled intentionally.
+- PDF filename follows `kanban-{board_slug}-{YYYYMMDD-HHMM}-{timezone_slug}.pdf` and delivery text references the attachment clearly.
 - Generated PDFs include a real text layer and basic document metadata.
 - The implementation uses `uv` for Python dependency management and running scripts.
-- The cron job can send the normal prose summary and attach the generated PDF when the target platform supports MEDIA attachments.
+- The cron job can send concise prose summary and attach the generated PDF when the target platform supports media attachments.
