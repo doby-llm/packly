@@ -31,6 +31,7 @@ import com.dobyllm.packly.feature.trips.CreateTripSheet
 import com.dobyllm.packly.ui.component.EmptyState
 import com.dobyllm.packly.ui.component.TripSummaryCard
 import com.dobyllm.packly.ui.token.PacklySpacing
+import java.time.LocalTime
 import kotlin.math.roundToInt
 
 @Composable
@@ -110,9 +111,11 @@ fun HomeScreen(
 
 @Composable
 private fun HomeHero(activeTripCount: Int) {
+    val greeting = remember { greetingFor(LocalTime.now()) }
+
     Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm)) {
         Text(
-            text = "Good Morning.",
+            text = greeting,
             style = MaterialTheme.typography.displayLarge,
             color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.ExtraBold,
@@ -123,6 +126,13 @@ private fun HomeHero(activeTripCount: Int) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+}
+
+private fun greetingFor(localTime: LocalTime): String = when (localTime.hour) {
+    in 5..11 -> "Good Morning."
+    in 12..16 -> "Good Afternoon."
+    in 17..21 -> "Good Evening."
+    else -> "Good Night."
 }
 
 @Composable

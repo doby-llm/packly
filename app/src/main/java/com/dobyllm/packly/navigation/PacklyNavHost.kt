@@ -1,37 +1,31 @@
 package com.dobyllm.packly.navigation
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.dobyllm.packly.PacklyAppViewModel
-import com.dobyllm.packly.core.model.ThemeMode
 import com.dobyllm.packly.feature.home.HomeScreen
 import com.dobyllm.packly.feature.items.ItemsScreen
 import com.dobyllm.packly.feature.lists.ListDetailScreen
@@ -42,6 +36,7 @@ import com.dobyllm.packly.feature.trips.TripsScreen
 import com.dobyllm.packly.ui.component.PacklyFabAction
 import com.dobyllm.packly.ui.component.PacklyScaffold
 import com.dobyllm.packly.ui.component.PacklyTopLevelDestinations
+import com.dobyllm.packly.ui.token.PacklyMotion
 
 @Composable
 fun PacklyNavHost(
@@ -53,16 +48,16 @@ fun PacklyNavHost(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val isTopLevelRoute = PacklyTopLevelDestinations.any { it.route == currentRoute }
-    var showAppearance by remember { mutableStateOf(false) }
-    var fabAction by remember { mutableStateOf<PacklyFabAction?>(null) }
+    var routeFabAction by remember { mutableStateOf<RouteFabAction?>(null) }
+    val fabAction = routeFabAction?.takeIf { it.route == currentRoute }?.action
 
     LaunchedEffect(initialTripId) {
         initialTripId?.let { navController.navigate(PacklyRoute.tripDetail(it)) }
     }
 
-    // Route changes must clear screen-scoped actions so nested destinations never inherit a FAB.
+    // Route changes must clear stale screen-scoped actions so nested destinations never inherit a FAB.
     LaunchedEffect(currentRoute) {
-        fabAction = null
+        if (routeFabAction?.route != currentRoute) routeFabAction = null
     }
 
     PacklyScaffold(
@@ -71,7 +66,6 @@ fun PacklyNavHost(
         nestedTitle = currentRoute.nestedTitle(),
         fabAction = fabAction,
         onBack = { navController.popBackStack() },
-        onSettings = { showAppearance = true },
         onDestinationClick = { destination ->
             navController.navigate(destination.route) {
                 popUpTo(navController.graph.findStartDestination().id) { saveState = true }
@@ -84,6 +78,10 @@ fun PacklyNavHost(
             navController = navController,
             startDestination = PacklyRoute.Home,
             modifier = Modifier.fillMaxSize(),
+            enterTransition = { packlyEnterTransition() },
+            exitTransition = { packlyExitTransition() },
+            popEnterTransition = { packlyPopEnterTransition() },
+            popExitTransition = { packlyPopExitTransition() },
         ) {
             composable(PacklyRoute.Home) {
                 HomeScreen(
@@ -97,7 +95,9 @@ fun PacklyNavHost(
                 ItemsScreen(
                     doc = doc,
                     contentPadding = shellPadding,
-                    onFabActionChange = { fabAction = it },
+                    onFabActionChange = { action ->
+                        routeFabAction = routeFabAction.updatedForRoute(PacklyRoute.Items, action)
+                    },
                     onAdd = vm::addItem,
                     onUpdate = vm::updateItem,
                     onDelete = vm::archiveItem,
@@ -107,7 +107,9 @@ fun PacklyNavHost(
                 ListsScreen(
                     doc = doc,
                     contentPadding = shellPadding,
-                    onFabActionChange = { fabAction = it },
+                    onFabActionChange = { action ->
+                        routeFabAction = routeFabAction.updatedForRoute(PacklyRoute.Lists, action)
+                    },
                     onCreate = vm::createList,
                     onOpen = { navController.navigate(PacklyRoute.listDetail(it)) },
                     onRename = vm::renameList,
@@ -132,7 +134,9 @@ fun PacklyNavHost(
                 TripsScreen(
                     doc = doc,
                     contentPadding = shellPadding,
-                    onFabActionChange = { fabAction = it },
+                    onFabActionChange = { action ->
+                        routeFabAction = routeFabAction.updatedForRoute(PacklyRoute.Trips, action)
+                    },
                     onCreate = vm::createTrip,
                     onOpen = { navController.navigate(PacklyRoute.tripDetail(it)) },
                     onPack = { navController.navigate(PacklyRoute.packingMode(it)) },
@@ -163,16 +167,17 @@ fun PacklyNavHost(
         }
     }
 
-    if (showAppearance) {
-        AppearanceDialog(
-            selectedMode = doc.settings.themeMode,
-            onSelect = { mode ->
-                vm.updateThemeMode(mode)
-                showAppearance = false
-            },
-            onDismiss = { showAppearance = false },
-        )
-    }
+}
+
+private data class RouteFabAction(
+    val route: String,
+    val action: PacklyFabAction,
+)
+
+private fun RouteFabAction?.updatedForRoute(route: String, action: PacklyFabAction?): RouteFabAction? = when {
+    action != null -> RouteFabAction(route, action)
+    this?.route == route -> null
+    else -> this
 }
 
 private fun String?.nestedTitle(): String = when (this) {
@@ -182,50 +187,18 @@ private fun String?.nestedTitle(): String = when (this) {
     else -> "Packly"
 }
 
-@Composable
-private fun AppearanceDialog(selectedMode: ThemeMode, onSelect: (ThemeMode) -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text("Settings") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                ThemeMode.entries.forEach { mode ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSelect(mode) }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        RadioButton(selected = selectedMode == mode, onClick = { onSelect(mode) })
-                        Column {
-                            Text(mode.label, style = MaterialTheme.typography.bodyLarge)
-                            Text(
-                                mode.description,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
-    )
-}
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.packlyEnterTransition(): EnterTransition =
+    fadeIn(animationSpec = tween(PacklyMotion.navMillis)) +
+        slideInHorizontally(animationSpec = tween(PacklyMotion.navMillis)) { it / 12 }
 
-private val ThemeMode.label: String
-    get() = when (this) {
-        ThemeMode.System -> "Follow system"
-        ThemeMode.Light -> "Light"
-        ThemeMode.Dark -> "Dark"
-    }
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.packlyExitTransition(): ExitTransition =
+    fadeOut(animationSpec = tween(PacklyMotion.navMillis)) +
+        slideOutHorizontally(animationSpec = tween(PacklyMotion.navMillis)) { -it / 16 }
 
-private val ThemeMode.description: String
-    get() = when (this) {
-        ThemeMode.System -> "Use your device theme."
-        ThemeMode.Light -> "Always use light surfaces and dark system icons."
-        ThemeMode.Dark -> "Always use dark surfaces and light system icons."
-    }
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.packlyPopEnterTransition(): EnterTransition =
+    fadeIn(animationSpec = tween(PacklyMotion.navMillis)) +
+        slideInHorizontally(animationSpec = tween(PacklyMotion.navMillis)) { -it / 12 }
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.packlyPopExitTransition(): ExitTransition =
+    fadeOut(animationSpec = tween(PacklyMotion.navMillis)) +
+        slideOutHorizontally(animationSpec = tween(PacklyMotion.navMillis)) { it / 16 }

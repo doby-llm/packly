@@ -7,7 +7,7 @@ enum class ThemeMode { System, Light, Dark }
 
 @Serializable
 data class PacklySettings(
-    val themeMode: ThemeMode = ThemeMode.System,
+    val themeMode: ThemeMode = ThemeMode.Light,
     val dynamicColorEnabled: Boolean = false,
     val selectedPaletteKey: String = "packly_default",
     val firstLaunchCompleted: Boolean = false,

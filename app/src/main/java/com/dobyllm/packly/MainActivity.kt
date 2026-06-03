@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dobyllm.packly.navigation.PacklyNavHost
 import com.dobyllm.packly.notification.EXTRA_TRIP_ID
@@ -29,11 +28,10 @@ class MainActivity : ComponentActivity() {
         val notificationTripId = intent?.getStringExtra(EXTRA_TRIP_ID)
         setContent {
             val vm: PacklyAppViewModel = viewModel()
-            val doc = vm.document.collectAsStateWithLifecycle().value
 
             PacklyTheme(
                 darkTheme = false,
-                dynamicColor = doc.settings.dynamicColorEnabled,
+                dynamicColor = false,
             ) {
                 SyncSystemBars()
                 Surface(
@@ -48,13 +46,13 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun SyncSystemBars(darkTheme: Boolean = false) {
+private fun SyncSystemBars() {
     val view = LocalView.current
     val background = MaterialTheme.colorScheme.background.toArgb()
     val navigation = MaterialTheme.colorScheme.surface.toArgb()
 
     if (!view.isInEditMode) {
-        DisposableEffect(darkTheme, background, navigation, view) {
+        DisposableEffect(background, navigation, view) {
             val window = (view.context as Activity).window
             window.statusBarColor = background
             window.navigationBarColor = navigation
@@ -62,14 +60,14 @@ private fun SyncSystemBars(darkTheme: Boolean = false) {
                 window.isNavigationBarContrastEnforced = false
                 window.isStatusBarContrastEnforced = false
             }
-            window.syncSystemBarIconColors(view = view, darkTheme = darkTheme)
+            window.syncLightSystemBarIconColors(view = view)
             onDispose { }
         }
     }
 }
 
-private fun Window.syncSystemBarIconColors(view: android.view.View, darkTheme: Boolean) {
+private fun Window.syncLightSystemBarIconColors(view: android.view.View) {
     val controller = WindowCompat.getInsetsController(this, view)
-    controller.isAppearanceLightStatusBars = !darkTheme
-    controller.isAppearanceLightNavigationBars = !darkTheme
+    controller.isAppearanceLightStatusBars = true
+    controller.isAppearanceLightNavigationBars = true
 }

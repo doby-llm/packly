@@ -2,6 +2,7 @@ package com.dobyllm.packly.ui.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,7 +24,6 @@ import androidx.compose.material.icons.rounded.Backpack
 import androidx.compose.material.icons.rounded.Checklist
 import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -37,13 +37,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dobyllm.packly.R
 import com.dobyllm.packly.navigation.PacklyRoute
 import com.dobyllm.packly.ui.theme.PacklyOnSecondaryContainer
 import com.dobyllm.packly.ui.theme.PacklyOnSurfaceVariant
@@ -82,7 +85,6 @@ fun PacklyScaffold(
     nestedTitle: String?,
     fabAction: PacklyFabAction?,
     onBack: () -> Unit,
-    onSettings: () -> Unit,
     onDestinationClick: (PacklyTopLevelDestination) -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 ) {
@@ -96,7 +98,6 @@ fun PacklyScaffold(
                 canNavigateBack = canNavigateBack,
                 title = if (showBottomBar) "Packly" else nestedTitle.orEmpty(),
                 onBack = onBack,
-                onSettings = onSettings,
             )
         },
         bottomBar = {
@@ -121,7 +122,6 @@ fun PacklyTopBar(
     canNavigateBack: Boolean,
     title: String,
     onBack: () -> Unit,
-    onSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -150,21 +150,16 @@ fun PacklyTopBar(
                     .size(48.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Box(
+                Image(
+                    painter = painterResource(R.drawable.packly_logo),
+                    contentDescription = "Packly logo",
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
                         .background(PacklySurfaceContainer)
                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "M",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = PacklyPrimary,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
+                    contentScale = ContentScale.Crop,
+                )
             }
         }
 
@@ -176,16 +171,8 @@ fun PacklyTopBar(
             fontWeight = if (canNavigateBack) FontWeight.SemiBold else FontWeight.Bold,
         )
 
-        IconButton(
-            onClick = onSettings,
-            modifier = Modifier.align(Alignment.CenterEnd).size(48.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Settings,
-                contentDescription = "Settings",
-                tint = PacklyOnSurfaceVariant,
-            )
-        }
+        // Right-side spacer keeps the centered title optically balanced after removing settings.
+        Box(modifier = Modifier.align(Alignment.CenterEnd).size(48.dp))
     }
 }
 
@@ -207,9 +194,9 @@ fun PacklyBottomNavBar(
             .clip(RoundedCornerShape(topStart = PacklyRadius.lg, topEnd = PacklyRadius.lg))
             .background(PacklySurfaceContainer)
             .navigationBarsPadding()
-            .height(80.dp)
-            .padding(horizontal = PacklySpacing.base, vertical = PacklySpacing.base),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+            .height(72.dp)
+            .padding(horizontal = PacklySpacing.xs, vertical = PacklySpacing.xs),
+        horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         PacklyTopLevelDestinations.forEach { destination ->
@@ -238,7 +225,7 @@ private fun PacklyBottomNavItem(
         onClick = onClick,
         modifier = modifier
             .defaultMinSize(minHeight = 48.dp)
-            .padding(horizontal = 2.dp)
+            .padding(horizontal = 1.dp)
             .semantics {
                 role = Role.Tab
                 this.selected = selected
@@ -248,8 +235,8 @@ private fun PacklyBottomNavItem(
         contentColor = contentColor,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = PacklySpacing.base, vertical = PacklySpacing.xs),
-            horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs, Alignment.CenterHorizontally),
+            modifier = Modifier.padding(horizontal = PacklySpacing.xs, vertical = PacklySpacing.xs),
+            horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -260,7 +247,7 @@ private fun PacklyBottomNavItem(
             Text(
                 text = destination.label,
                 style = MaterialTheme.typography.labelMedium,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
             )
         }
     }
