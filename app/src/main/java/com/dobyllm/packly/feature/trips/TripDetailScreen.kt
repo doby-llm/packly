@@ -63,14 +63,12 @@ fun TripDetailScreen(
 ) {
     val trip = doc.trips.firstOrNull { it.id == tripId }
     var showResetConfirm by remember(tripId) { mutableStateOf(false) }
-    var deadlineInput by remember(trip?.packBy) { mutableStateOf(PacklyDeadlineFormatter.formatInput(trip?.packBy)) }
+    var deadlineDraft by remember(trip?.packBy) { mutableStateOf(trip?.packBy) }
     var notificationPermissionGranted by rememberNotificationPermissionState()
     val requestNotificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         notificationPermissionGranted = granted
     }
-    val parsedDeadline = remember(deadlineInput) { PacklyDeadlineFormatter.parseLocalInput(deadlineInput) }
-    val deadlineInvalid = deadlineInput.isNotBlank() && parsedDeadline == null
-    val hasDeadlineChange = trip != null && parsedDeadline != trip.packBy && !(deadlineInput.isBlank() && trip.packBy == null)
+    val hasDeadlineChange = trip != null && deadlineDraft != trip.packBy
 
     if (trip == null) {
         EmptyState(
@@ -144,22 +142,21 @@ fun TripDetailScreen(
                     packBy = packBy,
                     unpackedItems = unpackedItems,
                     deadlineWarning = deadlineWarning,
-                    deadlineInput = deadlineInput,
-                    onDeadlineInputChange = { deadlineInput = it },
-                    deadlineInvalid = deadlineInvalid,
+                    deadlineDraft = deadlineDraft,
+                    onDeadlineDraftChange = { deadlineDraft = it },
                     notificationPermissionGranted = notificationPermissionGranted,
                     hasDeadlineChange = hasDeadlineChange,
                     onSaveDeadline = {
-                        if (deadlineInput.isNotBlank() && !notificationPermissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (deadlineDraft != null && !notificationPermissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
-                        onDeadlineChange(parsedDeadline)
+                        onDeadlineChange(deadlineDraft)
                     },
                     onClearDeadline = {
-                        deadlineInput = ""
+                        deadlineDraft = null
                         onDeadlineChange(null)
                     },
-                    canClearDeadline = trip.packBy != null || deadlineInput.isNotBlank(),
+                    canClearDeadline = trip.packBy != null || deadlineDraft != null,
                 )
             }
             item { Text("Trip quantities", style = MaterialTheme.typography.titleLarge) }
@@ -200,9 +197,8 @@ private fun DeadlineCard(
     packBy: String?,
     unpackedItems: Int,
     deadlineWarning: Boolean,
-    deadlineInput: String,
-    onDeadlineInputChange: (String) -> Unit,
-    deadlineInvalid: Boolean,
+    deadlineDraft: InstantString?,
+    onDeadlineDraftChange: (InstantString?) -> Unit,
     notificationPermissionGranted: Boolean,
     hasDeadlineChange: Boolean,
     onSaveDeadline: () -> Unit,
@@ -233,22 +229,18 @@ private fun DeadlineCard(
                     color = if (deadlineWarning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            PacklyTripTextField(
-                value = deadlineInput,
-                onValueChange = onDeadlineInputChange,
+            PacklyDeadlinePickerField(
+                deadline = deadlineDraft,
+                onDeadlineChange = onDeadlineDraftChange,
                 label = "Pack by date/time",
-                placeholder = PacklyDeadlineFormatter.InputPattern,
                 supportingText = when {
-                    deadlineInvalid -> "Use ${PacklyDeadlineFormatter.InputPattern}."
-                    deadlineInput.isNotBlank() && !notificationPermissionGranted -> "Notifications are off. We can still show the deadline in Packly."
-                    else -> "We'll remind you if anything is still unpacked."
+                    deadlineDraft != null && !notificationPermissionGranted -> "Notifications are off. We can still show the deadline in Packly."
+                    else -> "Pick a date, then adjust the optional reminder time. Default time is 18:00."
                 },
-                isError = deadlineInvalid,
-                singleLine = true,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
                 Button(
-                    enabled = !deadlineInvalid && hasDeadlineChange,
+                    enabled = hasDeadlineChange,
                     onClick = onSaveDeadline,
                     shape = RoundedCornerShape(PacklyRadius.default),
                 ) { Text("Save deadline") }

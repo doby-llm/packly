@@ -65,8 +65,8 @@ fun TripsScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding),
-        contentPadding = PaddingValues(horizontal = PacklySpacing.marginMobile, vertical = PacklySpacing.md),
-        verticalArrangement = Arrangement.spacedBy(PacklySpacing.md),
+        contentPadding = PaddingValues(horizontal = PacklySpacing.marginMobile, vertical = PacklySpacing.sm),
+        verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
     ) {
         item { TripsHeader(activeCount = activeTrips.size, completedCount = completedTrips.size) }
         if (visibleTrips.isEmpty()) {
@@ -129,19 +129,19 @@ private fun TripsHeader(activeCount: Int, completedCount: Int) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = PacklySpacing.base),
+            .padding(bottom = PacklySpacing.xs),
         verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
     ) {
         Text(
             text = "Trips",
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
         )
         val completedCopy = completedCount.takeIf { it > 0 }?.let { " Completed trips stay lower priority." } ?: ""
         Text(
             text = "Prepare ${activeCount.coerceAtLeast(0)} active ${if (activeCount == 1) "trip" else "trips"}.$completedCopy",
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
@@ -151,7 +151,8 @@ private fun TripsHeader(activeCount: Int, completedCount: Int) {
 private fun TripsSectionTitle(title: String) {
     Text(
         text = title,
-        style = MaterialTheme.typography.titleLarge,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurface,
     )
 }

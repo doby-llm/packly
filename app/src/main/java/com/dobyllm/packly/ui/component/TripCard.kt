@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.dobyllm.packly.ui.component
 
 import androidx.compose.foundation.background
@@ -6,8 +8,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,6 +27,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.PacklyTrip
 import com.dobyllm.packly.core.time.PacklyDeadlineFormatter
@@ -54,7 +60,7 @@ fun TripCard(trip: PacklyTrip, onOpen: () -> Unit, onPack: () -> Unit, onDelete:
         progress = summary.progress,
         chips = summary.chips,
         accentColor = MaterialTheme.colorScheme.primaryContainer,
-        onClick = onOpen,
+        onClick = null,
     ) {
         if (deadlineWarning) {
             AssistChip(
@@ -63,10 +69,24 @@ fun TripCard(trip: PacklyTrip, onOpen: () -> Unit, onPack: () -> Unit, onDelete:
                 colors = AssistChipDefaults.assistChipColors(labelColor = MaterialTheme.colorScheme.error),
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
-            Button(onClick = onPack) { Text(if (summary.packedItems == 0) "Start packing" else "Continue packing") }
-            OutlinedButton(onClick = onOpen) { Text("Details") }
-            TextButton(onClick = onDelete, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) { Text("Archive") }
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
+            verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
+        ) {
+            Button(
+                onClick = onPack,
+                contentPadding = CompactTripButtonPadding,
+            ) { Text(if (summary.packedItems == 0) "Start packing" else "Continue") }
+            OutlinedButton(
+                onClick = onOpen,
+                contentPadding = CompactTripButtonPadding,
+            ) { Text("Details") }
+            TextButton(
+                onClick = onDelete,
+                contentPadding = CompactTripButtonPadding,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+            ) { Text("Archive") }
         }
     }
 }
@@ -79,27 +99,55 @@ fun TripSummaryCard(
     progress: Float,
     chips: List<String>,
     accentColor: Color,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     actions: @Composable ColumnScope.() -> Unit = {},
 ) {
     val cardShape = RoundedCornerShape(PacklyRadius.lg)
 
-    ElevatedCard(
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = PacklyElevation.card,
-                shape = cardShape,
-                ambientColor = accentColor.copy(alpha = 0.10f),
-                spotColor = accentColor.copy(alpha = 0.10f),
-            )
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, cardShape),
-        shape = cardShape,
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = PacklyElevation.floor),
-    ) {
+    val cardModifier = modifier
+        .fillMaxWidth()
+        .shadow(
+            elevation = PacklyElevation.card,
+            shape = cardShape,
+            ambientColor = accentColor.copy(alpha = 0.10f),
+            spotColor = accentColor.copy(alpha = 0.10f),
+        )
+        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, cardShape)
+
+    if (onClick != null) {
+        ElevatedCard(
+            onClick = onClick,
+            modifier = cardModifier,
+            shape = cardShape,
+            colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = PacklyElevation.floor),
+        ) {
+            TripSummaryCardContent(title, metadata, percentLabel, progress, chips, accentColor, actions)
+        }
+    } else {
+        Surface(
+            modifier = cardModifier,
+            shape = cardShape,
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            shadowElevation = PacklyElevation.floor,
+        ) {
+            TripSummaryCardContent(title, metadata, percentLabel, progress, chips, accentColor, actions)
+        }
+    }
+}
+
+@Composable
+private fun TripSummaryCardContent(
+    title: String,
+    metadata: String,
+    percentLabel: String,
+    progress: Float,
+    chips: List<String>,
+    accentColor: Color,
+    actions: @Composable ColumnScope.() -> Unit,
+) {
         Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
             Box(
                 modifier = Modifier
@@ -110,8 +158,8 @@ fun TripSummaryCard(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(PacklySpacing.md),
-                verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
+                    .padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.sm),
+                verticalArrangement = Arrangement.spacedBy(PacklySpacing.base),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -122,7 +170,13 @@ fun TripSummaryCard(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
                     ) {
-                        Text(title, style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            title,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                         if (metadata.isNotBlank()) {
                             Text(
                                 metadata,
@@ -138,13 +192,16 @@ fun TripSummaryCard(
                     progress = { progress.coerceIn(0f, 1f) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(8.dp)
+                        .height(6.dp)
                         .clip(RoundedCornerShape(PacklyRadius.full)),
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 )
                 if (chips.isNotEmpty()) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+                        verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
+                    ) {
                         chips.take(MAX_VISIBLE_TRIP_CHIPS).forEachIndexed { index, chip ->
                             TripMetadataChip(
                                 label = chip,
@@ -156,7 +213,6 @@ fun TripSummaryCard(
                 actions()
             }
         }
-    }
 }
 
 @Composable
@@ -213,12 +269,10 @@ private fun computeTripSummary(trip: PacklyTrip): TripSummary {
     val progress = packed / safeTotal.toFloat()
     val packBy = PacklyDeadlineFormatter.formatDisplay(trip.packBy)
     val dateRange = listOfNotNull(trip.startDate, trip.endDate).joinToString(" - ").ifBlank { null }
-    val metadata = listOfNotNull(
-        dateRange,
-        trip.destination.takeIf { it.isNotBlank() },
-        "$packed/$total packed",
-        packBy?.let { "Pack by $it" },
-    ).joinToString(" • ")
+    val metadata = dateRange
+        ?: packBy?.let { "Pack by $it" }
+        ?: trip.destination.takeIf { it.isNotBlank() }
+        ?: "$packed/$total packed"
     val chips = listOfNotNull(
         trip.destination.takeIf { it.isNotBlank() },
         packBy?.let { "Pack by $it" },
@@ -236,3 +290,4 @@ private fun computeTripSummary(trip: PacklyTrip): TripSummary {
 }
 
 private const val MAX_VISIBLE_TRIP_CHIPS = 2
+private val CompactTripButtonPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)

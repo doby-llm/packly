@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,8 +26,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -35,9 +39,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
@@ -64,6 +72,10 @@ import com.dobyllm.packly.core.time.PacklyDeadlineFormatter
 import com.dobyllm.packly.notification.canPostPacklyNotifications
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneOffset
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
@@ -75,7 +87,7 @@ fun CreateTripSheet(
     var name by remember { mutableStateOf("") }
     var destination by remember { mutableStateOf("") }
     var showDestination by remember { mutableStateOf(false) }
-    var packByInput by remember { mutableStateOf("") }
+    var packByDeadline by remember { mutableStateOf<InstantString?>(null) }
     var sourceListId by remember { mutableStateOf<ListId?>(null) }
     var itemQuery by remember { mutableStateOf("") }
     var notificationPermissionGranted by rememberNotificationPermissionState()
@@ -96,8 +108,6 @@ fun CreateTripSheet(
     val reviewItems = remember(selectedItemIds, doc.items, sourceEntries) {
         buildTripReviewItems(selectedItemIds, doc.items, sourceEntries)
     }
-    val parsedPackBy = remember(packByInput) { PacklyDeadlineFormatter.parseLocalInput(packByInput) }
-    val packByInvalid = packByInput.isNotBlank() && parsedPackBy == null
 
     LaunchedEffect(selectedItemIds) {
         selectedItemIds.forEach { itemId -> quantities.putIfAbsent(itemId, 1) }
@@ -147,18 +157,13 @@ fun CreateTripSheet(
                 } else {
                     TextButton(onClick = { showDestination = true }) { Text("Add destination (optional)") }
                 }
-                PacklyTripTextField(
-                    value = packByInput,
-                    onValueChange = { packByInput = it },
-                    label = "Pack by (optional)",
-                    placeholder = PacklyDeadlineFormatter.InputPattern,
+                PacklyDeadlinePickerField(
+                    deadline = packByDeadline,
+                    onDeadlineChange = { packByDeadline = it },
                     supportingText = when {
-                        packByInvalid -> "Use ${PacklyDeadlineFormatter.InputPattern}. We'll remind you if anything is still unpacked."
-                        packByInput.isNotBlank() && !notificationPermissionGranted -> "Notifications are off. We can still show the deadline in Packly."
-                        else -> "We'll remind you if anything is still unpacked."
+                        packByDeadline != null && !notificationPermissionGranted -> "Notifications are off. We can still show the deadline in Packly."
+                        else -> "Pick a date, then adjust the optional reminder time. Default time is 18:00."
                     },
-                    isError = packByInvalid,
-                    singleLine = true,
                 )
                 Text("Use a list", style = MaterialTheme.typography.labelLarge)
                 FlowRow(
@@ -216,12 +221,12 @@ fun CreateTripSheet(
                 }
             }
             Button(
-                enabled = name.trim().isNotEmpty() && !duplicateName && !packByInvalid,
+                enabled = name.trim().isNotEmpty() && !duplicateName,
                 onClick = {
-                    if (packByInput.isNotBlank() && !notificationPermissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (packByDeadline != null && !notificationPermissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
-                    onCreate(name, destination, sourceListId, selectedItems.toSet(), quantities.toMap(), parsedPackBy)
+                    onCreate(name, destination, sourceListId, selectedItems.toSet(), quantities.toMap(), packByDeadline)
                     onDismiss()
                 },
                 modifier = Modifier
@@ -242,6 +247,101 @@ fun rememberNotificationPermissionState(): MutableState<Boolean> {
     val context = LocalContext.current
     return remember { mutableStateOf(canPostPacklyNotifications(context)) }
 }
+
+@Composable
+internal fun PacklyDeadlinePickerField(
+    deadline: InstantString?,
+    onDeadlineChange: (InstantString?) -> Unit,
+    supportingText: String,
+    modifier: Modifier = Modifier,
+    label: String = "Pack by (optional)",
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+    val selectedDate = PacklyDeadlineFormatter.localDate(deadline)
+    val selectedTime = PacklyDeadlineFormatter.localTime(deadline) ?: PacklyDeadlineFormatter.DefaultPackByTime
+    val selectedDisplay = PacklyDeadlineFormatter.formatDisplay(deadline) ?: "No deadline selected"
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(PacklyRadius.default),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHigh),
+    ) {
+        Column(
+            modifier = Modifier.padding(PacklySpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+        ) {
+            Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                text = selectedDisplay,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = if (deadline == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+            )
+            Text(supportingText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base), verticalAlignment = Alignment.CenterVertically) {
+                Button(onClick = { showDatePicker = true }, shape = RoundedCornerShape(PacklyRadius.default)) {
+                    Text(if (deadline == null) "Pick date" else "Change date")
+                }
+                OutlinedButton(
+                    enabled = deadline != null,
+                    onClick = { showTimePicker = true },
+                    shape = RoundedCornerShape(PacklyRadius.default),
+                ) { Text("Time ${PacklyDeadlineFormatter.formatTime(deadline) ?: "18:00"}") }
+                Spacer(Modifier.weight(1f))
+                TextButton(enabled = deadline != null, onClick = { onDeadlineChange(null) }) { Text("Clear") }
+            }
+        }
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = deadlineDateMillis(selectedDate))
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val date = datePickerState.selectedDateMillis?.toLocalDateUtc() ?: LocalDate.now()
+                        onDeadlineChange(PacklyDeadlineFormatter.toInstantString(date, selectedTime))
+                        showDatePicker = false
+                        showTimePicker = true
+                    },
+                ) { Text("Next: time") }
+            },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } },
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showTimePicker) {
+        val timePickerState = rememberTimePickerState(initialHour = selectedTime.hour, initialMinute = selectedTime.minute, is24Hour = true)
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = { Text("Pack by time") },
+            text = { TimePicker(state = timePickerState) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val date = PacklyDeadlineFormatter.localDate(deadline) ?: LocalDate.now()
+                        val time = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                        onDeadlineChange(PacklyDeadlineFormatter.toInstantString(date, time))
+                        showTimePicker = false
+                    },
+                ) { Text("Save time") }
+            },
+            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Skip") } },
+        )
+    }
+}
+
+private fun deadlineDateMillis(date: LocalDate?): Long? = date
+    ?.atStartOfDay(ZoneOffset.UTC)
+    ?.toInstant()
+    ?.toEpochMilli()
+
+private fun Long.toLocalDateUtc(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
 
 private data class TripReviewItem(
     val itemId: ItemId,
