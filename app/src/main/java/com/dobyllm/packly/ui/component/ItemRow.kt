@@ -86,6 +86,7 @@ fun PackingItemRow(
         note = quantityText,
         category = category,
         isCompleted = entry.isPacked,
+        completedIndicatorColor = MaterialTheme.colorScheme.secondaryContainer,
         modifier = modifier.semantics {
             contentDescription = listOfNotNull(
                 entry.nameSnapshot,
@@ -112,11 +113,13 @@ private fun CatalogItemRow(
     category: PacklyCategory?,
     isCompleted: Boolean,
     modifier: Modifier = Modifier,
+    completedIndicatorColor: androidx.compose.ui.graphics.Color? = null,
     role: Role? = null,
     onClick: () -> Unit,
     trailingContent: @Composable () -> Unit,
 ) {
     val token = category?.let { CategoryTokens.byKey(it.key) } ?: CategoryTokens.byKey("misc")
+    val indicatorColor = completedIndicatorColor ?: token.accent
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -126,7 +129,7 @@ private fun CatalogItemRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PacklySpacing.md),
     ) {
-        CompletionIndicator(isCompleted = isCompleted, accentColor = token.accent)
+        CompletionIndicator(isCompleted = isCompleted, accentColor = indicatorColor)
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp),
