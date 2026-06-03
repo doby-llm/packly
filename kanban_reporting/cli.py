@@ -8,6 +8,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from .adapters.hermes_kanban import collect_live_snapshot
 from .generator import build_report_from_snapshot
 from .models import BoardReport
 from .pdf import render_pdf
@@ -16,10 +17,17 @@ from .pdf import render_pdf
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Generate a project-agnostic Hermes Kanban JSON/PDF report.")
     parser.add_argument("--fixture", type=Path, help="Project-agnostic board snapshot JSON to transform into a report.")
+    parser.add_argument("--live-board", help="Hermes Kanban board slug to collect live via `hermes kanban list --json`.")
     parser.add_argument("--input-report", type=Path, help="Already validated BoardReport JSON payload to render/write.")
     parser.add_argument("--out-dir", type=Path, required=True, help="Output directory for report JSON/PDF artifacts.")
     parser.add_argument("--format", default="json,pdf", help="Comma-separated outputs: json,pdf")
     parser.add_argument("--schema", action="store_true", help="Write the BoardReport JSON Schema and exit.")
+    parser.add_argument("--project-name", help="Optional display name for the project/board consumer.")
+    parser.add_argument("--timezone", default="Europe/Zurich", help="IANA timezone for local report timestamps.")
+    parser.add_argument("--job-id", help="Optional cron/job id to include in report metadata.")
+    parser.add_argument("--window-minutes", type=int, default=40, help="Reporting window length used for live-board change derivation.")
+    parser.add_argument("--next-update-at-local", help="Optional human-readable next scheduled run time.")
+    parser.add_argument("--hermes-cli", help="Absolute path to Hermes CLI; defaults to HERMES_CLI, PATH, or the standard install path.")
     args = parser.parse_args(argv)
 
     try:
@@ -63,10 +71,22 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _load_report(args: argparse.Namespace) -> BoardReport:
-    if args.fixture and args.input_report:
-        raise ValueError("Use only one of --fixture or --input-report")
+    inputs = [bool(args.fixture), bool(args.input_report), bool(args.live_board)]
+    if sum(inputs) > 1:
+        raise ValueError("Use only one of --fixture, --input-report, or --live-board")
     if args.input_report:
         return BoardReport.model_validate_json(args.input_report.read_text(encoding="utf-8"))
+    if args.live_board:
+        snapshot = collect_live_snapshot(
+            board_name=args.live_board,
+            hermes_cli=args.hermes_cli,
+            project_name=args.project_name,
+            timezone_name=args.timezone,
+            job_id=args.job_id,
+            window_minutes=args.window_minutes,
+            next_update_at_local=args.next_update_at_local,
+        )
+        return build_report_from_snapshot(snapshot, out_dir=args.out_dir)
     if args.fixture:
         snapshot: dict[str, Any] = json.loads(args.fixture.read_text(encoding="utf-8"))
         return build_report_from_snapshot(snapshot, out_dir=args.out_dir)
