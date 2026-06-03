@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Packly - Lists</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "tertiary-container": "#94d2ff",
+                "tertiary-fixed-dim": "#89ceff",
+                "error-container": "#ffdad6",
+                "primary": "#006b57",
+                "on-surface-variant": "#3b4a44",
+                "surface-container-lowest": "#ffffff",
+                "on-primary": "#ffffff",
+                "secondary-container": "#9c7afe",
+                "on-tertiary": "#ffffff",
+                "tertiary-fixed": "#c9e6ff",
+                "on-secondary-fixed": "#21005e",
+                "surface-container-low": "#f3f4f5",
+                "inverse-on-surface": "#f0f1f2",
+                "background": "#f8f9fa",
+                "surface": "#f8f9fa",
+                "surface-container": "#edeeef",
+                "outline-variant": "#b9cac3",
+                "on-primary-fixed": "#002019",
+                "primary-fixed-dim": "#00e0b8",
+                "inverse-primary": "#00e0b8",
+                "on-tertiary-fixed-variant": "#004c6e",
+                "on-surface": "#191c1d",
+                "secondary-fixed-dim": "#cebdff",
+                "primary-fixed": "#42fdd3",
+                "surface-bright": "#f8f9fa",
+                "inverse-surface": "#2e3132",
+                "secondary-fixed": "#e8ddff",
+                "on-secondary-fixed-variant": "#5028ae",
+                "outline": "#6b7b74",
+                "on-primary-container": "#00614f",
+                "on-error-container": "#93000a",
+                "surface-variant": "#e1e3e4",
+                "surface-container-high": "#e7e8e9",
+                "primary-container": "#00e5bc",
+                "on-secondary-container": "#310082",
+                "surface-dim": "#d9dadb",
+                "surface-tint": "#006b57",
+                "on-error": "#ffffff",
+                "on-tertiary-fixed": "#001e2f",
+                "on-background": "#191c1d",
+                "on-tertiary-container": "#005b84",
+                "tertiary": "#006591",
+                "on-secondary": "#ffffff",
+                "error": "#ba1a1a",
+                "on-primary-fixed-variant": "#005141",
+                "secondary": "#6844c7",
+                "surface-container-highest": "#e1e3e4"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "lg": "48px",
+                "xs": "4px",
+                "margin-mobile": "16px",
+                "gutter": "24px",
+                "md": "24px",
+                "margin-desktop": "40px",
+                "base": "8px",
+                "xl": "80px",
+                "sm": "12px"
+        },
+        "fontFamily": {
+                "title-md": [
+                        "Plus Jakarta Sans"
+                ],
+                "body-lg": [
+                        "Plus Jakarta Sans"
+                ],
+                "display-lg": [
+                        "Plus Jakarta Sans"
+                ],
+                "headline-lg-mobile": [
+                        "Plus Jakarta Sans"
+                ],
+                "headline-lg": [
+                        "Plus Jakarta Sans"
+                ],
+                "label-md": [
+                        "Plus Jakarta Sans"
+                ],
+                "body-sm": [
+                        "Plus Jakarta Sans"
+                ]
+        },
+        "fontSize": {
+                "title-md": [
+                        "20px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "display-lg": [
+                        "48px",
+                        {
+                                "lineHeight": "56px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "800"
+                        }
+                ],
+                "headline-lg-mobile": [
+                        "28px",
+                        {
+                                "lineHeight": "36px",
+                                "fontWeight": "700"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "label-md": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-sm": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-sm text-body-sm antialiased min-h-screen relative pb-[120px]">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky bg-surface dark:bg-surface-dim z-40">
+<div class="flex justify-between items-center px-margin-mobile h-16 w-full">
+<div class="flex items-center gap-sm">
+<img alt="User Profile" class="w-8 h-8 rounded-full object-cover" data-alt="A close-up portrait of a cheerful young woman with light brown hair, smiling warmly. The lighting is soft, natural, and bright, fitting a modern light-mode interface. The background is slightly blurred, keeping the focus entirely on her friendly expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaCDD0fh_RZ05DFlUtRuusdS13Ksp0vdcsrKoLhu_BIblJpPT8iIMAQON54Rkb97UQzXuliLDPLypq_XyW68nvCWAFwnjUKwL-t6UUPbBsd-nyh8QlZkgMY0HAZ8hzzMAEE5-xzvBvv7BGZG6SnJ9dPwN7pPhXaaU_L3pwr-ltMSA3TDCe0RmNqZmcQJo6IAutaEH4gWhavTpF5A0WX9i9r96Iq0a69WFJQuIvqsqhgSmFG727fSFZi0dpTwZhXiy8HkqwYzJni8Tt"/>
+<span class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary dark:text-primary-fixed-dim tracking-tight">Packly</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors active:opacity-80 transition-opacity duration-150 text-on-surface-variant dark:text-outline">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="px-margin-mobile pt-md flex flex-col gap-xl max-w-screen-md mx-auto">
+<!-- Section Header -->
+<div class="flex flex-col gap-xs">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">My Lists</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Manage your packing templates and upcoming trips.</p>
+</div>
+<!-- Lists Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Card 1: Beach Weekend -->
+<div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_20px_rgba(0,0,0,0.04)] relative overflow-hidden flex flex-col gap-md border border-surface-container-high transition-transform hover:-translate-y-1 duration-200">
+<!-- Pastel Accent Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-tertiary-fixed"></div>
+<!-- Card Header -->
+<div class="flex justify-between items-start pl-2">
+<div class="flex flex-col gap-xs">
+<h2 class="font-title-md text-title-md text-on-surface">Beach Weekend</h2>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">check_box</span> 45 Items
+                        </span>
+</div>
+</div>
+<!-- Category Preview Chips -->
+<div class="flex flex-wrap gap-2 pl-2">
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-3 py-1 rounded-full font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">checkroom</span> Clothes
+                    </span>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-3 py-1 rounded-full font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">soap</span> Toiletries
+                    </span>
+</div>
+<!-- Action Bar -->
+<div class="flex items-center gap-sm mt-sm pt-sm border-t border-surface-container pl-2">
+<button class="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors p-2 -ml-2 rounded-lg hover:bg-surface-container-low font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">edit</span> Rename
+                    </button>
+<button class="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors p-2 rounded-lg hover:bg-surface-container-low font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">content_copy</span> Duplicate
+                    </button>
+<div class="flex-grow"></div>
+<button class="flex items-center gap-1 text-on-surface-variant hover:text-error transition-colors p-2 -mr-2 rounded-lg hover:bg-error-container/50 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">archive</span> Archive
+                    </button>
+</div>
+</div>
+<!-- Card 2: Business Trip -->
+<div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_20px_rgba(0,0,0,0.04)] relative overflow-hidden flex flex-col gap-md border border-surface-container-high transition-transform hover:-translate-y-1 duration-200">
+<!-- Pastel Accent Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-primary-fixed"></div>
+<!-- Card Header -->
+<div class="flex justify-between items-start pl-2">
+<div class="flex flex-col gap-xs">
+<h2 class="font-title-md text-title-md text-on-surface">Business Trip</h2>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">check_box</span> 22 Items
+                        </span>
+</div>
+</div>
+<!-- Category Preview Chips -->
+<div class="flex flex-wrap gap-2 pl-2">
+<span class="bg-primary-fixed text-on-primary-fixed-variant px-3 py-1 rounded-full font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">work</span> Formal
+                    </span>
+<span class="bg-primary-fixed text-on-primary-fixed-variant px-3 py-1 rounded-full font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">laptop_mac</span> Tech
+                    </span>
+</div>
+<!-- Action Bar -->
+<div class="flex items-center gap-sm mt-sm pt-sm border-t border-surface-container pl-2">
+<button class="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors p-2 -ml-2 rounded-lg hover:bg-surface-container-low font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">edit</span> Rename
+                    </button>
+<button class="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors p-2 rounded-lg hover:bg-surface-container-low font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">content_copy</span> Duplicate
+                    </button>
+<div class="flex-grow"></div>
+<button class="flex items-center gap-1 text-on-surface-variant hover:text-error transition-colors p-2 -mr-2 rounded-lg hover:bg-error-container/50 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">archive</span> Archive
+                    </button>
+</div>
+</div>
+<!-- Card 3: Ski Trip -->
+<div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_20px_rgba(0,0,0,0.04)] relative overflow-hidden flex flex-col gap-md border border-surface-container-high transition-transform hover:-translate-y-1 duration-200">
+<!-- Pastel Accent Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-secondary-fixed"></div>
+<!-- Card Header -->
+<div class="flex justify-between items-start pl-2">
+<div class="flex flex-col gap-xs">
+<h2 class="font-title-md text-title-md text-on-surface">Ski Trip</h2>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">check_box</span> 58 Items
+                        </span>
+</div>
+</div>
+<!-- Category Preview Chips -->
+<div class="flex flex-wrap gap-2 pl-2">
+<span class="bg-secondary-fixed text-on-secondary-fixed-variant px-3 py-1 rounded-full font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">downhill_skiing</span> Gear
+                    </span>
+<span class="bg-secondary-fixed text-on-secondary-fixed-variant px-3 py-1 rounded-full font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">ac_unit</span> Warm Clothes
+                    </span>
+</div>
+<!-- Action Bar -->
+<div class="flex items-center gap-sm mt-sm pt-sm border-t border-surface-container pl-2">
+<button class="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors p-2 -ml-2 rounded-lg hover:bg-surface-container-low font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">edit</span> Rename
+                    </button>
+<button class="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors p-2 rounded-lg hover:bg-surface-container-low font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">content_copy</span> Duplicate
+                    </button>
+<div class="flex-grow"></div>
+<button class="flex items-center gap-1 text-on-surface-variant hover:text-error transition-colors p-2 -mr-2 rounded-lg hover:bg-error-container/50 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">archive</span> Archive
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button (FAB) -->
+<button class="fixed bottom-[100px] right-margin-mobile w-14 h-14 bg-primary text-on-primary rounded-xl flex items-center justify-center shadow-[0_8px_24px_rgba(67,96,109,0.25)] hover:scale-105 active:scale-95 transition-transform z-40 md:right-margin-desktop md:bottom-lg">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 pb-4 pt-3 h-[80px] bg-surface-container dark:bg-surface-container-low shadow-[0_-4px_20px_rgba(0,0,0,0.04)] rounded-t-xl">
+<!-- Inactive Tab: Home -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:bg-surface-container-highest dark:hover:bg-surface-container transition-all active:scale-95 transition-transform duration-100 rounded-lg">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-label-md mt-1">Home</span>
+</button>
+<!-- Inactive Tab: Items -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:bg-surface-container-highest dark:hover:bg-surface-container transition-all active:scale-95 transition-transform duration-100 rounded-lg">
+<span class="material-symbols-outlined" data-icon="category">category</span>
+<span class="font-label-md text-label-md mt-1">Items</span>
+</button>
+<!-- Active Tab: Lists -->
+<button class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-lg px-4 py-1 hover:bg-surface-container-highest dark:hover:bg-surface-container transition-all active:scale-95 transition-transform duration-100">
+<span class="material-symbols-outlined" data-icon="checklist" data-weight="fill" style="font-variation-settings: 'FILL' 1;">checklist</span>
+<span class="font-label-md text-label-md mt-1 font-bold">Lists</span>
+</button>
+<!-- Inactive Tab: Trips -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:bg-surface-container-highest dark:hover:bg-surface-container transition-all active:scale-95 transition-transform duration-100 rounded-lg">
+<span class="material-symbols-outlined" data-icon="luggage">luggage</span>
+<span class="font-label-md text-label-md mt-1">Trips</span>
+</button>
+</nav>
+</body></html>

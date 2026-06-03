@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Packly - Items</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "tertiary-container": "#94d2ff",
+                "tertiary-fixed-dim": "#89ceff",
+                "error-container": "#ffdad6",
+                "primary": "#006b57",
+                "on-surface-variant": "#3b4a44",
+                "surface-container-lowest": "#ffffff",
+                "on-primary": "#ffffff",
+                "secondary-container": "#9c7afe",
+                "on-tertiary": "#ffffff",
+                "tertiary-fixed": "#c9e6ff",
+                "on-secondary-fixed": "#21005e",
+                "surface-container-low": "#f3f4f5",
+                "inverse-on-surface": "#f0f1f2",
+                "background": "#f8f9fa",
+                "surface": "#f8f9fa",
+                "surface-container": "#edeeef",
+                "outline-variant": "#b9cac3",
+                "on-primary-fixed": "#002019",
+                "primary-fixed-dim": "#00e0b8",
+                "inverse-primary": "#00e0b8",
+                "on-tertiary-fixed-variant": "#004c6e",
+                "on-surface": "#191c1d",
+                "secondary-fixed-dim": "#cebdff",
+                "primary-fixed": "#42fdd3",
+                "surface-bright": "#f8f9fa",
+                "inverse-surface": "#2e3132",
+                "secondary-fixed": "#e8ddff",
+                "on-secondary-fixed-variant": "#5028ae",
+                "outline": "#6b7b74",
+                "on-primary-container": "#00614f",
+                "on-error-container": "#93000a",
+                "surface-variant": "#e1e3e4",
+                "surface-container-high": "#e7e8e9",
+                "primary-container": "#00e5bc",
+                "on-secondary-container": "#310082",
+                "surface-dim": "#d9dadb",
+                "surface-tint": "#006b57",
+                "on-error": "#ffffff",
+                "on-tertiary-fixed": "#001e2f",
+                "on-background": "#191c1d",
+                "on-tertiary-container": "#005b84",
+                "tertiary": "#006591",
+                "on-secondary": "#ffffff",
+                "error": "#ba1a1a",
+                "on-primary-fixed-variant": "#005141",
+                "secondary": "#6844c7",
+                "surface-container-highest": "#e1e3e4"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "lg": "48px",
+                "xs": "4px",
+                "margin-mobile": "16px",
+                "gutter": "24px",
+                "md": "24px",
+                "margin-desktop": "40px",
+                "base": "8px",
+                "xl": "80px",
+                "sm": "12px"
+        },
+        "fontFamily": {
+                "title-md": [
+                        "Plus Jakarta Sans"
+                ],
+                "body-lg": [
+                        "Plus Jakarta Sans"
+                ],
+                "display-lg": [
+                        "Plus Jakarta Sans"
+                ],
+                "headline-lg-mobile": [
+                        "Plus Jakarta Sans"
+                ],
+                "headline-lg": [
+                        "Plus Jakarta Sans"
+                ],
+                "label-md": [
+                        "Plus Jakarta Sans"
+                ],
+                "body-sm": [
+                        "Plus Jakarta Sans"
+                ]
+        },
+        "fontSize": {
+                "title-md": [
+                        "20px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "display-lg": [
+                        "48px",
+                        {
+                                "lineHeight": "56px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "800"
+                        }
+                ],
+                "headline-lg-mobile": [
+                        "28px",
+                        {
+                                "lineHeight": "36px",
+                                "fontWeight": "700"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "label-md": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-sm": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        body { -webkit-tap-highlight-color: transparent; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .material-symbols-outlined.filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        /* Custom scrollbar for web view */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e1e3e4; border-radius: 10px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-sm min-h-screen pb-[100px] flex flex-col md:items-center">
+<div class="w-full md:max-w-[600px] min-h-screen relative bg-surface flex flex-col shadow-sm">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky bg-surface flex justify-between items-center px-margin-mobile h-16 z-40">
+<button class="w-[48px] h-[48px] flex items-center justify-start hover:bg-surface-container-high transition-colors active:opacity-80 transition-opacity duration-150 rounded-full">
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAR5ZzeDW2i-XPvFJEjOO0_49nj2m7vfZWotEovqo8aF11fLP-4MOdaDb7nSery49dfiMkZzvsFnkpWrlCm4boEOR2YcjhsVkX6se0TAEIw30piU00D-mr_8UU3yoGk_Ffjl2TRzX6XofOp2geBYLFrqQwetZnC5fkfM6izCQuGNVFvuw6XRAVxtw9awNFFj9KRbjaSPoC2NReDudXxctmTGtswOW0W3fP0yHDSbZ8PPxHOcI5fyk5CgmxDpOHUTAW6AlHppVYpTwnw"/>
+</div>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary tracking-tight">Packly</h1>
+<button class="w-[48px] h-[48px] flex items-center justify-end text-on-surface-variant hover:bg-surface-container-high transition-colors active:opacity-80 transition-opacity duration-150 rounded-full">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col px-margin-mobile pt-sm pb-xl gap-lg">
+<!-- Search & Filter -->
+<section class="flex w-full gap-sm items-center h-[48px]">
+<div class="relative flex-1 h-full bg-surface-container-low rounded-full flex items-center px-4 transition-all focus-within:bg-surface focus-within:ring-2 focus-within:ring-primary-container">
+<span class="material-symbols-outlined text-on-surface-variant mr-3">search</span>
+<input class="w-full h-full bg-transparent border-none outline-none font-body-lg text-body-lg text-on-surface placeholder-on-surface-variant" placeholder="Search items..." type="text"/>
+</div>
+<button class="w-[48px] h-[48px] rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors active:scale-95">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</section>
+<!-- Categories Container -->
+<section class="flex flex-col gap-lg">
+<!-- Category: Electronics -->
+<div class="bg-surface-container-lowest rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden relative border border-surface-container-low">
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-primary-container z-10"></div>
+<!-- Header -->
+<div class="bg-primary-container/10 px-md py-sm flex justify-between items-center border-b border-surface-container-low">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-container filled">cable</span>
+<h2 class="font-title-md text-title-md text-on-surface">Electronics</h2>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant bg-surface-container px-3 py-1 rounded-full">3 Items</span>
+</div>
+<!-- Items List -->
+<ul class="flex flex-col px-md py-sm">
+<!-- Item: Checked -->
+<li class="flex items-center justify-between py-xs min-h-[48px] border-b border-surface-container-low last:border-0 group cursor-pointer">
+<div class="flex items-center gap-4 flex-1">
+<button class="w-6 h-6 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center flex-shrink-0 transition-colors">
+<span class="material-symbols-outlined text-[16px] filled">check</span>
+</button>
+<span class="font-body-lg text-body-lg text-on-surface-variant line-through opacity-60">MacBook Pro &amp; Charger</span>
+</div>
+</li>
+<!-- Item: Unchecked -->
+<li class="flex items-center justify-between py-xs min-h-[48px] border-b border-surface-container-low last:border-0 group cursor-pointer">
+<div class="flex items-center gap-4 flex-1">
+<button class="w-6 h-6 rounded-full border-2 border-outline-variant flex items-center justify-center flex-shrink-0 group-hover:border-primary-container transition-colors"></button>
+<span class="font-body-lg text-body-lg text-on-surface">Universal Travel Adapter</span>
+</div>
+</li>
+<!-- Item: Unchecked with Warning -->
+<li class="flex items-center justify-between py-xs min-h-[48px] border-b border-surface-container-low last:border-0 group cursor-pointer">
+<div class="flex items-center gap-4 flex-1">
+<button class="w-6 h-6 rounded-full border-2 border-outline-variant flex items-center justify-center flex-shrink-0 group-hover:border-primary-container transition-colors"></button>
+<span class="font-body-lg text-body-lg text-on-surface">Noise Cancelling Headphones</span>
+</div>
+<div class="w-[48px] h-[48px] flex items-center justify-end flex-shrink-0">
+<span class="material-symbols-outlined text-error" title="Duplicate item detected">warning</span>
+</div>
+</li>
+</ul>
+</div>
+<!-- Category: Clothing -->
+<div class="bg-surface-container-lowest rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden relative border border-surface-container-low">
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-secondary-container z-10"></div>
+<!-- Header -->
+<div class="bg-secondary-container/20 px-md py-sm flex justify-between items-center border-b border-surface-container-low">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary-container filled">apparel</span>
+<h2 class="font-title-md text-title-md text-on-surface">Clothing</h2>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant bg-surface-container px-3 py-1 rounded-full">5 Items</span>
+</div>
+<!-- Items List -->
+<ul class="flex flex-col px-md py-sm">
+<!-- Item: Unchecked -->
+<li class="flex items-center justify-between py-xs min-h-[48px] border-b border-surface-container-low last:border-0 group cursor-pointer">
+<div class="flex items-center gap-4 flex-1">
+<button class="w-6 h-6 rounded-full border-2 border-outline-variant flex items-center justify-center flex-shrink-0 group-hover:border-secondary-container transition-colors"></button>
+<div class="flex flex-col">
+<span class="font-body-lg text-body-lg text-on-surface">Lightweight Jacket</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Cold weather</span>
+</div>
+</div>
+</li>
+<!-- Item: Checked -->
+<li class="flex items-center justify-between py-xs min-h-[48px] border-b border-surface-container-low last:border-0 group cursor-pointer">
+<div class="flex items-center gap-4 flex-1">
+<button class="w-6 h-6 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center flex-shrink-0 transition-colors">
+<span class="material-symbols-outlined text-[16px] filled">check</span>
+</button>
+<span class="font-body-lg text-body-lg text-on-surface-variant line-through opacity-60">T-Shirts (x4)</span>
+</div>
+</li>
+<!-- Item: Checked -->
+<li class="flex items-center justify-between py-xs min-h-[48px] border-b border-surface-container-low last:border-0 group cursor-pointer">
+<div class="flex items-center gap-4 flex-1">
+<button class="w-6 h-6 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center flex-shrink-0 transition-colors">
+<span class="material-symbols-outlined text-[16px] filled">check</span>
+</button>
+<span class="font-body-lg text-body-lg text-on-surface-variant line-through opacity-60">Jeans</span>
+</div>
+</li>
+</ul>
+</div>
+<!-- Category: Toiletries -->
+<div class="bg-surface-container-lowest rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden relative border border-surface-container-low opacity-80">
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-tertiary-container z-10"></div>
+<!-- Header -->
+<div class="bg-tertiary-container/10 px-md py-sm flex justify-between items-center border-b border-surface-container-low">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary-container filled">wash</span>
+<h2 class="font-title-md text-title-md text-on-surface">Toiletries</h2>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant bg-surface-container px-3 py-1 rounded-full">All Packed</span>
+</div>
+<!-- Items List -->
+<ul class="flex flex-col px-md py-sm">
+<!-- Item: Checked -->
+<li class="flex items-center justify-between py-xs min-h-[48px] border-b border-surface-container-low last:border-0 group cursor-pointer">
+<div class="flex items-center gap-4 flex-1">
+<button class="w-6 h-6 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center flex-shrink-0 transition-colors">
+<span class="material-symbols-outlined text-[16px] filled">check</span>
+</button>
+<span class="font-body-lg text-body-lg text-on-surface-variant line-through opacity-60">Toothbrush &amp; Paste</span>
+</div>
+</li>
+<!-- Item: Checked -->
+<li class="flex items-center justify-between py-xs min-h-[48px] border-b border-surface-container-low last:border-0 group cursor-pointer">
+<div class="flex items-center gap-4 flex-1">
+<button class="w-6 h-6 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center flex-shrink-0 transition-colors">
+<span class="material-symbols-outlined text-[16px] filled">check</span>
+</button>
+<span class="font-body-lg text-body-lg text-on-surface-variant line-through opacity-60">Shampoo Travel Size</span>
+</div>
+</li>
+</ul>
+</div>
+</section>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-[96px] right-margin-mobile w-[64px] h-[64px] bg-primary text-on-primary rounded-[20px] shadow-[0_8px_24px_rgba(0,107,87,0.3)] flex items-center justify-center hover:bg-surface-tint active:scale-95 transition-all z-40 md:right-[calc(50%-300px+20px)]">
+<span class="material-symbols-outlined text-[32px]">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full md:max-w-[600px] z-50 flex justify-around items-center px-2 pb-4 pt-3 h-[80px] bg-surface-container shadow-[0_-4px_20px_rgba(0,0,0,0.04)] rounded-t-lg">
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-highest transition-all active:scale-95 duration-100 min-w-[64px] min-h-[48px] rounded-xl">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-md text-label-md mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-4 py-1 hover:bg-surface-container-highest transition-all active:scale-95 duration-100 min-w-[64px] min-h-[48px]">
+<span class="material-symbols-outlined filled">category</span>
+<span class="font-label-md text-label-md mt-1">Items</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-highest transition-all active:scale-95 duration-100 min-w-[64px] min-h-[48px] rounded-xl">
+<span class="material-symbols-outlined">checklist</span>
+<span class="font-label-md text-label-md mt-1">Lists</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-highest transition-all active:scale-95 duration-100 min-w-[64px] min-h-[48px] rounded-xl">
+<span class="material-symbols-outlined">luggage</span>
+<span class="font-label-md text-label-md mt-1">Trips</span>
+</button>
+</nav>
+</div>
+<script>
+        // Simple micro-interaction for checkboxes
+        document.querySelectorAll('.group.cursor-pointer').forEach(item => {
+            item.addEventListener('click', function(e) {
+                // Prevent action if clicking the warning icon area
+                if(e.target.closest('.text-error')) return;
+
+                const btn = this.querySelector('button');
+                const text = this.querySelector('span.font-body-lg');
+                const isChecked = btn.classList.contains('bg-primary-container') || btn.classList.contains('bg-secondary-container') || btn.classList.contains('bg-tertiary-container');
+                const parentCategory = this.closest('[class*="bg-surface-container-lowest"]');
+                let colorClass = 'bg-primary-container';
+                let onColorClass = 'text-on-primary-container';
+                
+                if(parentCategory.querySelector('.bg-secondary-container')) {
+                    colorClass = 'bg-secondary-container';
+                    onColorClass = 'text-on-secondary-container';
+                } else if(parentCategory.querySelector('.bg-tertiary-container')) {
+                    colorClass = 'bg-tertiary-container';
+                    onColorClass = 'text-on-tertiary-container';
+                }
+
+                if (isChecked) {
+                    btn.className = `w-6 h-6 rounded-full border-2 border-outline-variant flex items-center justify-center flex-shrink-0 group-hover:border-${colorClass.split('-')[1]}-container transition-colors`;
+                    btn.innerHTML = '';
+                    text.classList.remove('line-through', 'opacity-60', 'text-on-surface-variant');
+                    text.classList.add('text-on-surface');
+                } else {
+                    btn.className = `w-6 h-6 rounded-full ${colorClass} ${onColorClass} flex items-center justify-center flex-shrink-0 transition-colors scale-95 duration-150`;
+                    setTimeout(() => btn.classList.remove('scale-95'), 150);
+                    btn.innerHTML = '<span class="material-symbols-outlined text-[16px] filled">check</span>';
+                    text.classList.remove('text-on-surface');
+                    text.classList.add('line-through', 'opacity-60', 'text-on-surface-variant');
+                }
+            });
+        });
+    </script>
+</body></html>
