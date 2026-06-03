@@ -2,7 +2,7 @@
 
 ## Goal
 
-Create a reusable Hermes Kanban reporting mini-project that can be used by any repository, board, or cron job. The first consumer is the Packly cron job, but the schema, CLI, generator, and PDF renderer must not contain Packly-specific branding, Android assumptions, product fields, or board names.
+Create a reusable Hermes Kanban reporting mini-project that can be used by any repository, board, or cron job. The schema, CLI, generator, PDF renderer, and documentation must not contain product-specific branding, app-domain assumptions, product fields, or fixed board names.
 
 The reporting pipeline emits:
 
@@ -359,7 +359,7 @@ Contract rules:
 - `media_tag` is included only for platforms that support `MEDIA:` attachment interception, especially Telegram. CLI/terminal logs should show the plain path.
 - The generator updates `--since-state` only after successful JSON and PDF writes.
 
-## Migration path for cron job `6b9b2fb0665a`
+## Migration path for an existing cron job
 
 1. Commit this project-agnostic architecture spec.
 2. Implement neutral package paths (`kanban_reporting/...`), Pydantic models, fixture tests, deterministic generator, ReportLab renderer, and CLI using `uv` only.
@@ -368,12 +368,12 @@ Contract rules:
    - `uv run pytest tests/kanban_reporting -q`
    - `uv run python -m kanban_reporting.cli --fixture tests/fixtures/kanban_reporting/sample_board.json --out-dir /tmp/kanban-report-fixture --format json,pdf`
    - `git diff --check`
-5. Update cron job `6b9b2fb0665a` so its prompt/script runs the CLI first, reads the validated JSON/envelope, writes the normal concise summary from the JSON, and includes the PDF media tag in Telegram delivery.
-6. Keep the existing schedule and Packly workdir initially because Packly is the first consumer: every 40 minutes, workdir `/home/mflova/packly`, board `packly-fresh`.
+5. Update the target cron job so its prompt/script runs the CLI first, reads the validated JSON/envelope, writes a very short Telegram message from the JSON, and includes the PDF media tag in Telegram delivery.
+6. Keep the existing schedule and target workdir initially; pass the board slug, project label, and output directory as configuration instead of hardcoding them.
 7. Run the cron job once manually and verify Telegram receives concise text plus the PDF attachment.
 8. After two successful runs, remove old prose-only extraction instructions from the cron prompt.
 
-Note: `cronjob(action="list")` returned no matching job in this profile during the first spec attempt, so the implementation worker or orchestrator should confirm whether job `6b9b2fb0665a` lives under another Hermes profile before editing it.
+Note: the implementation worker or orchestrator should confirm the target cron job id/profile before editing it.
 
 ## Scalability and bottlenecks
 
@@ -394,7 +394,7 @@ Note: `cronjob(action="list")` returned no matching job in this profile during t
 5. Add Hermes Kanban, git, CI, and artifact adapters behind interfaces.
 6. Add ReportLab PDF renderer with smoke checks: file exists, non-empty, at least one page/text marker.
 7. Add CLI envelope behavior and Telegram media-tag support.
-8. Update cron job `6b9b2fb0665a` only after fixture generation succeeds.
+8. Update a target cron job only after fixture generation succeeds.
 
 ## Recommended committed paths and modules
 

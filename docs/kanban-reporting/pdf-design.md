@@ -9,7 +9,7 @@ Create a Telegram-friendly PDF companion to a Hermes Kanban status summary. The 
 3. Which work is ready, running, or done?
 4. What should happen next?
 
-The prose message remains the fast notification. The PDF is the structured, scannable artifact for deeper review and forwarding. The design is intentionally project-agnostic: no Packly branding, Android assumptions, product-specific fields, or fixed board names. Packly can use it as the first consumer through configuration values only.
+The Telegram message should be a very short notification: two or three sentences at most, naming what the PDF contains and any urgent human action. The PDF is the structured, scannable artifact for deeper review and forwarding. The design is intentionally project-agnostic: no product branding, app-domain assumptions, product-specific fields, or fixed board names. Any consumer must be configured through generic values only.
 
 ## Design principles
 

@@ -1,6 +1,6 @@
 # Kanban reporting
 
-This directory documents the project-agnostic Hermes Kanban reporting mini-project. The implementation lives in the neutral `kanban_reporting/` Python package and intentionally avoids Packly-specific branding, fields, or Android assumptions.
+This directory documents the project-agnostic Hermes Kanban reporting mini-project. The implementation lives in the neutral `kanban_reporting/` Python package and intentionally avoids product-specific branding, fields, or app-domain assumptions.
 
 ## Generate from the sample fixture
 
