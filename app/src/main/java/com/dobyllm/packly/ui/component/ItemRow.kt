@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -56,7 +57,6 @@ fun ItemRow(
         name = item.name,
         note = item.notes,
         category = category,
-        isCompleted = false,
         modifier = modifier,
         onClick = onEdit,
         trailingContent = {
@@ -85,7 +85,6 @@ fun PackingItemRow(
         name = entry.nameSnapshot,
         note = quantityText,
         category = category,
-        isCompleted = entry.isPacked,
         completedIndicatorColor = MaterialTheme.colorScheme.secondaryContainer,
         modifier = modifier.semantics {
             contentDescription = listOfNotNull(
@@ -100,6 +99,8 @@ fun PackingItemRow(
         },
         onClick = onToggle,
         role = Role.Checkbox,
+        isCompleted = entry.isPacked,
+        showCompletionIndicator = true,
         trailingContent = {
             PackingMetadataChip(note)
         },
@@ -111,8 +112,9 @@ private fun CatalogItemRow(
     name: String,
     note: String,
     category: PacklyCategory?,
-    isCompleted: Boolean,
     modifier: Modifier = Modifier,
+    isCompleted: Boolean = false,
+    showCompletionIndicator: Boolean = false,
     completedIndicatorColor: androidx.compose.ui.graphics.Color? = null,
     role: Role? = null,
     onClick: () -> Unit,
@@ -123,13 +125,17 @@ private fun CatalogItemRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
+            .heightIn(min = 52.dp)
             .clickable(role = role, onClick = onClick)
-            .padding(horizontal = PacklySpacing.marginMobile, vertical = PacklySpacing.sm),
+            .padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.base),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(PacklySpacing.md),
+        horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
     ) {
-        CompletionIndicator(isCompleted = isCompleted, accentColor = indicatorColor)
+        if (showCompletionIndicator) {
+            CompletionIndicator(isCompleted = isCompleted, accentColor = indicatorColor)
+        } else {
+            CategoryAccentDot(accentColor = indicatorColor)
+        }
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -156,6 +162,16 @@ private fun CatalogItemRow(
             trailingContent()
         }
     }
+}
+
+@Composable
+private fun CategoryAccentDot(accentColor: androidx.compose.ui.graphics.Color) {
+    Box(
+        modifier = Modifier
+            .width(4.dp)
+            .height(28.dp)
+            .background(accentColor, RoundedCornerShape(PacklyRadius.full)),
+    )
 }
 
 @Composable

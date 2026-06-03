@@ -6,39 +6,36 @@ import org.junit.Test
 
 class ItemsFilterTest {
     @Test
-    fun filters_by_query_category_and_active_status_by_default() {
+    fun filters_by_query_and_category_while_hiding_archived_items() {
         val result = filterLibraryItems(
             items = sampleItems,
             query = "tooth",
             selectedCategoryIds = setOf("cat_toiletries"),
-            statusFilter = ItemStatusFilter.Active,
         )
 
         assertEquals(listOf("item_toothbrush"), result.map { it.id })
     }
 
     @Test
-    fun archived_status_filter_returns_archived_items_only() {
+    fun archived_items_are_not_in_the_catalog() {
         val result = filterLibraryItems(
             items = sampleItems,
             query = "",
             selectedCategoryIds = emptySet(),
-            statusFilter = ItemStatusFilter.Archived,
         )
 
-        assertEquals(listOf("item_old_sunscreen"), result.map { it.id })
+        assertEquals(listOf("item_toothbrush", "item_passport"), result.map { it.id })
     }
 
     @Test
-    fun all_status_filter_keeps_category_grouping_input_order() {
+    fun category_filter_keeps_catalog_input_order() {
         val result = filterLibraryItems(
             items = sampleItems,
             query = "",
             selectedCategoryIds = setOf("cat_toiletries"),
-            statusFilter = ItemStatusFilter.All,
         )
 
-        assertEquals(listOf("item_toothbrush", "item_old_sunscreen"), result.map { it.id })
+        assertEquals(listOf("item_toothbrush"), result.map { it.id })
     }
 
     private companion object {

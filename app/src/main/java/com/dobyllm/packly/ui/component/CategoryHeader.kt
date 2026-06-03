@@ -7,10 +7,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -38,7 +40,7 @@ fun CategoryHeader(category: PacklyCategory, countLabel: String, modifier: Modif
             .fillMaxWidth()
             .background(token.accent.copy(alpha = headerTintAlpha))
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
-            .padding(horizontal = PacklySpacing.md, vertical = PacklySpacing.sm),
+            .padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.base),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
     ) {
@@ -64,18 +66,25 @@ fun CategorySectionCard(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(PacklyRadius.xl),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        color = token.accent,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerLow),
         shadowElevation = 2.dp,
     ) {
-        Row(Modifier.fillMaxWidth()) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
+        ) {
             Box(
                 Modifier
                     .width(4.dp)
-                    .fillMaxHeight()
-                    .background(token.accent),
+                    .fillMaxHeight(),
             )
-            Column(Modifier.weight(1f)) {
+            Column(
+                Modifier
+                    .weight(1f)
+                    .background(MaterialTheme.colorScheme.surfaceContainerLowest),
+            ) {
                 CategoryHeader(category = category, countLabel = countLabel)
                 content()
             }
@@ -124,7 +133,7 @@ fun CategoryChip(
 @Composable
 fun CategoryRowsContainer(content: @Composable () -> Unit) {
     Column(
-        modifier = Modifier.padding(horizontal = PacklySpacing.md, vertical = PacklySpacing.sm),
+        modifier = Modifier.padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.xs),
         verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         content()

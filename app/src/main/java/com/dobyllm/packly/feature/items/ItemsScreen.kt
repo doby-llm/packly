@@ -65,7 +65,6 @@ fun ItemsScreen(
     var itemToEdit by remember { mutableStateOf<PacklyItem?>(null) }
     var itemToDelete by remember { mutableStateOf<PacklyItem?>(null) }
     var selectedCategoryIds by remember { mutableStateOf<Set<CategoryId>>(emptySet()) }
-    var statusFilter by remember { mutableStateOf(ItemStatusFilter.Active) }
     val categories = doc.categories.filterNot { it.isArchived }.sortedBy { it.sortOrder }
     val activeItems = doc.items.filterNot { it.isArchived }
     val duplicateNames = remember(activeItems) {
@@ -76,10 +75,9 @@ fun ItemsScreen(
             .keys
     }
     val filteredItems = filterLibraryItems(
-        items = doc.items,
+        items = activeItems,
         query = query,
         selectedCategoryIds = selectedCategoryIds,
-        statusFilter = statusFilter,
     )
 
     DisposableEffect(onFabActionChange) {
@@ -97,7 +95,7 @@ fun ItemsScreen(
             end = PacklySpacing.marginMobile,
             bottom = PacklySpacing.xl,
         ),
-        verticalArrangement = Arrangement.spacedBy(PacklySpacing.lg),
+        verticalArrangement = Arrangement.spacedBy(PacklySpacing.md),
     ) {
         item {
             PacklySearchFilterRow(
@@ -145,7 +143,7 @@ fun ItemsScreen(
                 } else {
                     EmptyState(
                         title = "No items found",
-                        body = "Try a different search, category, or status filter.",
+                        body = "Try a different search or category filter.",
                         actionLabel = "Add item",
                         onAction = { showAdd = true },
                     )
@@ -165,11 +163,9 @@ fun ItemsScreen(
     if (showFilters) {
         ItemsFilterSheet(
             categories = categories,
-            allItems = doc.items,
+            allItems = activeItems,
             selectedCategoryIds = selectedCategoryIds,
-            statusFilter = statusFilter,
             onCategorySelectionChange = { selectedCategoryIds = it },
-            onStatusFilterChange = { statusFilter = it },
             onDismiss = { showFilters = false },
         )
     }
@@ -206,9 +202,7 @@ private fun ItemsFilterSheet(
     categories: List<PacklyCategory>,
     allItems: List<PacklyItem>,
     selectedCategoryIds: Set<CategoryId>,
-    statusFilter: ItemStatusFilter,
     onCategorySelectionChange: (Set<CategoryId>) -> Unit,
-    onStatusFilterChange: (ItemStatusFilter) -> Unit,
     onDismiss: () -> Unit,
 ) {
     ModalBottomSheet(
@@ -236,19 +230,6 @@ private fun ItemsFilterSheet(
                     .padding(horizontal = PacklySpacing.md),
                 verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
             ) {
-                Text("Status", style = MaterialTheme.typography.labelLarge)
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
-                    verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
-                ) {
-                    ItemStatusFilter.entries.forEach { filter ->
-                        ItemsFilterChip(
-                            selected = statusFilter == filter,
-                            onClick = { onStatusFilterChange(filter) },
-                            label = filter.label,
-                        )
-                    }
-                }
                 Text("Categories", style = MaterialTheme.typography.labelLarge)
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
@@ -257,7 +238,7 @@ private fun ItemsFilterSheet(
                     ItemsFilterChip(
                         selected = selectedCategoryIds.isEmpty(),
                         onClick = { onCategorySelectionChange(emptySet()) },
-                        label = "All categories (${allItems.countFor(statusFilter)})",
+                        label = "All categories (${allItems.countFor()})",
                     )
                     categories.forEach { category ->
                         val selected = category.id in selectedCategoryIds
@@ -271,7 +252,7 @@ private fun ItemsFilterSheet(
                                 }
                                 onCategorySelectionChange(nextSelection)
                             },
-                            label = "${category.label} (${allItems.countFor(statusFilter, category.id)})",
+                            label = "${category.label} (${allItems.countFor(category.id)})",
                         )
                     }
                 }
@@ -307,21 +288,14 @@ private fun ItemsFilterChip(selected: Boolean, onClick: () -> Unit, label: Strin
     )
 }
 
-internal enum class ItemStatusFilter(val label: String) {
-    All("All"),
-    Active("Active"),
-    Archived("Archived"),
-}
-
 internal fun filterLibraryItems(
     items: List<PacklyItem>,
     query: String,
     selectedCategoryIds: Set<CategoryId>,
-    statusFilter: ItemStatusFilter,
 ): List<PacklyItem> = items.filter { item ->
     item.matchesQuery(query) &&
         item.matchesCategory(selectedCategoryIds) &&
-        item.matchesStatus(statusFilter)
+        !item.isArchived
 }
 
 private fun PacklyItem.matchesQuery(query: String): Boolean =
@@ -330,14 +304,8 @@ private fun PacklyItem.matchesQuery(query: String): Boolean =
 private fun PacklyItem.matchesCategory(selectedCategoryIds: Set<CategoryId>): Boolean =
     selectedCategoryIds.isEmpty() || categoryId in selectedCategoryIds
 
-private fun PacklyItem.matchesStatus(statusFilter: ItemStatusFilter): Boolean = when (statusFilter) {
-    ItemStatusFilter.All -> true
-    ItemStatusFilter.Active -> !isArchived
-    ItemStatusFilter.Archived -> isArchived
-}
-
-private fun List<PacklyItem>.countFor(statusFilter: ItemStatusFilter, categoryId: CategoryId? = null): Int =
-    count { item -> item.matchesStatus(statusFilter) && (categoryId == null || item.categoryId == categoryId) }
+private fun List<PacklyItem>.countFor(categoryId: CategoryId? = null): Int =
+    count { item -> !item.isArchived && (categoryId == null || item.categoryId == categoryId) }
 
 private fun List<PacklyItem>.itemCountLabel(): String {
     val count = size
