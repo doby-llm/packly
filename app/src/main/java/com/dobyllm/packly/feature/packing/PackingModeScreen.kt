@@ -206,13 +206,13 @@ private fun PackingProgressHeader(
     onFilterChange: (PackingFilter) -> Unit,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
         modifier = Modifier
             .fillMaxWidth()
             .shadow(
                 elevation = 4.dp,
-                ambientColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.02f),
-                spotColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.02f),
+                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
             ),
     ) {
         Column(

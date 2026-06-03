@@ -3,6 +3,7 @@
 package com.dobyllm.packly.feature.items
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -11,6 +12,8 @@ import com.dobyllm.packly.core.model.CategoryId
 import com.dobyllm.packly.core.model.PacklyCategory
 import com.dobyllm.packly.core.model.PacklyItem
 import com.dobyllm.packly.ui.component.CategoryChip
+import com.dobyllm.packly.ui.token.PacklyRadius
+import com.dobyllm.packly.ui.token.PacklySpacing
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
@@ -28,21 +31,39 @@ fun EditItemSheet(
     val duplicateName = existingNames.any { it.equals(trimmedName, ignoreCase = true) }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        shape = RoundedCornerShape(topStart = PacklyRadius.xl, topEnd = PacklyRadius.xl),
     ) {
-        Column(Modifier.padding(20.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = PacklySpacing.md, vertical = PacklySpacing.sm)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
+        ) {
             Text(if (item == null) "Add item" else "Edit item", style = MaterialTheme.typography.titleLarge)
             OutlinedTextField(
-                name,
-                { name = it },
+                value = name,
+                onValueChange = { name = it },
                 label = { Text("Name (required)") },
                 supportingText = { if (duplicateName) Text("An active item with this name already exists.") },
                 isError = duplicateName,
                 modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(PacklyRadius.default),
+                colors = packlyTextFieldColors(),
             )
-            OutlinedTextField(notes, { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = { Text("Notes") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(PacklyRadius.default),
+                colors = packlyTextFieldColors(),
+            )
             Text("Category", style = MaterialTheme.typography.labelLarge)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+                verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
+            ) {
                 categories.filterNot { it.isArchived }.forEach { category ->
                     CategoryChip(
                         label = category.label,
@@ -57,8 +78,19 @@ fun EditItemSheet(
                     onSave(trimmedName, categoryId, notes)
                     onDismiss()
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
+                shape = RoundedCornerShape(PacklyRadius.default),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             ) { Text(if (item == null) "Save item" else "Update item") }
         }
     }
 }
+
+@Composable
+private fun packlyTextFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    errorContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+)

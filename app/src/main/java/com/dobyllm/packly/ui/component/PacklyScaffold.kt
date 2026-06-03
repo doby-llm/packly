@@ -201,8 +201,8 @@ fun PacklyBottomNavBar(
             .shadow(
                 elevation = 8.dp,
                 shape = RoundedCornerShape(topStart = PacklyRadius.lg, topEnd = PacklyRadius.lg),
-                ambientColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.04f),
-                spotColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.04f),
+                ambientColor = PacklySecondaryContainer.copy(alpha = 0.18f),
+                spotColor = PacklySecondaryContainer.copy(alpha = 0.18f),
             )
             .clip(RoundedCornerShape(topStart = PacklyRadius.lg, topEnd = PacklyRadius.lg))
             .background(PacklySurfaceContainer)

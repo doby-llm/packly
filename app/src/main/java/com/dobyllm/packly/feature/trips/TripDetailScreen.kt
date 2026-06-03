@@ -45,6 +45,7 @@ import com.dobyllm.packly.core.model.PacklyAppDocument
 import com.dobyllm.packly.core.model.TripEntryId
 import com.dobyllm.packly.core.model.TripId
 import com.dobyllm.packly.core.time.PacklyDeadlineFormatter
+import com.dobyllm.packly.ui.component.EmptyState
 import com.dobyllm.packly.ui.component.TripSummaryCard
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
@@ -72,7 +73,11 @@ fun TripDetailScreen(
     val hasDeadlineChange = trip != null && parsedDeadline != trip.packBy && !(deadlineInput.isBlank() && trip.packBy == null)
 
     if (trip == null) {
-        Text("Trip not found", Modifier.padding(contentPadding).padding(PacklySpacing.md))
+        EmptyState(
+            title = "This trip could not be found",
+            body = "Go back to Trips and choose another trip.",
+            modifier = Modifier.padding(contentPadding).padding(PacklySpacing.md),
+        )
     } else {
         val packedItems = trip.entries.count { it.isPacked }
         val totalItems = trip.entries.size

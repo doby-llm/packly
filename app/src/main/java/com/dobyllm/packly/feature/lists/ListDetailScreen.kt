@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.ItemId
 import com.dobyllm.packly.core.model.ListId
 import com.dobyllm.packly.core.model.PacklyAppDocument
+import com.dobyllm.packly.ui.component.EmptyState
 import com.dobyllm.packly.ui.component.SelectableItemCard
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
@@ -37,7 +38,11 @@ fun ListDetailScreen(
     val selected = list?.entries?.mapNotNull { it.itemId }?.toSet() ?: emptySet()
 
     if (list == null) {
-        Text("List not found", Modifier.padding(contentPadding).padding(PacklySpacing.md))
+        EmptyState(
+            title = "This list could not be found",
+            body = "Go back to Lists and choose another template.",
+            modifier = Modifier.padding(contentPadding).padding(PacklySpacing.md),
+        )
         return
     }
 
