@@ -31,6 +31,7 @@ fun SelectableItemCard(
     selected: Boolean,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
 ) {
     val description = "$title, $subtitle, ${if (selected) "selected" else "not selected"}"
     Surface(
@@ -51,8 +52,11 @@ fun SelectableItemCard(
         shadowElevation = if (selected) 2.dp else 0.dp,
     ) {
         Row(
-            modifier = Modifier.padding(PacklySpacing.marginMobile),
-            horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
+            modifier = Modifier.padding(
+                horizontal = if (compact) PacklySpacing.sm else PacklySpacing.marginMobile,
+                vertical = if (compact) PacklySpacing.base else PacklySpacing.marginMobile,
+            ),
+            horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Checkbox(

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,13 +20,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
@@ -81,8 +82,8 @@ fun ListCard(
             )
             Column(Modifier.fillMaxWidth()) {
                 Column(
-                    modifier = Modifier.padding(PacklySpacing.md),
-                    verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
+                    modifier = Modifier.padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.sm),
+                    verticalArrangement = Arrangement.spacedBy(PacklySpacing.base),
                 ) {
                     Text(
                         text = list.name,
@@ -93,13 +94,13 @@ fun ListCard(
                     )
                     Text(
                         text = "${list.entries.size} Items",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     if (categoryChips.isNotEmpty()) {
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
-                            verticalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+                            verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
                         ) {
                             categoryChips.forEach { label ->
                                 ListCategoryChip(label = label, accent = accent)
@@ -111,7 +112,7 @@ fun ListCard(
                             text = list.description,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
+                            maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
@@ -120,19 +121,23 @@ fun ListCard(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.base),
+                        .padding(horizontal = PacklySpacing.xs, vertical = PacklySpacing.xs),
                     horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     TextButton(
                         onClick = onRename,
+                        modifier = Modifier.defaultMinSize(minHeight = 48.dp),
                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                     ) {
                         Icon(Icons.Rounded.Edit, contentDescription = null)
                         Spacer(Modifier.width(PacklySpacing.xs))
                         Text("Rename")
                     }
-                    TextButton(onClick = onDuplicate) {
+                    TextButton(
+                        onClick = onDuplicate,
+                        modifier = Modifier.defaultMinSize(minHeight = 48.dp),
+                    ) {
                         Icon(Icons.Rounded.ContentCopy, contentDescription = null)
                         Spacer(Modifier.width(PacklySpacing.xs))
                         Text("Duplicate")
@@ -140,6 +145,7 @@ fun ListCard(
                     Spacer(Modifier.weight(1f))
                     TextButton(
                         onClick = onDelete,
+                        modifier = Modifier.defaultMinSize(minHeight = 48.dp),
                         colors = ButtonDefaults.textButtonColors(
                             contentColor = MaterialTheme.colorScheme.error,
                             containerColor = Color.Transparent,
@@ -164,7 +170,7 @@ private fun ListCategoryChip(label: String, accent: ListAccent) {
     ) {
         Text(
             text = label,
-            modifier = Modifier.padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.xs),
+            modifier = Modifier.padding(horizontal = PacklySpacing.base, vertical = PacklySpacing.xs),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,

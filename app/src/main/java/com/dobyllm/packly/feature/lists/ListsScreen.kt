@@ -48,13 +48,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dobyllm.packly.core.model.CategoryId
 import com.dobyllm.packly.core.model.ItemId
 import com.dobyllm.packly.core.model.ListId
 import com.dobyllm.packly.core.model.PacklyAppDocument
+import com.dobyllm.packly.core.model.PacklyItem
 import com.dobyllm.packly.core.model.PacklyList
 import com.dobyllm.packly.ui.component.EmptyState
 import com.dobyllm.packly.ui.component.ListCard
 import com.dobyllm.packly.ui.component.PacklyFabAction
+import com.dobyllm.packly.ui.component.SelectableItemCard
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
 import kotlinx.coroutines.launch
@@ -219,9 +222,24 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var itemQuery by remember { mutableStateOf("") }
+    var selectedCategoryId by remember { mutableStateOf<CategoryId?>(null) }
     val selected = remember { mutableStateListOf<ItemId>() }
     val activeItems = doc.items.filterNot { it.isArchived }
-    val matchingItems = activeItems.filter { it.name.contains(itemQuery, ignoreCase = true) }
+    val activeCategories = doc.categories
+        .filterNot { it.isArchived }
+        .filter { category -> activeItems.any { it.categoryId == category.id } }
+        .sortedBy { it.sortOrder }
+    val categoryLabelById = doc.categories.associate { it.id to it.label }
+    val matchingItems = activeItems
+        .filter { selectedCategoryId == null || it.categoryId == selectedCategoryId }
+        .filter { item ->
+            val categoryLabel = categoryLabelById[item.categoryId].orEmpty()
+            itemQuery.isBlank() ||
+                item.name.contains(itemQuery, ignoreCase = true) ||
+                item.notes.contains(itemQuery, ignoreCase = true) ||
+                categoryLabel.contains(itemQuery, ignoreCase = true)
+        }
+    val itemSections = buildListBuilderItemSections(matchingItems, doc)
     val duplicateName = doc.lists.any { !it.isArchived && it.name.equals(name.trim(), ignoreCase = true) }
 
     ModalBottomSheet(
@@ -238,7 +256,7 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
             )
             Column(
                 Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = PacklySpacing.md),
-                verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
+                verticalArrangement = Arrangement.spacedBy(PacklySpacing.base),
             ) {
                 PacklyTextField(
                     value = name,
@@ -252,34 +270,54 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
                     onValueChange = { description = it },
                     label = "Description",
                 )
-                Text("Checklist items", style = MaterialTheme.typography.labelLarge)
+                Text(
+                    text = "Checklist items • ${selected.size} selected",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 PacklyTextField(
                     value = itemQuery,
                     onValueChange = { itemQuery = it },
-                    label = "Search all ${activeItems.size} items",
+                    label = "Search ${activeItems.size} items",
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base), verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
-                    matchingItems.forEach { item ->
-                        FilterChip(
-                            selected = item.id in selected,
-                            onClick = { if (item.id in selected) selected.remove(item.id) else selected.add(item.id) },
-                            label = { Text(item.name) },
-                            shape = RoundedCornerShape(PacklyRadius.default),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true,
-                                selected = item.id in selected,
-                                borderColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                selectedBorderColor = MaterialTheme.colorScheme.primary,
-                            ),
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                                selectedContainerColor = MaterialTheme.colorScheme.primaryFixed,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryFixedVariant,
-                            ),
+                    PacklyCategoryFilterChip(
+                        label = "All",
+                        selected = selectedCategoryId == null,
+                        onClick = { selectedCategoryId = null },
+                    )
+                    activeCategories.forEach { category ->
+                        PacklyCategoryFilterChip(
+                            label = category.label,
+                            selected = selectedCategoryId == category.id,
+                            onClick = { selectedCategoryId = if (selectedCategoryId == category.id) null else category.id },
                         )
                     }
                 }
-                if (matchingItems.isEmpty()) Text("No items match this search.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (itemSections.isEmpty()) {
+                    Text("No items match this filter.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    itemSections.forEach { section ->
+                        Text(
+                            text = "${section.label} (${section.items.size})",
+                            modifier = Modifier.padding(top = PacklySpacing.base),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
+                            section.items.forEach { item ->
+                                SelectableItemCard(
+                                    title = item.name,
+                                    subtitle = item.notes.takeIf { it.isNotBlank() } ?: section.label,
+                                    selected = item.id in selected,
+                                    onToggle = { if (item.id in selected) selected.remove(item.id) else selected.add(item.id) },
+                                    compact = true,
+                                )
+                            }
+                        }
+                    }
+                }
             }
             Button(
                 enabled = name.trim().isNotEmpty() && !duplicateName,
@@ -294,6 +332,50 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
         }
     }
 }
+
+@Composable
+private fun PacklyCategoryFilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(label) },
+        shape = RoundedCornerShape(PacklyRadius.default),
+        border = FilterChipDefaults.filterChipBorder(
+            enabled = true,
+            selected = selected,
+            borderColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            selectedBorderColor = MaterialTheme.colorScheme.primary,
+        ),
+        colors = FilterChipDefaults.filterChipColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            selectedContainerColor = MaterialTheme.colorScheme.primaryFixed,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryFixedVariant,
+        ),
+    )
+}
+
+private fun buildListBuilderItemSections(items: List<PacklyItem>, doc: PacklyAppDocument): List<ListBuilderItemSection> {
+    val categories = doc.categories.associateBy { it.id }
+    return items
+        .groupBy { it.categoryId }
+        .map { (categoryId, categoryItems) ->
+            val category = categories[categoryId]
+            ListBuilderItemSection(
+                categoryId = categoryId,
+                label = category?.label ?: "Uncategorized",
+                sortOrder = category?.sortOrder ?: Int.MAX_VALUE,
+                items = categoryItems.sortedBy { it.name.lowercase() },
+            )
+        }
+        .sortedWith(compareBy<ListBuilderItemSection> { it.sortOrder }.thenBy { it.label })
+}
+
+private data class ListBuilderItemSection(
+    val categoryId: CategoryId,
+    val label: String,
+    val sortOrder: Int,
+    val items: List<PacklyItem>,
+)
 
 @Composable
 private fun PacklyTextField(
