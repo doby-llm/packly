@@ -223,7 +223,7 @@ private fun PacklyBottomNavItem(
             Text(
                 text = destination.label,
                 style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
             )
         }
     }

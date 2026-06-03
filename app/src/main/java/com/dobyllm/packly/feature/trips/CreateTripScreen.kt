@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -304,20 +303,34 @@ internal fun PacklyDeadlinePickerField(
                 color = if (deadline == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
             )
             Text(supportingText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base), verticalAlignment = Alignment.CenterVertically) {
-                Button(onClick = { showDatePicker = true }, shape = RoundedCornerShape(PacklyRadius.default)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Button(
+                    onClick = { showDatePicker = true },
+                    modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
+                    shape = RoundedCornerShape(PacklyRadius.default),
+                ) {
                     Text(if (deadline == null) "Pick date" else "Change date")
                 }
                 OutlinedButton(
                     enabled = deadline != null,
                     onClick = { showTimePicker = true },
+                    modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
                     shape = RoundedCornerShape(PacklyRadius.default),
-                ) { Text("Time ${PacklyDeadlineFormatter.formatTime(deadline) ?: "18:00"}") }
-                Spacer(Modifier.weight(1f))
+                ) { Text("Change time") }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 TextButton(
                     enabled = deadline != null,
                     onClick = { onDeadlineChange(null) },
-                    modifier = Modifier.widthIn(min = 72.dp),
+                    modifier = Modifier.defaultMinSize(minWidth = 72.dp, minHeight = 48.dp),
                 ) { Text("Clear", maxLines = 1, softWrap = false) }
             }
         }

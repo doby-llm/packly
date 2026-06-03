@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -238,16 +239,20 @@ private fun DeadlineCard(
                     else -> "Pick a date, then adjust the optional reminder time. Default time is 18:00."
                 },
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+            ) {
                 Button(
                     enabled = hasDeadlineChange,
                     onClick = onSaveDeadline,
+                    modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
                     shape = RoundedCornerShape(PacklyRadius.default),
                 ) { Text("Save deadline") }
                 OutlinedButton(
                     enabled = canClearDeadline,
                     onClick = onClearDeadline,
-                    modifier = Modifier.widthIn(min = 72.dp),
+                    modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
                     shape = RoundedCornerShape(PacklyRadius.default),
                 ) { Text("Clear", maxLines = 1, softWrap = false) }
             }
