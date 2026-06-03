@@ -12,20 +12,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.dobyllm.packly.ui.token.PacklyRadius
 
 @Composable
 fun QuantityBadge(quantity: Int, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .clip(RoundedCornerShape(PacklyRadius.full))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
             .semantics { contentDescription = "quantity $quantity" }
             .padding(horizontal = 10.dp, vertical = 4.dp),
     ) {
         Text(
-            text = "×$quantity",
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-            style = MaterialTheme.typography.labelLarge,
+            text = "x$quantity",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelMedium,
         )
     }
 }

@@ -155,7 +155,7 @@ fun PacklyNavHost(
                     doc = doc,
                     tripId = id,
                     contentPadding = shellPadding,
-                    onToggle = { vm.togglePacked(id, it) },
+                    onSetPacked = { entryId, isPacked -> vm.setPacked(id, entryId, isPacked) },
                 )
             }
         }
@@ -176,7 +176,7 @@ fun PacklyNavHost(
 private fun String?.nestedTitle(): String = when (this) {
     PacklyRoute.ListDetail -> "List"
     PacklyRoute.TripDetail -> "Trip"
-    PacklyRoute.PackingMode -> "Packing"
+    PacklyRoute.PackingMode -> "Packly"
     else -> "Packly"
 }
 

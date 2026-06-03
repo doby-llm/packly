@@ -207,6 +207,22 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
         } }
     }
 
+    fun setPacked(tripId: TripId, entryId: TripEntryId, isPacked: Boolean) = viewModelScope.launch {
+        val now = PacklyClock.now()
+        repository.updateTrips { trips -> trips.map { trip ->
+            if (trip.id != tripId) trip else trip.copy(
+                entries = trip.entries.map { entry ->
+                    if (entry.id == entryId) {
+                        entry.copy(isPacked = isPacked, packedAt = if (isPacked) now else null)
+                    } else {
+                        entry
+                    }
+                },
+                updatedAt = now,
+            )
+        } }
+    }
+
     fun resetPacking(tripId: TripId) = viewModelScope.launch {
         val now = PacklyClock.now()
         repository.updateTrips { trips -> trips.map { if (it.id == tripId) it.copy(entries = it.entries.map { e -> e.copy(isPacked = false, packedAt = null) }, updatedAt = now) else it } }
