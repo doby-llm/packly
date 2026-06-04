@@ -43,7 +43,7 @@ class DeadlineReminderReceiver : BroadcastReceiver() {
         )
         val body = "$remainingCount items still need packing for $tripName."
         val notification = NotificationCompat.Builder(context, notificationChannelId())
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.packly_launcher_foreground)
             .setContentTitle("Packly reminder")
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
