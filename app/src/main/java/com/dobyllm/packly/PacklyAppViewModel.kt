@@ -221,49 +221,15 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
                     if (trip.id != tripId) {
                         trip
                     } else {
-                        val existingItemIds = trip.entries.mapNotNull { it.sourceItemId }.toMutableSet()
-                        val existingSnapshotKeys = trip.entries
-                            .mapTo(mutableSetOf()) { it.snapshotDedupeKey() }
-                        val existingNoItemSnapshotKeys = trip.entries
-                            .filter { it.sourceItemId == null }
-                            .mapTo(mutableSetOf()) { it.snapshotDedupeKey() }
                         val nextSortOrder = (trip.entries.maxOfOrNull { it.sortOrder } ?: -1) + 1
-                        val newEntries = doc.buildTripEntries(
+                        val newEntryCandidates = doc.buildTripEntries(
                             sourceListIds = activeSourceListIds,
                             itemIds = itemIds,
                             itemQuantities = itemQuantities,
                             sortOrderOffset = nextSortOrder,
-                        ).filter { entry ->
-                            val sourceItemId = entry.sourceItemId
-                            val snapshotKey = entry.snapshotDedupeKey()
-                            val isDuplicate = if (sourceItemId != null) {
-                                sourceItemId in existingItemIds || snapshotKey in existingNoItemSnapshotKeys
-                            } else {
-                                snapshotKey in existingSnapshotKeys
-                            }
-                            if (isDuplicate) {
-                                false
-                            } else {
-                                if (sourceItemId != null) {
-                                    existingItemIds += sourceItemId
-                                } else {
-                                    existingNoItemSnapshotKeys += snapshotKey
-                                }
-                                existingSnapshotKeys += snapshotKey
-                                true
-                            }
-                        }.mapIndexed { index, entry ->
-                            entry.copy(sortOrder = nextSortOrder + index)
-                        }
+                        )
 
-                        if (newEntries.isEmpty()) {
-                            trip
-                        } else {
-                            trip.copy(
-                                entries = trip.entries + newEntries,
-                                updatedAt = now,
-                            )
-                        }
+                        trip.withAdditionalEntriesForTripAction(newEntryCandidates, now)
                     }
                 },
             )
@@ -282,12 +248,14 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
     fun updateTripEntryQuantity(tripId: TripId, entryId: TripEntryId, quantity: Int) = viewModelScope.launch {
         val now = PacklyClock.now()
         repository.updateTrips { trips -> trips.map { trip ->
-            if (trip.id != tripId) trip else trip.copy(
-                entries = trip.entries.map { entry ->
-                    if (entry.id == entryId) entry.copy(quantity = quantity.coerceAtLeast(1)) else entry
-                },
-                updatedAt = now,
-            )
+            if (trip.id != tripId) trip else trip.withUpdatedEntryQuantityForTripAction(entryId, quantity, now)
+        } }
+    }
+
+    fun removeTripEntry(tripId: TripId, entryId: TripEntryId) = viewModelScope.launch {
+        val now = PacklyClock.now()
+        repository.updateTrips { trips -> trips.map { trip ->
+            if (trip.id != tripId) trip else trip.withRemovedEntryForTripAction(entryId, now)
         } }
     }
 
@@ -345,7 +313,7 @@ private fun PacklyAppDocument.activeSourceListIdsInSelectedOrder(sourceListIds: 
     return sourceListIds.distinct().filter { it in activeListIds }
 }
 
-private fun PacklyAppDocument.buildTripEntries(
+internal fun PacklyAppDocument.buildTripEntries(
     sourceListIds: List<ListId>,
     itemIds: Set<ItemId>,
     itemQuantities: Map<ItemId, Int>,
@@ -421,6 +389,75 @@ private fun PacklyAppDocument.buildTripEntries(
             sortOrder = sortOrderOffset + index,
         )
     }
+}
+
+internal fun PacklyTrip.withAdditionalEntriesForTripAction(
+    newEntryCandidates: List<TripEntry>,
+    now: InstantString,
+): PacklyTrip {
+    val existingItemIds = entries.mapNotNull { it.sourceItemId }.toMutableSet()
+    val existingSnapshotKeys = entries.mapTo(mutableSetOf()) { it.snapshotDedupeKey() }
+    val existingNoItemSnapshotKeys = entries
+        .filter { it.sourceItemId == null }
+        .mapTo(mutableSetOf()) { it.snapshotDedupeKey() }
+    val nextSortOrder = (entries.maxOfOrNull { it.sortOrder } ?: -1) + 1
+    val newEntries = newEntryCandidates.filter { entry ->
+        val sourceItemId = entry.sourceItemId
+        val snapshotKey = entry.snapshotDedupeKey()
+        val isDuplicate = if (sourceItemId != null) {
+            sourceItemId in existingItemIds || snapshotKey in existingNoItemSnapshotKeys
+        } else {
+            snapshotKey in existingSnapshotKeys
+        }
+        if (isDuplicate) {
+            false
+        } else {
+            if (sourceItemId != null) {
+                existingItemIds += sourceItemId
+            } else {
+                existingNoItemSnapshotKeys += snapshotKey
+            }
+            existingSnapshotKeys += snapshotKey
+            true
+        }
+    }.mapIndexed { index, entry ->
+        entry.copy(sortOrder = nextSortOrder + index)
+    }
+
+    return if (newEntries.isEmpty()) this else copy(entries = entries + newEntries, updatedAt = now)
+}
+
+internal fun PacklyTrip.withUpdatedEntryQuantityForTripAction(
+    entryId: TripEntryId,
+    quantity: Int,
+    now: InstantString,
+): PacklyTrip = copy(
+    entries = entries.map { entry ->
+        if (entry.id == entryId) entry.copy(quantity = quantity.coerceAtLeast(1)) else entry
+    },
+    updatedAt = now,
+)
+
+internal fun PacklyTrip.withRemovedEntryForTripAction(entryId: TripEntryId, now: InstantString): PacklyTrip {
+    var removed = false
+    val remainingEntries = entries
+        .filter { entry ->
+            if (!removed && entry.id == entryId) {
+                removed = true
+                false
+            } else {
+                true
+            }
+        }
+
+    if (!removed) return this
+
+    return copy(
+        entries = remainingEntries
+            .sortedWith(compareBy<TripEntry> { it.sortOrder }.thenBy { it.id })
+            .mapIndexed { index, entry -> entry.copy(sortOrder = index) },
+        updatedAt = now,
+    )
 }
 
 private fun TripEntry.snapshotDedupeKey(): String = snapshotDedupeKey(nameSnapshot, categoryIdSnapshot)
