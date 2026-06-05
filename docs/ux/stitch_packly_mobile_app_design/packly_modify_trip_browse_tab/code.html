@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Packly - Browse Lists and Items</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-variant": "#e1e3e4",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#004c6e",
+                        "on-primary": "#ffffff",
+                        "secondary-container": "#9c7afe",
+                        "on-secondary-fixed-variant": "#5028ae",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#89ceff",
+                        "on-tertiary-container": "#005b84",
+                        "surface-bright": "#f8f9fa",
+                        "primary-container": "#00e5bc",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#3b4a44",
+                        "on-secondary-container": "#310082",
+                        "primary": "#006b57",
+                        "on-primary-fixed-variant": "#005141",
+                        "surface-dim": "#d9dadb",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#006591",
+                        "surface": "#f8f9fa",
+                        "surface-container": "#edeeef",
+                        "on-error": "#ffffff",
+                        "secondary": "#6844c7",
+                        "surface-container-low": "#f3f4f5",
+                        "on-primary-container": "#00614f",
+                        "on-tertiary-fixed": "#001e2f",
+                        "outline-variant": "#b9cac3",
+                        "primary-fixed-dim": "#00e0b8",
+                        "outline": "#6b7b74",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-container-highest": "#e1e3e4",
+                        "surface-tint": "#006b57",
+                        "tertiary-fixed": "#c9e6ff",
+                        "secondary-fixed-dim": "#cebdff",
+                        "secondary-fixed": "#e8ddff",
+                        "background": "#f8f9fa",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#191c1d",
+                        "primary-fixed": "#42fdd3",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-background": "#191c1d",
+                        "on-primary-fixed": "#002019",
+                        "inverse-surface": "#2e3132",
+                        "on-secondary-fixed": "#21005e",
+                        "inverse-primary": "#00e0b8",
+                        "tertiary-container": "#94d2ff"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        base: "8px",
+                        xs: "4px",
+                        sm: "12px",
+                        md: "24px",
+                        lg: "48px",
+                        xl: "80px",
+                        gutter: "24px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "40px"
+                    },
+                    fontFamily: {
+                        headline: ["Plus Jakarta Sans"],
+                        display: ["Plus Jakarta Sans"],
+                        body: ["Plus Jakarta Sans"],
+                        label: ["Plus Jakarta Sans"]
+                    },
+                    fontSize: {
+                        "display-lg": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "800" }],
+                        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "700" }],
+                        "headline-lg-mobile": ["28px", { lineHeight: "36px", fontWeight: "700" }],
+                        "title-md": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+                        "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+                        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .glass-panel {
+                @apply bg-surface-container-lowest/80 backdrop-blur-md border border-white/20 shadow-[0_4px_20px_rgba(0,107,87,0.05)];
+            }
+            .interactive-card {
+                @apply transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(104,68,199,0.1)];
+            }
+            .material-symbols-outlined {
+                font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body antialiased min-h-screen flex flex-col">
+<!-- Top Action Bar (Contextual) -->
+<header class="sticky top-0 z-40 bg-surface/90 backdrop-blur-sm border-b border-surface-container-high px-margin-mobile md:px-margin-desktop h-16 flex items-center justify-between">
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center p-2 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+<h1 class="font-headline font-headline-lg-mobile text-primary">Modify Trip</h1>
+<button class="text-primary font-title-md hover:text-primary-container transition-colors px-4 py-2 rounded-lg hover:bg-surface-container-lowest shadow-sm">
+            Save
+        </button>
+</header>
+<!-- Main Content Area -->
+<main class="flex-grow flex flex-col max-w-4xl mx-auto w-full pb-xl">
+<!-- Trip Header & Tabs -->
+<section class="pt-md px-margin-mobile md:px-margin-desktop bg-surface-container-lowest shadow-sm rounded-b-xl z-30">
+<div class="mb-sm">
+<h2 class="font-display text-display-lg text-on-surface tracking-tight mb-xs">Paris Getaway</h2>
+<div class="flex items-center text-outline gap-2 font-body text-body-sm">
+<span class="material-symbols-outlined text-sm">calendar_month</span>
+<span>Sep 12 - Sep 18, 2024</span>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex border-b border-surface-variant w-full overflow-x-auto hide-scrollbar">
+<button class="flex-1 py-3 text-center font-title-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors whitespace-nowrap px-4 border-b-2 border-transparent">
+                    Current Plan
+                </button>
+<button class="flex-1 py-3 text-center font-title-md text-primary whitespace-nowrap px-4 border-b-2 border-primary bg-surface-container-low/50">
+                    Browse
+                </button>
+</div>
+</section>
+<!-- Search & Filter Container -->
+<section class="px-margin-mobile md:px-margin-desktop py-md sticky top-16 z-20 bg-background/95 backdrop-blur-md">
+<div class="relative w-full shadow-sm rounded-lg overflow-hidden group">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline group-focus-within:text-primary transition-colors">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-3 border border-outline-variant rounded-lg leading-5 bg-surface-container-lowest placeholder-outline focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-body-lg transition-all" placeholder="Search templates and items..." type="text"/>
+</div>
+<!-- Quick Filters Chips -->
+<div class="flex gap-2 mt-sm overflow-x-auto pb-1 hide-scrollbar">
+<button class="px-4 py-1.5 rounded-full bg-secondary-container/20 text-on-secondary-container font-label-md whitespace-nowrap border border-secondary-container/30 hover:bg-secondary-container/40 transition-colors">All</button>
+<button class="px-4 py-1.5 rounded-full bg-surface-container text-on-surface-variant font-label-md whitespace-nowrap hover:bg-surface-container-high transition-colors">Essentials</button>
+<button class="px-4 py-1.5 rounded-full bg-surface-container text-on-surface-variant font-label-md whitespace-nowrap hover:bg-surface-container-high transition-colors">Electronics</button>
+<button class="px-4 py-1.5 rounded-full bg-surface-container text-on-surface-variant font-label-md whitespace-nowrap hover:bg-surface-container-high transition-colors">Clothing</button>
+</div>
+</section>
+<div class="px-margin-mobile md:px-margin-desktop space-y-lg">
+<!-- Lists Section (Bento Grid) -->
+<section>
+<div class="flex items-center justify-between mb-sm">
+<h3 class="font-headline text-headline-lg text-on-surface">Lists</h3>
+<button class="text-secondary font-label-md hover:text-secondary-container transition-colors">See All</button>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-sm">
+<!-- Template Card 1 -->
+<div class="glass-panel interactive-card p-sm rounded-xl relative flex flex-col h-full group">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-sm">
+<span class="material-symbols-outlined text-primary" data-icon="medical_services">medical_services</span>
+</div>
+<h4 class="font-title-md text-on-surface mb-xs flex-grow">First Aid Kit</h4>
+<p class="font-body text-body-sm text-outline mb-md">12 items</p>
+<button class="absolute bottom-sm right-sm w-8 h-8 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors group-hover:scale-105">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+<!-- Template Card 2 -->
+<div class="glass-panel interactive-card p-sm rounded-xl relative flex flex-col h-full group border-t-4 border-t-secondary">
+<div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center mb-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="photo_camera">photo_camera</span>
+</div>
+<h4 class="font-title-md text-on-surface mb-xs flex-grow">Photography Gear</h4>
+<p class="font-body text-body-sm text-outline mb-md">8 items</p>
+<button class="absolute bottom-sm right-sm w-8 h-8 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors group-hover:scale-105">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+<!-- Template Card 3 -->
+<div class="glass-panel interactive-card p-sm rounded-xl relative flex flex-col h-full group">
+<div class="w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center mb-sm">
+<span class="material-symbols-outlined text-tertiary" data-icon="beach_access">beach_access</span>
+</div>
+<h4 class="font-title-md text-on-surface mb-xs flex-grow">Beach Essentials</h4>
+<p class="font-body text-body-sm text-outline mb-md">15 items</p>
+<button class="absolute bottom-sm right-sm w-8 h-8 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors group-hover:scale-105">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+<!-- Template Card 4 -->
+<div class="glass-panel interactive-card p-sm rounded-xl relative flex flex-col h-full group hidden md:flex">
+<div class="w-10 h-10 rounded-full bg-primary-container/30 flex items-center justify-center mb-sm">
+<span class="material-symbols-outlined text-on-primary-container" data-icon="flight">flight</span>
+</div>
+<h4 class="font-title-md text-on-surface mb-xs flex-grow">Carry-on Only</h4>
+<p class="font-body text-body-sm text-outline mb-md">24 items</p>
+<button class="absolute bottom-sm right-sm w-8 h-8 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors group-hover:scale-105">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Items Section (List View) -->
+<section>
+<div class="flex items-center justify-between mb-sm">
+<h3 class="font-headline text-headline-lg text-on-surface">Items</h3>
+<button class="text-secondary font-label-md hover:text-secondary-container transition-colors">Filter</button>
+</div>
+<div class="space-y-xs">
+<!-- Item 1 -->
+<div class="bg-surface-container-lowest rounded-lg p-3 flex items-center justify-between shadow-sm border border-surface-container hover:border-outline-variant transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-md bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">battery_charging_full</span>
+</div>
+<div>
+<h4 class="font-title-md text-on-surface text-base">Power Bank</h4>
+<span class="font-label-md text-outline bg-surface-container px-2 py-0.5 rounded text-[10px]">Electronics</span>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors group-hover:shadow-md">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+<!-- Item 2 -->
+<div class="bg-surface-container-lowest rounded-lg p-3 flex items-center justify-between shadow-sm border border-surface-container hover:border-outline-variant transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-md bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">eyeglasses</span>
+</div>
+<div>
+<h4 class="font-title-md text-on-surface text-base">Sunglasses</h4>
+<span class="font-label-md text-outline bg-surface-container px-2 py-0.5 rounded text-[10px]">Accessories</span>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors group-hover:shadow-md">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+<!-- Item 3 -->
+<div class="bg-surface-container-lowest rounded-lg p-3 flex items-center justify-between shadow-sm border border-surface-container hover:border-outline-variant transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-md bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">umbrella</span>
+</div>
+<div>
+<h4 class="font-title-md text-on-surface text-base">Rain Jacket</h4>
+<span class="font-label-md text-outline bg-surface-container px-2 py-0.5 rounded text-[10px]">Clothing</span>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors group-hover:shadow-md">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+<!-- Item 4 -->
+<div class="bg-surface-container-lowest rounded-lg p-3 flex items-center justify-between shadow-sm border border-surface-container hover:border-outline-variant transition-colors group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-md bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">book</span>
+</div>
+<div>
+<h4 class="font-title-md text-on-surface text-base">Travel Journal</h4>
+<span class="font-label-md text-outline bg-surface-container px-2 py-0.5 rounded text-[10px]">Miscellaneous</span>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors group-hover:shadow-md">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>
