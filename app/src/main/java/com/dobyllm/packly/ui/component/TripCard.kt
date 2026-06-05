@@ -35,7 +35,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -76,11 +78,15 @@ fun TripCard(trip: PacklyTrip, onOpen: () -> Unit, onPack: () -> Unit, onDelete:
             Button(
                 onClick = onPack,
                 contentPadding = CompactTripButtonPadding,
-            ) { Text(if (summary.packedItems == 0) "Start packing" else "Continue") }
+            ) { Text(if (summary.packedItems == 0) "Start packing" else "Continue packing") }
             OutlinedButton(
                 onClick = onOpen,
                 contentPadding = CompactTripButtonPadding,
-            ) { Text("Details") }
+                modifier = Modifier.semantics {
+                    contentDescription = "Modify ${trip.name}"
+                    role = Role.Button
+                },
+            ) { Text("Modify") }
             TextButton(
                 onClick = onDelete,
                 contentPadding = CompactTripButtonPadding,

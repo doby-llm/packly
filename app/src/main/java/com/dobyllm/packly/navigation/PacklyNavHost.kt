@@ -153,6 +153,7 @@ fun PacklyNavHost(
                     onReset = { vm.resetPacking(id) },
                     onQuantityChange = { entryId, quantity -> vm.updateTripEntryQuantity(id, entryId, quantity) },
                     onDeadlineChange = { deadline -> vm.updateTripDeadline(id, deadline) },
+                    onAddEntries = { sourceListIds, itemIds -> vm.addTripEntries(id, sourceListIds, itemIds) },
                 )
             }
             composable(PacklyRoute.PackingMode) { backStack ->
@@ -182,7 +183,7 @@ private fun RouteFabAction?.updatedForRoute(route: String, action: PacklyFabActi
 
 private fun String?.nestedTitle(): String = when (this) {
     PacklyRoute.ListDetail -> "List"
-    PacklyRoute.TripDetail -> "Trip"
+    PacklyRoute.TripDetail -> "Modify trip"
     PacklyRoute.PackingMode -> "Packly"
     else -> "Packly"
 }
