@@ -527,15 +527,22 @@ private fun QuantityStepper(
         color = PacklySurfaceContainerLow,
     ) {
         Row(
-            modifier = Modifier.defaultMinSize(minHeight = 44.dp).padding(horizontal = PacklySpacing.xs),
+            modifier = Modifier.defaultMinSize(minHeight = 48.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
         ) {
-            IconButton(onClick = { onQuantityChange(quantity - 1) }, enabled = quantity > 1, modifier = Modifier.size(40.dp)) {
+            IconButton(
+                onClick = { onQuantityChange(quantity - 1) },
+                enabled = quantity > 1,
+                modifier = Modifier.size(48.dp),
+            ) {
                 Icon(Icons.Rounded.Remove, contentDescription = "Decrease $itemName quantity")
             }
             Text("$quantity", modifier = Modifier.width(24.dp), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            IconButton(onClick = { onQuantityChange(quantity + 1) }, modifier = Modifier.size(40.dp)) {
+            IconButton(
+                onClick = { onQuantityChange(quantity + 1) },
+                modifier = Modifier.size(48.dp),
+            ) {
                 Icon(Icons.Rounded.Add, contentDescription = "Increase $itemName quantity")
             }
         }
@@ -594,33 +601,44 @@ private fun BrowseTripContent(
                 )
             }
         }
-        BrowseSectionHeader(title = "Lists", action = "See All")
-        filteredLists.chunked(2).forEach { rowLists ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm)) {
-                rowLists.forEach { list ->
-                    val fullyAdded = list.entries.isNotEmpty() && list.entries.all { it.dedupeKey() in existingKeys }
-                    BrowseListCard(
-                        list = list,
-                        primaryCategory = list.entries.firstOrNull()?.let { doc.categoryFor(it.categoryIdSnapshot) },
-                        alreadyAdded = fullyAdded,
-                        onAdd = { onAddEntries(listOf(list.id), emptySet()) },
-                        modifier = Modifier.weight(1f),
-                    )
+        if (filteredLists.isEmpty() && filteredItems.isEmpty()) {
+            EmptyState(
+                title = "No matches found",
+                body = "Try another search or category.",
+            )
+        } else {
+            if (filteredLists.isNotEmpty()) {
+                BrowseSectionHeader(title = "Lists", action = "See All")
+                filteredLists.chunked(2).forEach { rowLists ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm)) {
+                        rowLists.forEach { list ->
+                            val fullyAdded = list.entries.isNotEmpty() && list.entries.all { it.dedupeKey() in existingKeys }
+                            BrowseListCard(
+                                list = list,
+                                primaryCategory = list.entries.firstOrNull()?.let { doc.categoryFor(it.categoryIdSnapshot) },
+                                alreadyAdded = fullyAdded,
+                                onAdd = { onAddEntries(listOf(list.id), emptySet()) },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        if (rowLists.size == 1) Spacer(Modifier.weight(1f))
+                    }
                 }
-                if (rowLists.size == 1) Spacer(Modifier.weight(1f))
             }
-        }
-        BrowseSectionHeader(title = "Items", action = "Filter")
-        Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
-            filteredItems.forEach { item ->
-                val category = doc.categoryFor(item.categoryId)
-                val alreadyAdded = item.dedupeKey() in existingKeys
-                BrowseItemRow(
-                    item = item,
-                    category = category,
-                    alreadyAdded = alreadyAdded,
-                    onAdd = { onAddEntries(emptyList(), setOf(item.id)) },
-                )
+            if (filteredItems.isNotEmpty()) {
+                BrowseSectionHeader(title = "Items", action = "Filter")
+                Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
+                    filteredItems.forEach { item ->
+                        val category = doc.categoryFor(item.categoryId)
+                        val alreadyAdded = item.dedupeKey() in existingKeys
+                        BrowseItemRow(
+                            item = item,
+                            category = category,
+                            alreadyAdded = alreadyAdded,
+                            onAdd = { onAddEntries(emptyList(), setOf(item.id)) },
+                        )
+                    }
+                }
             }
         }
     }
