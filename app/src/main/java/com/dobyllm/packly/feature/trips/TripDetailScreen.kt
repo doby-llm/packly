@@ -236,7 +236,7 @@ private fun DeadlineCard(
                 label = "Pack by date/time",
                 supportingText = when {
                     deadlineDraft != null && !notificationPermissionGranted -> "Notifications are off. We can still show the deadline in Packly."
-                    else -> "Pick a date, then adjust the optional reminder time. Default time is 18:00."
+                    else -> "Choose a date and time to enable the reminder."
                 },
             )
             Row(

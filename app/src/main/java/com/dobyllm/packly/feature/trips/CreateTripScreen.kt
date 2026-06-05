@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -32,6 +33,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -81,13 +83,14 @@ import java.time.ZoneOffset
 fun CreateTripSheet(
     doc: PacklyAppDocument,
     onDismiss: () -> Unit,
-    onCreate: (String, String, ListId?, Set<ItemId>, Map<ItemId, Int>, InstantString?) -> Unit,
+    onCreate: (String, String, List<ListId>, Set<ItemId>, Map<ItemId, Int>, InstantString?) -> Unit,
 ) {
     var name by remember { mutableStateOf("") }
     var destination by remember { mutableStateOf("") }
     var showDestination by remember { mutableStateOf(false) }
     var packByDeadline by remember { mutableStateOf<InstantString?>(null) }
-    var sourceListId by remember { mutableStateOf<ListId?>(null) }
+    var reminderDraftIncomplete by remember { mutableStateOf(false) }
+    val selectedSourceListIds = remember { mutableStateListOf<ListId>() }
     var itemQuery by remember { mutableStateOf("") }
     var notificationPermissionGranted by rememberNotificationPermissionState()
     val requestNotificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -96,20 +99,22 @@ fun CreateTripSheet(
     val selectedItems = remember { mutableStateListOf<ItemId>() }
     val quantities = remember { mutableStateMapOf<ItemId, Int>() }
     val activeItems = doc.items.filterNot { it.isArchived }
+    val activeLists = doc.lists.filterNot { it.isArchived }
     val matchingItems = activeItems.filter { it.name.contains(itemQuery, ignoreCase = true) }
     val duplicateName = doc.trips.any { it.status != TripStatus.Archived && it.name.equals(name.trim(), ignoreCase = true) }
-    val sourceEntries = sourceListId
-        ?.let { id -> doc.lists.firstOrNull { it.id == id }?.entries }
-        ?: emptyList()
+    val selectedLists = selectedSourceListIds.mapNotNull { listId -> activeLists.firstOrNull { it.id == listId } }
+    val sourceEntries = selectedLists.flatMap { list -> list.entries.sortedBy { it.sortOrder } }
     val selectedItemIds = remember(sourceEntries, selectedItems.toList()) { sourceEntries.mapNotNull { it.itemId }.toSet() + selectedItems }
     val sourceItemIds = sourceEntries.mapNotNull { it.itemId }.toSet()
-    val duplicateSourceCount = selectedItems.count { it in sourceItemIds }
+    val duplicateAcrossListsCount = sourceEntries.mapNotNull { it.itemId }.let { ids -> ids.size - ids.toSet().size }
+    val duplicateIndividualCount = selectedItems.count { it in sourceItemIds }
+    val duplicateSourceCount = duplicateAcrossListsCount + duplicateIndividualCount
     val reviewItems = remember(selectedItemIds, doc.items, sourceEntries) {
         buildTripReviewItems(selectedItemIds, doc.items, sourceEntries)
     }
     val trimmedName = name.trim()
     val isTripNameMissing = trimmedName.isEmpty()
-    val canSaveTrip = !isTripNameMissing && !duplicateName
+    val canSaveTrip = !isTripNameMissing && !duplicateName && !reminderDraftIncomplete
 
     LaunchedEffect(selectedItemIds) {
         selectedItemIds.forEach { itemId -> quantities.putIfAbsent(itemId, 1) }
@@ -140,7 +145,8 @@ fun CreateTripSheet(
                     .widthIn(max = 560.dp)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = PacklySpacing.md),
+                    .padding(horizontal = PacklySpacing.md)
+                    .padding(bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
             ) {
                 PacklyTripTextField(
@@ -167,26 +173,77 @@ fun CreateTripSheet(
                 PacklyDeadlinePickerField(
                     deadline = packByDeadline,
                     onDeadlineChange = { packByDeadline = it },
+                    onIncompleteChange = { reminderDraftIncomplete = it },
                     supportingText = when {
+                        reminderDraftIncomplete -> "Choose a time to continue."
                         packByDeadline != null && !notificationPermissionGranted -> "Notifications are off. We can still show the deadline in Packly."
-                        else -> "Pick a date, then adjust the optional reminder time. Default time is 18:00."
+                        else -> "Choose a date and time to enable the reminder."
                     },
                 )
-                Text("Use a list", style = MaterialTheme.typography.labelLarge)
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
-                    verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
-                ) {
-                    PacklyTripFilterChip(selected = sourceListId == null, onClick = { sourceListId = null }, label = "Blank")
-                    doc.lists.filterNot { it.isArchived }.forEach { list ->
-                        PacklyTripFilterChip(
-                            selected = sourceListId == list.id,
-                            onClick = { sourceListId = list.id },
-                            label = list.name,
+                Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("Start from lists", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            "${selectedSourceListIds.size} selected",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+                    Text(
+                        "Choose one or more packing lists. Duplicate items are included once.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    if (activeLists.isEmpty()) {
+                        Text(
+                            "No packing lists yet. Create reusable lists from the Lists tab, or add individual items below.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    } else {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+                            verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
+                        ) {
+                            activeLists.forEach { list ->
+                                val selected = list.id in selectedSourceListIds
+                                PacklyTripFilterChip(
+                                    selected = selected,
+                                    onClick = {
+                                        if (selected) selectedSourceListIds.remove(list.id) else selectedSourceListIds.add(list.id)
+                                    },
+                                    label = "${list.name} (${list.entries.size})",
+                                )
+                            }
+                        }
+                    }
+                    if (selectedLists.isEmpty()) {
+                        Text(
+                            "No lists selected — start blank or add individual items below.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else {
+                        Text("Selected lists", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+                            verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
+                        ) {
+                            selectedLists.forEach { list ->
+                                PacklyTripFilterChip(
+                                    selected = true,
+                                    onClick = { selectedSourceListIds.remove(list.id) },
+                                    label = "${list.name} ×",
+                                )
+                            }
+                        }
+                    }
                 }
-                Text("Add isolated items", style = MaterialTheme.typography.labelLarge)
+                Text("Add individual items", style = MaterialTheme.typography.labelLarge)
                 PacklyTripTextField(
                     value = itemQuery,
                     onValueChange = { itemQuery = it },
@@ -197,17 +254,18 @@ fun CreateTripSheet(
                     verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
                 ) {
                     matchingItems.forEach { item ->
+                        val alreadyIncludedFromList = item.id in sourceItemIds
                         PacklyTripFilterChip(
-                            selected = item.id in selectedItems,
+                            selected = item.id in selectedItems || alreadyIncludedFromList,
                             onClick = { if (item.id in selectedItems) selectedItems.remove(item.id) else selectedItems.add(item.id) },
-                            label = item.name,
+                            label = if (alreadyIncludedFromList) "${item.name} · Already included" else item.name,
                         )
                     }
                 }
                 if (matchingItems.isEmpty()) Text("No items match this search.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (duplicateSourceCount > 0) {
                     Text(
-                        "$duplicateSourceCount selected item(s) already exist in the source list and will be included only once.",
+                        "$duplicateSourceCount duplicate item(s) across selected lists and individual items will be packed once.",
                         color = MaterialTheme.colorScheme.tertiary,
                         style = MaterialTheme.typography.bodySmall,
                     )
@@ -227,40 +285,50 @@ fun CreateTripSheet(
                     }
                 }
             }
-            if (!canSaveTrip) {
-                Text(
-                    text = if (isTripNameMissing) {
-                        "Create trip is disabled until you enter a trip name."
-                    } else {
-                        "Create trip is disabled until the trip name is unique."
-                    },
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .widthIn(max = 560.dp)
-                        .fillMaxWidth()
-                        .padding(horizontal = PacklySpacing.md),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Button(
-                enabled = canSaveTrip,
-                onClick = {
-                    if (packByDeadline != null && !notificationPermissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                tonalElevation = 1.dp,
+            ) {
+                Box(Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .widthIn(max = 560.dp)
+                            .fillMaxWidth()
+                            .padding(horizontal = PacklySpacing.md, vertical = PacklySpacing.sm),
+                        verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
+                    ) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
+                        if (!canSaveTrip) {
+                            Text(
+                                text = when {
+                                    isTripNameMissing -> "Create trip is disabled until you enter a trip name."
+                                    duplicateName -> "Create trip is disabled until the trip name is unique."
+                                    else -> "Choose a time to continue, or clear Pack by to create without a reminder."
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Button(
+                            enabled = canSaveTrip,
+                            onClick = {
+                                if (packByDeadline != null && !notificationPermissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                                onCreate(name, destination, selectedSourceListIds.toList(), selectedItems.toSet(), quantities.toMap(), packByDeadline)
+                                onDismiss()
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .defaultMinSize(minHeight = 48.dp),
+                            shape = RoundedCornerShape(PacklyRadius.default),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        ) { Text("Create trip") }
                     }
-                    onCreate(name, destination, sourceListId, selectedItems.toSet(), quantities.toMap(), packByDeadline)
-                    onDismiss()
-                },
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .widthIn(max = 560.dp)
-                    .padding(PacklySpacing.md)
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 48.dp),
-                shape = RoundedCornerShape(PacklyRadius.default),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-            ) { Text("Create trip") }
+                }
+            }
         }
     }
 }
@@ -278,12 +346,23 @@ internal fun PacklyDeadlinePickerField(
     supportingText: String,
     modifier: Modifier = Modifier,
     label: String = "Pack by (optional)",
+    onIncompleteChange: (Boolean) -> Unit = {},
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
+    var pendingDate by remember { mutableStateOf<LocalDate?>(null) }
     val selectedDate = PacklyDeadlineFormatter.localDate(deadline)
-    val selectedTime = PacklyDeadlineFormatter.localTime(deadline) ?: PacklyDeadlineFormatter.DefaultPackByTime
-    val selectedDisplay = PacklyDeadlineFormatter.formatDisplay(deadline) ?: "No deadline selected"
+    val selectedTime = PacklyDeadlineFormatter.localTime(deadline) ?: LocalTime.now()
+    val hasIncompleteDraft = pendingDate != null
+    val selectedDisplay = when {
+        hasIncompleteDraft -> "Choose a time to continue"
+        deadline == null -> "No reminder set"
+        else -> PacklyDeadlineFormatter.formatDisplay(deadline) ?: "No reminder set"
+    }
+
+    LaunchedEffect(hasIncompleteDraft) {
+        onIncompleteChange(hasIncompleteDraft)
+    }
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -300,9 +379,17 @@ internal fun PacklyDeadlinePickerField(
                 text = selectedDisplay,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = if (deadline == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                color = when {
+                    hasIncompleteDraft -> MaterialTheme.colorScheme.error
+                    deadline == null -> MaterialTheme.colorScheme.onSurfaceVariant
+                    else -> MaterialTheme.colorScheme.onSurface
+                },
             )
-            Text(supportingText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                supportingText,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (hasIncompleteDraft) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
@@ -313,14 +400,14 @@ internal fun PacklyDeadlinePickerField(
                     modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
                     shape = RoundedCornerShape(PacklyRadius.default),
                 ) {
-                    Text(if (deadline == null) "Pick date" else "Change date")
+                    Text(if (deadline == null && !hasIncompleteDraft) "Choose date" else "Change")
                 }
                 OutlinedButton(
-                    enabled = deadline != null,
+                    enabled = deadline != null || hasIncompleteDraft,
                     onClick = { showTimePicker = true },
                     modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
                     shape = RoundedCornerShape(PacklyRadius.default),
-                ) { Text("Change time") }
+                ) { Text(if (hasIncompleteDraft) "Choose time" else "Change time") }
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -328,8 +415,11 @@ internal fun PacklyDeadlinePickerField(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 TextButton(
-                    enabled = deadline != null,
-                    onClick = { onDeadlineChange(null) },
+                    enabled = deadline != null || hasIncompleteDraft,
+                    onClick = {
+                        pendingDate = null
+                        onDeadlineChange(null)
+                    },
                     modifier = Modifier.defaultMinSize(minWidth = 72.dp, minHeight = 48.dp),
                 ) { Text("Clear", maxLines = 1, softWrap = false) }
             }
@@ -337,18 +427,18 @@ internal fun PacklyDeadlinePickerField(
     }
 
     if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = deadlineDateMillis(selectedDate))
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = deadlineDateMillis(pendingDate ?: selectedDate))
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(
                     onClick = {
                         val date = datePickerState.selectedDateMillis?.toLocalDateUtc() ?: LocalDate.now()
-                        onDeadlineChange(PacklyDeadlineFormatter.toInstantString(date, selectedTime))
+                        pendingDate = date
                         showDatePicker = false
                         showTimePicker = true
                     },
-                ) { Text("Next: time") }
+                ) { Text("Next: choose time") }
             },
             dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } },
         ) {
@@ -365,14 +455,15 @@ internal fun PacklyDeadlinePickerField(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val date = PacklyDeadlineFormatter.localDate(deadline) ?: LocalDate.now()
+                        val date = pendingDate ?: PacklyDeadlineFormatter.localDate(deadline) ?: LocalDate.now()
                         val time = LocalTime.of(timePickerState.hour, timePickerState.minute)
                         onDeadlineChange(PacklyDeadlineFormatter.toInstantString(date, time))
+                        pendingDate = null
                         showTimePicker = false
                     },
                 ) { Text("Save time") }
             },
-            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Skip") } },
+            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancel") } },
         )
     }
 }

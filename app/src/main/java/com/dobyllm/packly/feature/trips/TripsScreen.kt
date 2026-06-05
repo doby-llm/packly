@@ -41,7 +41,7 @@ fun TripsScreen(
     doc: PacklyAppDocument,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     onFabActionChange: ((PacklyFabAction?) -> Unit)? = null,
-    onCreate: (String, String, ListId?, Set<ItemId>, Map<ItemId, Int>, InstantString?) -> Unit,
+    onCreate: (String, String, List<ListId>, Set<ItemId>, Map<ItemId, Int>, InstantString?) -> Unit,
     onOpen: (TripId) -> Unit,
     onPack: (TripId) -> Unit,
     onDelete: (TripId) -> Unit,

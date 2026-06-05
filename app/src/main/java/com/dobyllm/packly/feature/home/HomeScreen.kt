@@ -38,7 +38,7 @@ import kotlin.math.roundToInt
 fun HomeScreen(
     doc: PacklyAppDocument,
     contentPadding: PaddingValues = PaddingValues(0.dp),
-    onCreateTrip: (String, String, ListId?, Set<ItemId>, Map<ItemId, Int>, InstantString?) -> Unit,
+    onCreateTrip: (String, String, List<ListId>, Set<ItemId>, Map<ItemId, Int>, InstantString?) -> Unit,
     onOpenTrip: (TripId) -> Unit,
 ) {
     var showCreateTrip by remember { mutableStateOf(false) }
