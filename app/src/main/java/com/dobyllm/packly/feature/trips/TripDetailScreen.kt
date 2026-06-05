@@ -8,22 +8,30 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,32 +39,60 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.InstantString
 import com.dobyllm.packly.core.model.ItemId
 import com.dobyllm.packly.core.model.ListId
 import com.dobyllm.packly.core.model.PacklyAppDocument
+import com.dobyllm.packly.core.model.PacklyCategory
+import com.dobyllm.packly.core.model.PacklyItem
+import com.dobyllm.packly.core.model.PacklyList
 import com.dobyllm.packly.core.model.PacklyListEntry
+import com.dobyllm.packly.core.model.TripEntry
 import com.dobyllm.packly.core.model.TripEntryId
 import com.dobyllm.packly.core.model.TripId
 import com.dobyllm.packly.core.time.PacklyDeadlineFormatter
 import com.dobyllm.packly.ui.component.EmptyState
-import com.dobyllm.packly.ui.component.TripSummaryCard
+import com.dobyllm.packly.ui.theme.PacklyOnSecondaryContainer
+import com.dobyllm.packly.ui.theme.PacklyOutlineVariant
+import com.dobyllm.packly.ui.theme.PacklyPrimary
+import com.dobyllm.packly.ui.theme.PacklySecondary
+import com.dobyllm.packly.ui.theme.PacklySecondaryContainer
+import com.dobyllm.packly.ui.theme.PacklySurfaceContainer
+import com.dobyllm.packly.ui.theme.PacklySurfaceContainerHigh
+import com.dobyllm.packly.ui.theme.PacklySurfaceContainerLow
+import com.dobyllm.packly.ui.theme.PacklySurfaceContainerLowest
+import com.dobyllm.packly.ui.token.CategoryTokens
+import com.dobyllm.packly.ui.token.PacklyElevation
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
 import kotlin.math.roundToInt
+
+private enum class ModifyTripTab { CurrentPlan, Browse }
 
 @Composable
 fun TripDetailScreen(
@@ -66,10 +102,12 @@ fun TripDetailScreen(
     onPack: () -> Unit,
     onReset: () -> Unit,
     onQuantityChange: (TripEntryId, Int) -> Unit,
+    onRemoveEntry: (TripEntryId) -> Unit,
     onDeadlineChange: (InstantString?) -> Unit,
     onAddEntries: (List<ListId>, Set<ItemId>) -> Unit,
 ) {
     val trip = doc.trips.firstOrNull { it.id == tripId }
+    var activeTab by rememberSaveable(tripId) { mutableStateOf(ModifyTripTab.CurrentPlan) }
     var showResetConfirm by remember(tripId) { mutableStateOf(false) }
     var deadlineDraft by remember(trip?.packBy) { mutableStateOf(trip?.packBy) }
     var notificationPermissionGranted by rememberNotificationPermissionState()
@@ -92,113 +130,77 @@ fun TripDetailScreen(
         val deadlineWarning = unpackedItems > 0 && PacklyDeadlineFormatter.isCloseOrOverdue(trip.packBy)
         val packBy = PacklyDeadlineFormatter.formatDisplay(trip.packBy)
         val dateRange = listOfNotNull(trip.startDate, trip.endDate).joinToString(" - ").ifBlank { null }
-        val metadata = listOfNotNull(
-            dateRange,
-            trip.destination.takeIf { it.isNotBlank() },
-            "$packedItems/$totalItems packed",
-            packBy?.let { "Pack by $it" },
-        ).joinToString(" • ")
-        val chips = listOfNotNull(
-            trip.destination.takeIf { it.isNotBlank() },
-            packBy?.let { "Pack by $it" },
-            totalItems.takeIf { it > 0 }?.let { "$it items" },
-        )
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding),
-            contentPadding = PaddingValues(horizontal = PacklySpacing.marginMobile, vertical = PacklySpacing.md),
+            contentPadding = PaddingValues(bottom = PacklySpacing.xl),
             verticalArrangement = Arrangement.spacedBy(PacklySpacing.md),
         ) {
             item {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
-                ) {
-                    Text(
-                        text = trip.name,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        text = "Modify trip checklist and packing settings",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    trip.destination.takeIf { it.isNotBlank() }?.let { destination ->
-                        Text(
-                            text = destination,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                ModifyTripHeader(
+                    tripName = trip.name,
+                    dateRange = dateRange,
+                    activeTab = activeTab,
+                    onTabChange = { activeTab = it },
+                )
+            }
+
+            when (activeTab) {
+                ModifyTripTab.CurrentPlan -> {
+                    item {
+                        PackingProgressCard(
+                            packedItems = packedItems,
+                            totalItems = totalItems,
+                            progress = progress,
+                            onPack = onPack,
+                            onReset = { showResetConfirm = true },
+                        )
+                    }
+                    item {
+                        DeadlineSection(
+                            packBy = packBy,
+                            unpackedItems = unpackedItems,
+                            deadlineWarning = deadlineWarning,
+                            deadlineDraft = deadlineDraft,
+                            onDeadlineDraftChange = { deadlineDraft = it },
+                            notificationPermissionGranted = notificationPermissionGranted,
+                            hasDeadlineChange = hasDeadlineChange,
+                            onSaveDeadline = {
+                                if (deadlineDraft != null && !notificationPermissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                                onDeadlineChange(deadlineDraft)
+                            },
+                            onClearDeadline = {
+                                deadlineDraft = null
+                                onDeadlineChange(null)
+                            },
+                            canClearDeadline = trip.packBy != null || deadlineDraft != null,
+                            modifier = Modifier.padding(horizontal = PacklySpacing.marginMobile),
+                        )
+                    }
+                    item {
+                        CurrentPlanSection(
+                            doc = doc,
+                            entries = trip.entries,
+                            onQuantityChange = onQuantityChange,
+                            onRemoveEntry = onRemoveEntry,
+                            onBrowseClick = { activeTab = ModifyTripTab.Browse },
                         )
                     }
                 }
-            }
-            item {
-                TripSummaryCard(
-                    title = trip.name,
-                    metadata = metadata,
-                    percentLabel = "${(progress * 100).roundToInt()}% Packed",
-                    progress = progress,
-                    chips = chips,
-                    accentColor = MaterialTheme.colorScheme.primaryContainer,
-                    onClick = onPack,
-                ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
-                        Button(onClick = onPack) { Text(if (packedItems == 0) "Start packing" else "Continue packing") }
-                        OutlinedButton(onClick = { showResetConfirm = true }) { Text("Reset packed items") }
+
+                ModifyTripTab.Browse -> {
+                    item {
+                        BrowseTripContent(
+                            doc = doc,
+                            tripEntries = trip.entries,
+                            onAddEntries = onAddEntries,
+                            modifier = Modifier.padding(horizontal = PacklySpacing.marginMobile),
+                        )
                     }
-                }
-            }
-            item {
-                DeadlineSection(
-                    packBy = packBy,
-                    unpackedItems = unpackedItems,
-                    deadlineWarning = deadlineWarning,
-                    deadlineDraft = deadlineDraft,
-                    onDeadlineDraftChange = { deadlineDraft = it },
-                    notificationPermissionGranted = notificationPermissionGranted,
-                    hasDeadlineChange = hasDeadlineChange,
-                    onSaveDeadline = {
-                        if (deadlineDraft != null && !notificationPermissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        }
-                        onDeadlineChange(deadlineDraft)
-                    },
-                    onClearDeadline = {
-                        deadlineDraft = null
-                        onDeadlineChange(null)
-                    },
-                    canClearDeadline = trip.packBy != null || deadlineDraft != null,
-                )
-            }
-            item {
-                TripChecklistSection(
-                    doc = doc,
-                    tripEntries = trip.entries,
-                    onAddEntries = onAddEntries,
-                )
-            }
-            if (trip.entries.isEmpty()) {
-                item {
-                    EmptyState(
-                        title = "Nothing to pack yet",
-                        body = "Add a list or individual items to build this trip.",
-                    )
-                }
-            } else {
-                item { Text("Trip quantities", style = MaterialTheme.typography.titleLarge) }
-                items(trip.entries, key = { it.id }) { entry ->
-                    val category = doc.categories.firstOrNull { it.id == entry.categoryIdSnapshot }?.label ?: "Unknown"
-                    TripQuantityRow(
-                        name = entry.nameSnapshot,
-                        category = category,
-                        quantity = entry.quantity,
-                        isPacked = entry.isPacked,
-                        onQuantityChange = { onQuantityChange(entry.id, it) },
-                    )
                 }
             }
         }
@@ -224,6 +226,152 @@ fun TripDetailScreen(
 }
 
 @Composable
+private fun ModifyTripHeader(
+    tripName: String,
+    dateRange: String?,
+    activeTab: ModifyTripTab,
+    onTabChange: (ModifyTripTab) -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(bottomStart = PacklyRadius.xl, bottomEnd = PacklyRadius.xl),
+        color = PacklySurfaceContainerLowest,
+        shadowElevation = PacklyElevation.card,
+    ) {
+        Column(
+            modifier = Modifier.padding(start = PacklySpacing.marginMobile, end = PacklySpacing.marginMobile, top = PacklySpacing.md),
+            verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
+        ) {
+            Text(
+                text = tripName,
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Rounded.CalendarMonth, contentDescription = null, tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(18.dp))
+                Text(
+                    text = dateRange ?: "Dates not set",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.outline,
+                )
+            }
+            ModifyTripTabs(activeTab = activeTab, onTabChange = onTabChange)
+        }
+    }
+}
+
+@Composable
+private fun ModifyTripTabs(
+    activeTab: ModifyTripTab,
+    onTabChange: (ModifyTripTab) -> Unit,
+) {
+    Row(Modifier.fillMaxWidth()) {
+        ModifyTripTabButton(
+            label = "Current Plan",
+            selected = activeTab == ModifyTripTab.CurrentPlan,
+            onClick = { onTabChange(ModifyTripTab.CurrentPlan) },
+            modifier = Modifier.weight(1f),
+        )
+        ModifyTripTabButton(
+            label = "Browse",
+            selected = activeTab == ModifyTripTab.Browse,
+            onClick = { onTabChange(ModifyTripTab.Browse) },
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun ModifyTripTabButton(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.semantics {
+            role = Role.Tab
+            this.selected = selected
+        },
+        color = if (selected) PacklySurfaceContainerLow.copy(alpha = 0.5f) else Color.Transparent,
+        contentColor = if (selected) PacklyPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = label,
+                modifier = Modifier.padding(vertical = PacklySpacing.sm),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Surface(
+                modifier = Modifier.fillMaxWidth().height(2.dp),
+                color = if (selected) PacklyPrimary else Color.Transparent,
+                content = {},
+            )
+        }
+    }
+}
+
+@Composable
+private fun PackingProgressCard(
+    packedItems: Int,
+    totalItems: Int,
+    progress: Float,
+    onPack: () -> Unit,
+    onReset: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.padding(horizontal = PacklySpacing.marginMobile).fillMaxWidth(),
+        shape = RoundedCornerShape(PacklyRadius.lg),
+        color = PacklySurfaceContainerLowest,
+        border = BorderStroke(1.dp, PacklyOutlineVariant),
+        shadowElevation = PacklyElevation.card,
+    ) {
+        Column(
+            modifier = Modifier.padding(PacklySpacing.md),
+            verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Packing progress", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = "${(progress * 100).roundToInt()}% Packed",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = PacklyPrimary,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            Text("$packedItems of $totalItems items packed", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // Stacked full-width actions keep equal 48dp height on 360dp phones and prevent Reset copy wrapping.
+            Button(
+                onClick = onPack,
+                modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
+                shape = RoundedCornerShape(PacklyRadius.default),
+            ) {
+                Text(if (packedItems == 0) "Start packing" else "Continue packing", maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            OutlinedButton(
+                onClick = onReset,
+                modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
+                shape = RoundedCornerShape(PacklyRadius.default),
+            ) {
+                Text("Reset packed items", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+@Composable
 private fun DeadlineSection(
     packBy: String?,
     unpackedItems: Int,
@@ -235,9 +383,10 @@ private fun DeadlineSection(
     onSaveDeadline: () -> Unit,
     onClearDeadline: () -> Unit,
     canClearDeadline: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
     ) {
         Text("Trip settings", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
@@ -269,7 +418,7 @@ private fun DeadlineSection(
                 onClick = onSaveDeadline,
                 modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
                 shape = RoundedCornerShape(PacklyRadius.default),
-            ) { Text("Save Pack by") }
+            ) { Text("Save Pack by", maxLines = 1, overflow = TextOverflow.Ellipsis) }
             OutlinedButton(
                 enabled = canClearDeadline,
                 onClick = onClearDeadline,
@@ -281,217 +430,383 @@ private fun DeadlineSection(
 }
 
 @Composable
-private fun TripChecklistSection(
+private fun CurrentPlanSection(
     doc: PacklyAppDocument,
-    tripEntries: List<com.dobyllm.packly.core.model.TripEntry>,
-    onAddEntries: (List<ListId>, Set<ItemId>) -> Unit,
+    entries: List<TripEntry>,
+    onQuantityChange: (TripEntryId, Int) -> Unit,
+    onRemoveEntry: (TripEntryId) -> Unit,
+    onBrowseClick: () -> Unit,
 ) {
-    val activeLists = doc.lists.filterNot { it.isArchived }
-    val activeItems = doc.items.filterNot { it.isArchived }
-    val selectedListIds = remember { mutableStateListOf<ListId>() }
-    val selectedItemIds = remember { mutableStateListOf<ItemId>() }
-    var showListSelector by remember { mutableStateOf(false) }
-    var showItemSelector by remember { mutableStateOf(false) }
-    var feedback by remember { mutableStateOf<String?>(null) }
-    val existingKeys = remember(tripEntries) { tripEntries.map { it.dedupeKey() }.toSet() }
-    val selectedListEntries = selectedListIds.mapNotNull { listId -> activeLists.firstOrNull { it.id == listId } }
-        .flatMap { list -> list.entries.sortedBy { it.sortOrder } }
-    val estimatedAddCount = remember(selectedListEntries, selectedItemIds.toList(), activeItems, existingKeys) {
-        estimateNewEntries(selectedListEntries, selectedItemIds, activeItems, existingKeys).first
-    }
-    val estimatedSkipCount = remember(selectedListEntries, selectedItemIds.toList(), activeItems, existingKeys) {
-        estimateNewEntries(selectedListEntries, selectedItemIds, activeItems, existingKeys).second
-    }
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(PacklyRadius.lg),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        shadowElevation = 2.dp,
-    ) {
-        Column(
-            Modifier.fillMaxWidth().padding(PacklySpacing.md),
-            verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
-        ) {
-            Text("Trip checklist", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            Text(
-                "Add lists or individual items after trip creation. Existing quantities and packed states stay unchanged.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
-                Button(
-                    onClick = { showListSelector = true },
-                    modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
-                    shape = RoundedCornerShape(PacklyRadius.default),
-                ) { Text("Add lists") }
-                OutlinedButton(
-                    onClick = { showItemSelector = true },
-                    modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
-                    shape = RoundedCornerShape(PacklyRadius.default),
-                ) { Text("Add items") }
-            }
-            if (showListSelector) {
-                Row(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
-                    Text("Select lists", style = MaterialTheme.typography.labelLarge)
-                    Text("${selectedListIds.size} selected", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                if (activeLists.isEmpty()) {
-                    Text("No packing lists yet.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-                } else {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
-                        verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
-                    ) {
-                        activeLists.forEach { list ->
-                            val selected = list.id in selectedListIds
-                            val duplicateCount = list.entries.count { it.dedupeKey() in existingKeys }
-                            PacklyTripFilterChip(
-                                selected = selected,
-                                onClick = { if (selected) selectedListIds.remove(list.id) else selectedListIds.add(list.id) },
-                                label = if (duplicateCount > 0) "${list.name} (${list.entries.size}, $duplicateCount already)" else "${list.name} (${list.entries.size})",
-                            )
-                        }
-                    }
-                }
-            }
-            if (showItemSelector) {
-                Text("Select individual items", style = MaterialTheme.typography.labelLarge)
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
-                    verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
-                ) {
-                    activeItems.forEach { item ->
-                        val alreadyInTrip = item.dedupeKey() in existingKeys
-                        val selected = item.id in selectedItemIds
-                        PacklyTripFilterChip(
-                            selected = selected || alreadyInTrip,
-                            onClick = {
-                                if (!alreadyInTrip) {
-                                    if (selected) selectedItemIds.remove(item.id) else selectedItemIds.add(item.id)
-                                }
-                            },
-                            label = if (alreadyInTrip) "${item.name} · Already in trip" else item.name,
-                        )
-                    }
-                }
-            }
-            if (estimatedSkipCount > 0) {
-                Text(
-                    "$estimatedSkipCount item(s) already in this trip will be skipped.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.tertiary,
-                )
-            }
-            feedback?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
-            ) {
-                Button(
-                    enabled = selectedListIds.isNotEmpty() || selectedItemIds.isNotEmpty(),
-                    onClick = {
-                        onAddEntries(selectedListIds.toList(), selectedItemIds.toSet())
-                        feedback = when {
-                            estimatedAddCount > 0 && estimatedSkipCount > 0 -> "Added $estimatedAddCount item(s). $estimatedSkipCount item(s) already in this trip were skipped."
-                            estimatedAddCount > 0 -> "Added $estimatedAddCount item(s) to this trip."
-                            else -> "$estimatedSkipCount item(s) already in this trip were skipped."
-                        }
-                        selectedListIds.clear()
-                        selectedItemIds.clear()
-                    },
-                    modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
-                    shape = RoundedCornerShape(PacklyRadius.default),
-                ) { Text("Add selected") }
-                TextButton(
-                    enabled = selectedListIds.isNotEmpty() || selectedItemIds.isNotEmpty(),
-                    onClick = {
-                        selectedListIds.clear()
-                        selectedItemIds.clear()
-                    },
-                    modifier = Modifier.defaultMinSize(minHeight = 48.dp),
-                ) { Text("Clear") }
-            }
-        }
-    }
-}
-
-private fun estimateNewEntries(
-    listEntries: List<PacklyListEntry>,
-    itemIds: List<ItemId>,
-    activeItems: List<com.dobyllm.packly.core.model.PacklyItem>,
-    existingKeys: Set<String>,
-): Pair<Int, Int> {
-    val seenKeys = existingKeys.toMutableSet()
-    var added = 0
-    var skipped = 0
-
-    fun track(key: String) {
-        if (key in seenKeys) {
-            skipped += 1
-        } else {
-            seenKeys += key
-            added += 1
-        }
-    }
-
-    listEntries.forEach { track(it.dedupeKey()) }
-    activeItems.filter { it.id in itemIds }.forEach { track(it.dedupeKey()) }
-    return added to skipped
-}
-
-private fun PacklyListEntry.dedupeKey(): String = itemId?.let { "item:$it" } ?: snapshotDedupeKey(itemNameSnapshot, categoryIdSnapshot)
-
-private fun com.dobyllm.packly.core.model.TripEntry.dedupeKey(): String =
-    sourceItemId?.let { "item:$it" } ?: snapshotDedupeKey(nameSnapshot, categoryIdSnapshot)
-
-private fun com.dobyllm.packly.core.model.PacklyItem.dedupeKey(): String = "item:$id"
-
-private fun snapshotDedupeKey(name: String, categoryId: String): String =
-    "snapshot:${name.trim().lowercase().replace(Regex("\\s+"), " ")}\u0000$categoryId"
-
-@Composable
-private fun TripQuantityRow(
-    name: String,
-    category: String,
-    quantity: Int,
-    isPacked: Boolean,
-    onQuantityChange: (Int) -> Unit,
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .widthIn(max = 560.dp),
-        shape = RoundedCornerShape(PacklyRadius.lg),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHigh),
-        shadowElevation = 2.dp,
+    Column(
+        modifier = Modifier.padding(horizontal = PacklySpacing.marginMobile).fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(PacklySpacing.md),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = PacklySpacing.md, vertical = PacklySpacing.sm),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
-                Text(name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                Text(
-                    listOf(category, if (isPacked) "Packed" else "Unpacked").joinToString(" • "),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
-                IconButton(onClick = { onQuantityChange(quantity - 1) }, enabled = quantity > 1) {
-                    Icon(Icons.Rounded.Remove, contentDescription = "Decrease $name quantity")
-                }
-                Text("×$quantity", style = MaterialTheme.typography.titleMedium)
-                IconButton(onClick = { onQuantityChange(quantity + 1) }) {
-                    Icon(Icons.Rounded.Add, contentDescription = "Increase $name quantity")
+            Text("Items in this trip", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+            CountChip("${entries.size} ITEMS")
+        }
+
+        if (entries.isEmpty()) {
+            EmptyState(
+                title = "Nothing in this trip yet",
+                body = "Browse lists and items to build this trip.",
+            )
+            Button(
+                onClick = onBrowseClick,
+                modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
+                shape = RoundedCornerShape(PacklyRadius.default),
+            ) { Text("Browse items") }
+        } else {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(PacklyRadius.lg),
+                color = PacklySurfaceContainerLowest,
+                border = BorderStroke(1.dp, PacklySurfaceContainerHigh),
+                shadowElevation = PacklyElevation.card,
+            ) {
+                Column(Modifier.fillMaxWidth()) {
+                    entries.forEachIndexed { index, entry ->
+                        CurrentPlanEntryRow(
+                            entry = entry,
+                            sourceLabel = entry.sourceLabel(doc),
+                            onQuantityChange = { onQuantityChange(entry.id, it) },
+                            onRemoveEntry = { onRemoveEntry(entry.id) },
+                        )
+                        if (index != entries.lastIndex) {
+                            Surface(Modifier.fillMaxWidth().height(1.dp), color = PacklySurfaceContainerHigh, content = {})
+                        }
+                    }
                 }
             }
         }
     }
 }
+
+@Composable
+private fun CurrentPlanEntryRow(
+    entry: TripEntry,
+    sourceLabel: String,
+    onQuantityChange: (Int) -> Unit,
+    onRemoveEntry: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
+            Text(entry.nameSnapshot, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(
+                text = sourceLabel,
+                style = MaterialTheme.typography.labelMedium,
+                color = if (sourceLabel.startsWith("FROM ")) PacklySecondary else MaterialTheme.colorScheme.onSurfaceVariant,
+                fontStyle = if (sourceLabel == "Individual Item") FontStyle.Italic else FontStyle.Normal,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        QuantityStepper(quantity = entry.quantity, itemName = entry.nameSnapshot, onQuantityChange = onQuantityChange)
+        IconButton(onClick = onRemoveEntry, modifier = Modifier.size(48.dp)) {
+            Icon(Icons.Rounded.Close, contentDescription = "Remove ${entry.nameSnapshot}", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun QuantityStepper(
+    quantity: Int,
+    itemName: String,
+    onQuantityChange: (Int) -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(PacklyRadius.lg),
+        color = PacklySurfaceContainerLow,
+    ) {
+        Row(
+            modifier = Modifier.defaultMinSize(minHeight = 44.dp).padding(horizontal = PacklySpacing.xs),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
+        ) {
+            IconButton(onClick = { onQuantityChange(quantity - 1) }, enabled = quantity > 1, modifier = Modifier.size(40.dp)) {
+                Icon(Icons.Rounded.Remove, contentDescription = "Decrease $itemName quantity")
+            }
+            Text("$quantity", modifier = Modifier.width(24.dp), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            IconButton(onClick = { onQuantityChange(quantity + 1) }, modifier = Modifier.size(40.dp)) {
+                Icon(Icons.Rounded.Add, contentDescription = "Increase $itemName quantity")
+            }
+        }
+    }
+}
+
+@Composable
+private fun BrowseTripContent(
+    doc: PacklyAppDocument,
+    tripEntries: List<TripEntry>,
+    onAddEntries: (List<ListId>, Set<ItemId>) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var query by rememberSaveable { mutableStateOf("") }
+    var selectedCategoryId by rememberSaveable { mutableStateOf<String?>(null) }
+    val activeLists = doc.lists.filterNot { it.isArchived }
+    val activeItems = doc.items.filterNot { it.isArchived }
+    val categories = doc.categories.filterNot { it.isArchived }.sortedBy { it.sortOrder }
+    val existingKeys = remember(tripEntries) { tripEntries.map { it.dedupeKey() }.toSet() }
+    val normalizedQuery = query.trim()
+    val filteredItems = activeItems
+        .filter { item -> selectedCategoryId == null || item.categoryId == selectedCategoryId }
+        .filter { item -> normalizedQuery.isBlank() || item.name.contains(normalizedQuery, ignoreCase = true) || doc.categoryFor(item.categoryId).label.contains(normalizedQuery, ignoreCase = true) }
+    val filteredLists = activeLists.filter { list ->
+        val matchesQuery = normalizedQuery.isBlank() || list.name.contains(normalizedQuery, ignoreCase = true) || list.description.contains(normalizedQuery, ignoreCase = true)
+        val matchesCategory = selectedCategoryId == null || list.entries.any { it.categoryIdSnapshot == selectedCategoryId }
+        matchesQuery && matchesCategory
+    }
+
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(PacklySpacing.md)) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = MaterialTheme.colorScheme.outline) },
+            placeholder = { Text("Search templates and items…") },
+            singleLine = true,
+            shape = RoundedCornerShape(PacklyRadius.lg),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = PacklySurfaceContainerLowest,
+                unfocusedContainerColor = PacklySurfaceContainerLowest,
+                focusedBorderColor = PacklyPrimary,
+                unfocusedBorderColor = PacklyOutlineVariant,
+            ),
+        )
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+            verticalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+        ) {
+            BrowseCategoryChip(label = "All", selected = selectedCategoryId == null, onClick = { selectedCategoryId = null })
+            categories.forEach { category ->
+                BrowseCategoryChip(
+                    label = category.label,
+                    selected = selectedCategoryId == category.id,
+                    onClick = { selectedCategoryId = category.id },
+                )
+            }
+        }
+        BrowseSectionHeader(title = "Lists", action = "See All")
+        filteredLists.chunked(2).forEach { rowLists ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm)) {
+                rowLists.forEach { list ->
+                    val fullyAdded = list.entries.isNotEmpty() && list.entries.all { it.dedupeKey() in existingKeys }
+                    BrowseListCard(
+                        list = list,
+                        primaryCategory = list.entries.firstOrNull()?.let { doc.categoryFor(it.categoryIdSnapshot) },
+                        alreadyAdded = fullyAdded,
+                        onAdd = { onAddEntries(listOf(list.id), emptySet()) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                if (rowLists.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+        BrowseSectionHeader(title = "Items", action = "Filter")
+        Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
+            filteredItems.forEach { item ->
+                val category = doc.categoryFor(item.categoryId)
+                val alreadyAdded = item.dedupeKey() in existingKeys
+                BrowseItemRow(
+                    item = item,
+                    category = category,
+                    alreadyAdded = alreadyAdded,
+                    onAdd = { onAddEntries(emptyList(), setOf(item.id)) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BrowseSectionHeader(title: String, action: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(title, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
+        Text(action, style = MaterialTheme.typography.titleMedium, color = PacklySecondary)
+    }
+}
+
+@Composable
+private fun BrowseCategoryChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(PacklyRadius.full),
+        color = if (selected) PacklySecondaryContainer.copy(alpha = 0.2f) else PacklySurfaceContainer,
+        border = if (selected) BorderStroke(1.dp, PacklySecondaryContainer) else null,
+        modifier = Modifier.defaultMinSize(minHeight = 48.dp).semantics {
+            role = Role.Tab
+            this.selected = selected
+        },
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = PacklySpacing.md, vertical = PacklySpacing.sm),
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (selected) PacklyOnSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun BrowseListCard(
+    list: PacklyList,
+    primaryCategory: PacklyCategory?,
+    alreadyAdded: Boolean,
+    onAdd: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier
+            .defaultMinSize(minHeight = 164.dp)
+            .shadow(12.dp, RoundedCornerShape(PacklyRadius.xl), ambientColor = PacklySecondary.copy(alpha = 0.08f), spotColor = PacklySecondary.copy(alpha = 0.08f))
+            .semantics {
+                stateDescription = if (alreadyAdded) "In this trip" else "Not in this trip"
+                contentDescription = if (alreadyAdded) "${list.name}, already added to this trip" else "Add ${list.name} list"
+            },
+        onClick = onAdd,
+        enabled = !alreadyAdded,
+        shape = RoundedCornerShape(PacklyRadius.xl),
+        color = PacklySurfaceContainerLowest,
+    ) {
+        Box(Modifier.fillMaxWidth().padding(PacklySpacing.sm)) {
+            Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
+                val token = primaryCategory?.let { CategoryTokens.byKey(it.key) } ?: CategoryTokens.byKey("misc")
+                Surface(shape = CircleShape, color = token.soft.copy(alpha = 0.25f), modifier = Modifier.size(44.dp)) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(CategoryTokens.icon(token.iconKey), contentDescription = null, tint = token.accent, modifier = Modifier.size(24.dp))
+                    }
+                }
+                Spacer(Modifier.height(PacklySpacing.base))
+                Text(list.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text("${list.entries.size} items", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
+            }
+            AddStateButton(
+                alreadyAdded = alreadyAdded,
+                contentDescription = if (alreadyAdded) "${list.name} already in trip" else "Add ${list.name}",
+                modifier = Modifier.align(Alignment.BottomEnd),
+            )
+        }
+    }
+}
+
+@Composable
+private fun BrowseItemRow(
+    item: PacklyItem,
+    category: PacklyCategory,
+    alreadyAdded: Boolean,
+    onAdd: () -> Unit,
+) {
+    Surface(
+        onClick = onAdd,
+        enabled = !alreadyAdded,
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 92.dp)
+            .semantics {
+                stateDescription = if (alreadyAdded) "In this trip" else "Not in this trip"
+                contentDescription = if (alreadyAdded) "${item.name}, already added to this trip" else "Add ${item.name}"
+            },
+        shape = RoundedCornerShape(PacklyRadius.lg),
+        color = PacklySurfaceContainerLowest,
+        border = BorderStroke(1.dp, if (alreadyAdded) PacklyPrimary.copy(alpha = 0.35f) else PacklySurfaceContainerHigh),
+        shadowElevation = PacklyElevation.card,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(PacklySpacing.sm),
+            horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val token = CategoryTokens.byKey(category.key)
+            Surface(shape = RoundedCornerShape(PacklyRadius.default), color = PacklySurfaceContainer, modifier = Modifier.size(52.dp)) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(CategoryTokens.icon(category.iconKey), contentDescription = null, tint = token.accent, modifier = Modifier.size(24.dp))
+                }
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
+                Text(item.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Surface(shape = RoundedCornerShape(PacklyRadius.full), color = PacklySurfaceContainer) {
+                    Text(
+                        text = category.label,
+                        modifier = Modifier.padding(horizontal = PacklySpacing.base, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.outline,
+                        maxLines = 1,
+                    )
+                }
+            }
+            AddStateButton(
+                alreadyAdded = alreadyAdded,
+                contentDescription = if (alreadyAdded) "${item.name} already in trip" else "Add ${item.name}",
+            )
+        }
+    }
+}
+
+@Composable
+private fun AddStateButton(alreadyAdded: Boolean, contentDescription: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.size(48.dp),
+        shape = CircleShape,
+        color = if (alreadyAdded) PacklyPrimary else PacklySurfaceContainerHigh,
+        contentColor = if (alreadyAdded) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = if (alreadyAdded) Icons.Rounded.Check else Icons.Rounded.Add,
+                contentDescription = contentDescription,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun CountChip(label: String) {
+    Surface(shape = RoundedCornerShape(PacklyRadius.full), color = PacklySurfaceContainerHigh) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.xs),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+private fun TripEntry.sourceLabel(doc: PacklyAppDocument): String {
+    val sourceList = sourceListEntryId?.let { entryId -> doc.lists.firstOrNull { list -> list.entries.any { it.id == entryId } } }
+    return sourceList?.name?.let { "FROM $it" } ?: "Individual Item"
+}
+
+private fun PacklyAppDocument.categoryFor(categoryId: String): PacklyCategory =
+    categories.firstOrNull { it.id == categoryId } ?: categories.firstOrNull() ?: PacklyCategory(
+        id = categoryId,
+        key = "misc",
+        label = "Miscellaneous",
+        iconKey = "category",
+        accentColorHex = "#3b4a44",
+        softColorHex = "#e1e3e4",
+        sortOrder = Int.MAX_VALUE,
+    )
+
+private fun PacklyListEntry.dedupeKey(): String = itemId?.let { "item:$it" } ?: snapshotDedupeKey(itemNameSnapshot, categoryIdSnapshot)
+
+private fun TripEntry.dedupeKey(): String =
+    sourceItemId?.let { "item:$it" } ?: snapshotDedupeKey(nameSnapshot, categoryIdSnapshot)
+
+private fun PacklyItem.dedupeKey(): String = "item:$id"
+
+private fun snapshotDedupeKey(name: String, categoryId: String): String =
+    "snapshot:${name.trim().lowercase().replace(Regex("\\s+"), " ")}\u0000$categoryId"

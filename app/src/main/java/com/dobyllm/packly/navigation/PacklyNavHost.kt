@@ -35,6 +35,7 @@ import com.dobyllm.packly.feature.trips.TripDetailScreen
 import com.dobyllm.packly.feature.trips.TripsScreen
 import com.dobyllm.packly.ui.component.PacklyFabAction
 import com.dobyllm.packly.ui.component.PacklyScaffold
+import com.dobyllm.packly.ui.component.PacklyTopBarAction
 import com.dobyllm.packly.ui.component.PacklyTopLevelDestinations
 import com.dobyllm.packly.ui.token.PacklyMotion
 
@@ -50,6 +51,7 @@ fun PacklyNavHost(
     val isTopLevelRoute = PacklyTopLevelDestinations.any { it.route == currentRoute }
     var routeFabAction by remember { mutableStateOf<RouteFabAction?>(null) }
     val fabAction = routeFabAction?.takeIf { it.route == currentRoute }?.action
+    val isTripDetailRoute = currentRoute == PacklyRoute.TripDetail
 
     LaunchedEffect(initialTripId) {
         initialTripId?.let { navController.navigate(PacklyRoute.tripDetail(it)) }
@@ -65,6 +67,9 @@ fun PacklyNavHost(
         canNavigateBack = !isTopLevelRoute,
         nestedTitle = currentRoute.nestedTitle(),
         fabAction = fabAction,
+        // Modify Trip persists edits immediately through PacklyAppViewModel, so MVP Save is a commit affordance that returns to the previous route.
+        topBarAction = if (isTripDetailRoute) PacklyTopBarAction("Save") { navController.popBackStack() } else null,
+        useCloseNavigationIcon = isTripDetailRoute,
         onBack = { navController.popBackStack() },
         onDestinationClick = { destination ->
             navController.navigate(destination.route) {
@@ -152,6 +157,7 @@ fun PacklyNavHost(
                     onPack = { navController.navigate(PacklyRoute.packingMode(id)) },
                     onReset = { vm.resetPacking(id) },
                     onQuantityChange = { entryId, quantity -> vm.updateTripEntryQuantity(id, entryId, quantity) },
+                    onRemoveEntry = { entryId -> vm.removeTripEntry(id, entryId) },
                     onDeadlineChange = { deadline -> vm.updateTripDeadline(id, deadline) },
                     onAddEntries = { sourceListIds, itemIds -> vm.addTripEntries(id, sourceListIds, itemIds) },
                 )
@@ -183,7 +189,7 @@ private fun RouteFabAction?.updatedForRoute(route: String, action: PacklyFabActi
 
 private fun String?.nestedTitle(): String = when (this) {
     PacklyRoute.ListDetail -> "List"
-    PacklyRoute.TripDetail -> "Modify trip"
+    PacklyRoute.TripDetail -> "Modify Trip"
     PacklyRoute.PackingMode -> "Packly"
     else -> "Packly"
 }

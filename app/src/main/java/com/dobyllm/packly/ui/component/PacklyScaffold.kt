@@ -19,6 +19,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Backpack
 import androidx.compose.material.icons.rounded.Checklist
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material3.FloatingActionButton
@@ -65,6 +66,12 @@ data class PacklyFabAction(
     val onClick: () -> Unit,
 )
 
+@Immutable
+data class PacklyTopBarAction(
+    val label: String,
+    val onClick: () -> Unit,
+)
+
 val PacklyTopLevelDestinations = listOf(
     PacklyTopLevelDestination(PacklyRoute.Home, "Home", Icons.Rounded.Home),
     PacklyTopLevelDestination(PacklyRoute.Items, "Items", Icons.Rounded.EditNote),
@@ -78,6 +85,8 @@ fun PacklyScaffold(
     canNavigateBack: Boolean,
     nestedTitle: String?,
     fabAction: PacklyFabAction?,
+    topBarAction: PacklyTopBarAction? = null,
+    useCloseNavigationIcon: Boolean = false,
     onBack: () -> Unit,
     onDestinationClick: (PacklyTopLevelDestination) -> Unit,
     content: @Composable (PaddingValues) -> Unit,
@@ -92,6 +101,8 @@ fun PacklyScaffold(
                 canNavigateBack = canNavigateBack,
                 title = if (showBottomBar) "Packly" else nestedTitle.orEmpty(),
                 onBack = onBack,
+                action = topBarAction,
+                useCloseNavigationIcon = useCloseNavigationIcon,
             )
         },
         bottomBar = {
@@ -117,6 +128,8 @@ fun PacklyTopBar(
     title: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    action: PacklyTopBarAction? = null,
+    useCloseNavigationIcon: Boolean = false,
 ) {
     Box(
         modifier = modifier
@@ -132,8 +145,8 @@ fun PacklyTopBar(
                 modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.ArrowBack,
-                    contentDescription = "Back",
+                    imageVector = if (useCloseNavigationIcon) Icons.Rounded.Close else Icons.Rounded.ArrowBack,
+                    contentDescription = if (useCloseNavigationIcon) "Close" else "Back",
                     tint = PacklyOnSurfaceVariant,
                 )
             }
@@ -147,8 +160,22 @@ fun PacklyTopBar(
             fontWeight = if (canNavigateBack) FontWeight.SemiBold else FontWeight.Bold,
         )
 
-        // Right-side spacer keeps the centered title optically balanced after removing settings.
-        Box(modifier = Modifier.align(Alignment.CenterEnd).size(48.dp))
+        if (action == null) {
+            // Right-side spacer keeps the centered title optically balanced after removing settings.
+            Box(modifier = Modifier.align(Alignment.CenterEnd).size(48.dp))
+        } else {
+            androidx.compose.material3.TextButton(
+                onClick = action.onClick,
+                modifier = Modifier.align(Alignment.CenterEnd).defaultMinSize(minHeight = 48.dp),
+            ) {
+                Text(
+                    text = action.label,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = PacklyPrimary,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
     }
 }
 
