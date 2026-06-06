@@ -236,6 +236,50 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun toggleTripSourceList(tripId: TripId, sourceListId: ListId) = viewModelScope.launch {
+        val now = PacklyClock.now()
+        repository.updateDocument { doc ->
+            val sourceList = doc.lists.firstOrNull { it.id == sourceListId && !it.isArchived } ?: return@updateDocument doc
+            val newEntryCandidates = doc.buildTripEntries(
+                sourceListIds = listOf(sourceListId),
+                itemIds = emptySet(),
+                itemQuantities = emptyMap(),
+            )
+
+            doc.copy(
+                trips = doc.trips.map { trip ->
+                    if (trip.id == tripId) {
+                        trip.withToggledSourceListForTripAction(sourceList, newEntryCandidates, now)
+                    } else {
+                        trip
+                    }
+                },
+            )
+        }
+    }
+
+    fun toggleTripSourceItem(tripId: TripId, itemId: ItemId) = viewModelScope.launch {
+        val now = PacklyClock.now()
+        repository.updateDocument { doc ->
+            val item = doc.items.firstOrNull { it.id == itemId && !it.isArchived } ?: return@updateDocument doc
+            val newEntryCandidates = doc.buildTripEntries(
+                sourceListIds = emptyList(),
+                itemIds = setOf(itemId),
+                itemQuantities = emptyMap(),
+            )
+
+            doc.copy(
+                trips = doc.trips.map { trip ->
+                    if (trip.id == tripId) {
+                        trip.withToggledSourceItemForTripAction(item, newEntryCandidates, now)
+                    } else {
+                        trip
+                    }
+                },
+            )
+        }
+    }
+
     fun updateTripDeadline(tripId: TripId, packBy: InstantString?) = viewModelScope.launch {
         val now = PacklyClock.now()
         repository.updateTrips { trips ->
@@ -431,6 +475,38 @@ internal fun PacklyTrip.withAdditionalEntriesForTripAction(
     return if (newEntries.isEmpty()) this else copy(entries = entries + newEntries, updatedAt = now)
 }
 
+internal fun PacklyTrip.withToggledSourceListForTripAction(
+    sourceList: PacklyList,
+    newEntryCandidates: List<TripEntry>,
+    now: InstantString,
+): PacklyTrip {
+    val sourceEntryKeys = sourceList.entries.mapTo(mutableSetOf()) { it.tripMembershipKey() }
+    if (sourceEntryKeys.isEmpty()) return this
+
+    val allSourceEntriesPresent = sourceEntryKeys.all { sourceKey ->
+        entries.any { entry -> entry.matchesTripMembership(sourceKey) }
+    }
+
+    return if (allSourceEntriesPresent) {
+        withoutEntriesMatching(now) { entry -> entry.matchesAnyTripMembership(sourceEntryKeys) }
+    } else {
+        withAdditionalEntriesForTripAction(newEntryCandidates, now)
+    }
+}
+
+internal fun PacklyTrip.withToggledSourceItemForTripAction(
+    sourceItem: PacklyItem,
+    newEntryCandidates: List<TripEntry>,
+    now: InstantString,
+): PacklyTrip {
+    val sourceKey = sourceItem.tripMembershipKey()
+    return if (entries.any { it.matchesTripMembership(sourceKey) }) {
+        withoutEntriesMatching(now) { entry -> entry.matchesTripMembership(sourceKey) }
+    } else {
+        withAdditionalEntriesForTripAction(newEntryCandidates, now)
+    }
+}
+
 internal fun PacklyTrip.withUpdatedEntryQuantityForTripAction(
     entryId: TripEntryId,
     quantity: Int,
@@ -444,15 +520,23 @@ internal fun PacklyTrip.withUpdatedEntryQuantityForTripAction(
 
 internal fun PacklyTrip.withRemovedEntryForTripAction(entryId: TripEntryId, now: InstantString): PacklyTrip {
     var removed = false
-    val remainingEntries = entries
-        .filter { entry ->
-            if (!removed && entry.id == entryId) {
-                removed = true
-                false
-            } else {
-                true
-            }
+    val updated = withoutEntriesMatching(now) { entry ->
+        if (!removed && entry.id == entryId) {
+            removed = true
+            true
+        } else {
+            false
         }
+    }
+
+    return if (removed) updated else this
+}
+
+private fun PacklyTrip.withoutEntriesMatching(now: InstantString, shouldRemove: (TripEntry) -> Boolean): PacklyTrip {
+    var removed = false
+    val remainingEntries = entries.filterNot { entry ->
+        shouldRemove(entry).also { matched -> if (matched) removed = true }
+    }
 
     if (!removed) return this
 
@@ -465,6 +549,23 @@ internal fun PacklyTrip.withRemovedEntryForTripAction(entryId: TripEntryId, now:
 }
 
 private fun TripEntry.snapshotDedupeKey(): String = snapshotDedupeKey(nameSnapshot, categoryIdSnapshot)
+
+private data class TripMembershipKey(
+    val sourceItemId: ItemId?,
+    val snapshotKey: String,
+)
+
+private fun PacklyListEntry.tripMembershipKey(): TripMembershipKey =
+    TripMembershipKey(itemId, snapshotDedupeKey(itemNameSnapshot, categoryIdSnapshot))
+
+private fun PacklyItem.tripMembershipKey(): TripMembershipKey =
+    TripMembershipKey(id, snapshotDedupeKey(name, categoryId))
+
+private fun TripEntry.matchesAnyTripMembership(sourceKeys: Set<TripMembershipKey>): Boolean =
+    sourceKeys.any(::matchesTripMembership)
+
+private fun TripEntry.matchesTripMembership(sourceKey: TripMembershipKey): Boolean =
+    sourceItemId?.let { it == sourceKey.sourceItemId } ?: (snapshotDedupeKey() == sourceKey.snapshotKey)
 
 private fun snapshotDedupeKey(name: String, categoryId: CategoryId): String =
     "snapshot:${name.normalizedForDedupe()}\u0000$categoryId"

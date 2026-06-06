@@ -104,7 +104,8 @@ fun TripDetailScreen(
     onQuantityChange: (TripEntryId, Int) -> Unit,
     onRemoveEntry: (TripEntryId) -> Unit,
     onDeadlineChange: (InstantString?) -> Unit,
-    onAddEntries: (List<ListId>, Set<ItemId>) -> Unit,
+    onToggleSourceList: (ListId) -> Unit,
+    onToggleSourceItem: (ItemId) -> Unit,
 ) {
     val trip = doc.trips.firstOrNull { it.id == tripId }
     var activeTab by rememberSaveable(tripId) { mutableStateOf(ModifyTripTab.CurrentPlan) }
@@ -197,7 +198,8 @@ fun TripDetailScreen(
                         BrowseTripContent(
                             doc = doc,
                             tripEntries = trip.entries,
-                            onAddEntries = onAddEntries,
+                            onToggleSourceList = onToggleSourceList,
+                            onToggleSourceItem = onToggleSourceItem,
                             modifier = Modifier.padding(horizontal = PacklySpacing.marginMobile),
                         )
                     }
@@ -553,7 +555,8 @@ private fun QuantityStepper(
 private fun BrowseTripContent(
     doc: PacklyAppDocument,
     tripEntries: List<TripEntry>,
-    onAddEntries: (List<ListId>, Set<ItemId>) -> Unit,
+    onToggleSourceList: (ListId) -> Unit,
+    onToggleSourceItem: (ItemId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
@@ -608,7 +611,7 @@ private fun BrowseTripContent(
             )
         } else {
             if (filteredLists.isNotEmpty()) {
-                BrowseSectionHeader(title = "Lists", action = "See All")
+                BrowseSectionHeader(title = "Lists")
                 filteredLists.chunked(2).forEach { rowLists ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm)) {
                         rowLists.forEach { list ->
@@ -617,7 +620,7 @@ private fun BrowseTripContent(
                                 list = list,
                                 primaryCategory = list.entries.firstOrNull()?.let { doc.categoryFor(it.categoryIdSnapshot) },
                                 alreadyAdded = fullyAdded,
-                                onAdd = { onAddEntries(listOf(list.id), emptySet()) },
+                                onToggle = { onToggleSourceList(list.id) },
                                 modifier = Modifier.weight(1f),
                             )
                         }
@@ -626,7 +629,7 @@ private fun BrowseTripContent(
                 }
             }
             if (filteredItems.isNotEmpty()) {
-                BrowseSectionHeader(title = "Items", action = "Filter")
+                BrowseSectionHeader(title = "Items")
                 Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
                     filteredItems.forEach { item ->
                         val category = doc.categoryFor(item.categoryId)
@@ -635,7 +638,7 @@ private fun BrowseTripContent(
                             item = item,
                             category = category,
                             alreadyAdded = alreadyAdded,
-                            onAdd = { onAddEntries(emptyList(), setOf(item.id)) },
+                            onToggle = { onToggleSourceItem(item.id) },
                         )
                     }
                 }
@@ -645,14 +648,13 @@ private fun BrowseTripContent(
 }
 
 @Composable
-private fun BrowseSectionHeader(title: String, action: String) {
+private fun BrowseSectionHeader(title: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(title, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
-        Text(action, style = MaterialTheme.typography.titleMedium, color = PacklySecondary)
     }
 }
 
@@ -682,7 +684,7 @@ private fun BrowseListCard(
     list: PacklyList,
     primaryCategory: PacklyCategory?,
     alreadyAdded: Boolean,
-    onAdd: () -> Unit,
+    onToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -691,10 +693,9 @@ private fun BrowseListCard(
             .shadow(12.dp, RoundedCornerShape(PacklyRadius.xl), ambientColor = PacklySecondary.copy(alpha = 0.08f), spotColor = PacklySecondary.copy(alpha = 0.08f))
             .semantics {
                 stateDescription = if (alreadyAdded) "In this trip" else "Not in this trip"
-                contentDescription = if (alreadyAdded) "${list.name}, already added to this trip" else "Add ${list.name} list"
+                contentDescription = if (alreadyAdded) "Remove ${list.name} list from this trip" else "Add ${list.name} list"
             },
-        onClick = onAdd,
-        enabled = !alreadyAdded,
+        onClick = onToggle,
         shape = RoundedCornerShape(PacklyRadius.xl),
         color = PacklySurfaceContainerLowest,
     ) {
@@ -712,7 +713,7 @@ private fun BrowseListCard(
             }
             AddStateButton(
                 alreadyAdded = alreadyAdded,
-                contentDescription = if (alreadyAdded) "${list.name} already in trip" else "Add ${list.name}",
+                contentDescription = if (alreadyAdded) "Remove ${list.name}" else "Add ${list.name}",
                 modifier = Modifier.align(Alignment.BottomEnd),
             )
         }
@@ -724,17 +725,16 @@ private fun BrowseItemRow(
     item: PacklyItem,
     category: PacklyCategory,
     alreadyAdded: Boolean,
-    onAdd: () -> Unit,
+    onToggle: () -> Unit,
 ) {
     Surface(
-        onClick = onAdd,
-        enabled = !alreadyAdded,
+        onClick = onToggle,
         modifier = Modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = 92.dp)
             .semantics {
                 stateDescription = if (alreadyAdded) "In this trip" else "Not in this trip"
-                contentDescription = if (alreadyAdded) "${item.name}, already added to this trip" else "Add ${item.name}"
+                contentDescription = if (alreadyAdded) "Remove ${item.name} from this trip" else "Add ${item.name}"
             },
         shape = RoundedCornerShape(PacklyRadius.lg),
         color = PacklySurfaceContainerLowest,
@@ -766,7 +766,7 @@ private fun BrowseItemRow(
             }
             AddStateButton(
                 alreadyAdded = alreadyAdded,
-                contentDescription = if (alreadyAdded) "${item.name} already in trip" else "Add ${item.name}",
+                contentDescription = if (alreadyAdded) "Remove ${item.name}" else "Add ${item.name}",
             )
         }
     }

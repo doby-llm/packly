@@ -245,6 +245,102 @@ class TripActionsTest {
         assertEquals(original, updated)
     }
 
+    @Test
+    fun toggleSourceItemAddsWhenMissingAndRemovesMatchingEntryWhenPresent() {
+        val item = item(id = "item_socks", name = "Socks", categoryId = "cat_clothes")
+        val candidate = tripEntry(
+            id = "entry_socks",
+            sourceItemId = "item_socks",
+            name = "Socks",
+            categoryId = "cat_clothes",
+            sortOrder = 0,
+        )
+        val emptyTrip = trip(entries = emptyList())
+
+        val added = emptyTrip.withToggledSourceItemForTripAction(
+            sourceItem = item,
+            newEntryCandidates = listOf(candidate),
+            now = "2026-06-05T09:00:00Z",
+        )
+        val removed = added.withToggledSourceItemForTripAction(
+            sourceItem = item,
+            newEntryCandidates = listOf(candidate.copy(id = "entry_duplicate")),
+            now = "2026-06-05T10:00:00Z",
+        )
+
+        assertEquals(listOf("entry_socks"), added.entries.map { it.id })
+        assertEquals("2026-06-05T09:00:00Z", added.updatedAt)
+        assertEquals(emptyList<TripEntry>(), removed.entries)
+        assertEquals("2026-06-05T10:00:00Z", removed.updatedAt)
+    }
+
+    @Test
+    fun toggleSourceListRemovesAllListMembershipEntriesAndReindexesRemainingPlan() {
+        val sourceList = packingList(
+            id = "list_weekend",
+            entries = listOf(
+                listEntry(
+                    id = "list_entry_socks",
+                    itemId = "item_socks",
+                    name = "Socks",
+                    categoryId = "cat_clothes",
+                    sortOrder = 0,
+                ),
+                listEntry(
+                    id = "list_entry_hat",
+                    itemId = null,
+                    name = "Sun Hat",
+                    categoryId = "cat_clothes",
+                    sortOrder = 1,
+                ),
+            ),
+        )
+        val keep = tripEntry(id = "entry_keep", sourceItemId = "item_passport", name = "Passport", categoryId = "cat_docs", sortOrder = 9)
+        val trip = trip(
+            entries = listOf(
+                keep,
+                tripEntry(id = "entry_socks", sourceItemId = "item_socks", sourceListEntryId = "list_entry_socks", name = "Socks", categoryId = "cat_clothes", sortOrder = 2),
+                tripEntry(id = "entry_hat", sourceItemId = null, sourceListEntryId = "list_entry_hat", name = " sun   hat ", categoryId = "cat_clothes", sortOrder = 5),
+            ),
+        )
+
+        val updated = trip.withToggledSourceListForTripAction(
+            sourceList = sourceList,
+            newEntryCandidates = emptyList(),
+            now = "2026-06-05T09:00:00Z",
+        )
+
+        assertEquals(listOf("entry_keep"), updated.entries.map { it.id })
+        assertEquals(0, updated.entries.single().sortOrder)
+        assertEquals("2026-06-05T09:00:00Z", updated.updatedAt)
+    }
+
+    @Test
+    fun toggleSourceListAddsOnlyMissingEntriesWhenPartiallyPresent() {
+        val sourceList = packingList(
+            id = "list_weekend",
+            entries = listOf(
+                listEntry(id = "list_entry_socks", itemId = "item_socks", name = "Socks", categoryId = "cat_clothes"),
+                listEntry(id = "list_entry_hat", itemId = "item_hat", name = "Hat", categoryId = "cat_clothes"),
+            ),
+        )
+        val existing = tripEntry(id = "entry_socks", sourceItemId = "item_socks", name = "Socks", categoryId = "cat_clothes", sortOrder = 0)
+        val trip = trip(entries = listOf(existing))
+
+        val updated = trip.withToggledSourceListForTripAction(
+            sourceList = sourceList,
+            newEntryCandidates = listOf(
+                tripEntry(id = "entry_duplicate_socks", sourceItemId = "item_socks", name = "Socks", categoryId = "cat_clothes", sortOrder = 1),
+                tripEntry(id = "entry_hat", sourceItemId = "item_hat", sourceListEntryId = "list_entry_hat", name = "Hat", categoryId = "cat_clothes", sortOrder = 2),
+            ),
+            now = "2026-06-05T09:00:00Z",
+        )
+
+        assertEquals(listOf("entry_socks", "entry_hat"), updated.entries.map { it.id })
+        assertEquals(listOf(0, 1), updated.entries.map { it.sortOrder })
+        assertEquals("2026-06-05T09:00:00Z", updated.updatedAt)
+    }
+
     private fun item(
         id: String,
         name: String,

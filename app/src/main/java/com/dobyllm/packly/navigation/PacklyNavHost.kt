@@ -175,7 +175,8 @@ fun PacklyNavHost(
                     onQuantityChange = { entryId, quantity -> vm.updateTripEntryQuantity(id, entryId, quantity) },
                     onRemoveEntry = { entryId -> vm.removeTripEntry(id, entryId) },
                     onDeadlineChange = { deadline -> vm.updateTripDeadline(id, deadline) },
-                    onAddEntries = { sourceListIds, itemIds -> vm.addTripEntries(id, sourceListIds, itemIds) },
+                    onToggleSourceList = { sourceListId -> vm.toggleTripSourceList(id, sourceListId) },
+                    onToggleSourceItem = { itemId -> vm.toggleTripSourceItem(id, itemId) },
                 )
             }
             composable(PacklyRoute.PackingMode) { backStack ->
