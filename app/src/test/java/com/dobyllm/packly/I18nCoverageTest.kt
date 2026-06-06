@@ -1,5 +1,7 @@
 package com.dobyllm.packly
 
+import java.io.FileNotFoundException
+import java.nio.file.Files
 import java.nio.file.Path
 import javax.xml.parsers.DocumentBuilderFactory
 import org.junit.Assert.assertEquals
@@ -7,7 +9,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class I18nCoverageTest {
-    private val repoRoot: Path = Path.of(System.getProperty("user.dir"))
+    private val testWorkingDirectory: Path = Path.of(System.getProperty("user.dir"))
+        .toAbsolutePath()
+        .normalize()
 
     @Test
     fun englishSpanishAndGermanStringKeysMatch() {
@@ -43,7 +47,7 @@ class I18nCoverageTest {
         )
 
         targetFiles.forEach { relativePath ->
-            val source = repoRoot.resolve(relativePath).readUtf8Text()
+            val source = projectFile(relativePath).readUtf8Text()
             localizedUiSnippets.forEach { snippet ->
                 assertTrue(
                     "$snippet should come from string resources in $relativePath",
@@ -56,7 +60,7 @@ class I18nCoverageTest {
     private fun stringKeys(relativePath: String): Set<String> {
         val document = DocumentBuilderFactory.newInstance()
             .newDocumentBuilder()
-            .parse(repoRoot.resolve(relativePath).toFile())
+            .parse(projectFile(relativePath).toFile())
         val strings = document.getElementsByTagName("string")
         return buildSet {
             for (index in 0 until strings.length) {
@@ -64,6 +68,17 @@ class I18nCoverageTest {
                 add(item.attributes.getNamedItem("name").nodeValue)
             }
         }
+    }
+
+    private fun projectFile(relativePath: String): Path {
+        val searchedPaths = generateSequence(testWorkingDirectory) { it.parent }
+            .map { it.resolve(relativePath).normalize() }
+            .toList()
+        return searchedPaths.firstOrNull { Files.isRegularFile(it) }
+            ?: throw FileNotFoundException(
+                "Could not find $relativePath from Gradle/JUnit working directory " +
+                    "$testWorkingDirectory. Searched: ${searchedPaths.joinToString()}",
+            )
     }
 
     private fun Path.readUtf8Text(): String = toFile().readText(Charsets.UTF_8)
