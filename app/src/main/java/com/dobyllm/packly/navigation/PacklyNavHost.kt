@@ -74,7 +74,10 @@ fun PacklyNavHost(
         fabAction = fabAction,
         // Modify Trip persists edits immediately through PacklyAppViewModel, so MVP Save is a commit affordance that returns to the previous route.
         topBarAction = when {
-            isTripDetailRoute -> PacklyTopBarAction(stringResource(R.string.action_save)) { navController.popBackStack() }
+            isTripDetailRoute -> PacklyTopBarAction(
+                label = stringResource(R.string.action_save),
+                onClick = { navController.popBackStack() },
+            )
             isTopLevelRoute -> PacklyTopBarAction(
                 label = stringResource(R.string.action_options),
                 icon = Icons.Rounded.Settings,

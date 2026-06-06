@@ -26,7 +26,7 @@ fun PacklyList.displayDescription(): String = localizedSeedText(id, description,
 fun PacklyListEntry.displayItemNameSnapshot(): String = localizedSeedText(itemId.orEmpty(), itemNameSnapshot, SeedItemNames) ?: itemNameSnapshot
 
 @Composable
-fun TripEntry.displayNameSnapshot(): String = localizedSeedText(itemId.orEmpty(), nameSnapshot, SeedItemNames) ?: nameSnapshot
+fun TripEntry.displayNameSnapshot(): String = localizedSeedText(sourceItemId.orEmpty(), nameSnapshot, SeedItemNames) ?: nameSnapshot
 
 @Composable
 private fun localizedSeedText(id: String, currentValue: String, catalog: Map<String, SeedText>): String? {
