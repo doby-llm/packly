@@ -141,5 +141,6 @@ private fun SectionTitle(title: String) {
         text = title,
         style = MaterialTheme.typography.titleLarge,
         color = MaterialTheme.colorScheme.onSurface,
+        fontWeight = FontWeight.Bold,
     )
 }

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -41,8 +42,10 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dobyllm.packly.R
 import com.dobyllm.packly.core.model.PacklyAppDocument
 import com.dobyllm.packly.core.model.PacklyCategory
 import com.dobyllm.packly.core.model.TripEntry
@@ -54,6 +57,7 @@ import com.dobyllm.packly.ui.component.PacklyProgress
 import com.dobyllm.packly.ui.token.CategoryTokens
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 private enum class PackingFilter { All, Unpacked, Packed }
@@ -70,6 +74,7 @@ fun PackingModeScreen(
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var undoSnackbarJob by remember { mutableStateOf<Job?>(null) }
 
     if (trip == null) {
         Box(
@@ -146,6 +151,9 @@ fun PackingModeScreen(
                     )
                 }
                 item(key = "packing_section_card_$sectionKey") {
+                    val packedMessage = stringResource(R.string.snackbar_packed_item)
+                    val unpackedMessage = stringResource(R.string.snackbar_unpacked_item)
+                    val undoLabel = stringResource(R.string.action_undo)
                     PackingRowsCard(
                         entries = sectionEntries,
                         category = category,
@@ -153,11 +161,14 @@ fun PackingModeScreen(
                             val previousState = entry.isPacked
                             val nextState = !previousState
                             onSetPacked(entry.id, nextState)
-                            scope.launch {
+                            undoSnackbarJob?.cancel()
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            undoSnackbarJob = scope.launch {
                                 val result = snackbarHostState.showSnackbar(
-                                    message = "${if (nextState) "Packed" else "Unpacked"} \"${entry.nameSnapshot}\"",
-                                    actionLabel = "UNDO",
+                                    message = "${if (nextState) packedMessage else unpackedMessage} \"${entry.nameSnapshot}\"",
+                                    actionLabel = undoLabel,
                                     withDismissAction = false,
+                                    duration = SnackbarDuration.Short,
                                 )
                                 if (result == SnackbarResult.ActionPerformed) {
                                     onSetPacked(entry.id, previousState)

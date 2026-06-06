@@ -10,20 +10,24 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -39,9 +43,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.dobyllm.packly.R
 import com.dobyllm.packly.core.model.PacklyTrip
 import com.dobyllm.packly.core.time.PacklyDeadlineFormatter
 import com.dobyllm.packly.ui.token.PacklyElevation
@@ -53,6 +59,7 @@ import kotlin.math.roundToInt
 fun TripCard(trip: PacklyTrip, onOpen: () -> Unit, onPack: () -> Unit, onDelete: () -> Unit) {
     val summary = computeTripSummary(trip)
     val deadlineWarning = summary.unpackedItems > 0 && PacklyDeadlineFormatter.isCloseOrOverdue(trip.packBy)
+    val archiveDescription = stringResource(R.string.a11y_archive_trip, trip.name)
 
     TripSummaryCard(
         title = trip.name,
@@ -91,7 +98,15 @@ fun TripCard(trip: PacklyTrip, onOpen: () -> Unit, onPack: () -> Unit, onDelete:
                 onClick = onDelete,
                 contentPadding = CompactTripButtonPadding,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-            ) { Text("Archive") }
+                modifier = Modifier.semantics {
+                    contentDescription = archiveDescription
+                    role = Role.Button
+                },
+            ) {
+                Icon(Icons.Rounded.Archive, contentDescription = null)
+                Spacer(Modifier.width(PacklySpacing.xs))
+                Text(stringResource(R.string.action_archive))
+            }
         }
     }
 }
