@@ -1,6 +1,5 @@
 package com.dobyllm.packly
 
-import java.nio.file.Files
 import java.nio.file.Path
 import javax.xml.parsers.DocumentBuilderFactory
 import org.junit.Assert.assertEquals
@@ -44,7 +43,7 @@ class I18nCoverageTest {
         )
 
         targetFiles.forEach { relativePath ->
-            val source = repoRoot.resolve(relativePath).readString()
+            val source = repoRoot.resolve(relativePath).readUtf8Text()
             localizedUiSnippets.forEach { snippet ->
                 assertTrue(
                     "$snippet should come from string resources in $relativePath",
@@ -67,5 +66,5 @@ class I18nCoverageTest {
         }
     }
 
-    private fun Path.readString(): String = Files.readString(this)
+    private fun Path.readUtf8Text(): String = toFile().readText(Charsets.UTF_8)
 }
