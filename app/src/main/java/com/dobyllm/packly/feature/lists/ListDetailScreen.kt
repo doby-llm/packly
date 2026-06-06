@@ -28,6 +28,9 @@ import com.dobyllm.packly.core.model.ListId
 import com.dobyllm.packly.core.model.PacklyAppDocument
 import com.dobyllm.packly.ui.component.EmptyState
 import com.dobyllm.packly.ui.component.SelectableItemCard
+import com.dobyllm.packly.ui.i18n.displayDescription
+import com.dobyllm.packly.ui.i18n.displayLabel
+import com.dobyllm.packly.ui.i18n.displayName
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
 
@@ -62,8 +65,8 @@ fun ListDetailScreen(
         items(doc.items.filterNot { it.isArchived }, key = { it.id }) { item ->
             val category = doc.categories.firstOrNull { it.id == item.categoryId }
             SelectableItemCard(
-                title = item.name,
-                subtitle = listOfNotNull(category?.label, item.notes.takeIf { it.isNotBlank() }).joinToString(" • ").ifBlank { stringResource(R.string.uncategorized) },
+                title = item.displayName(),
+                subtitle = listOfNotNull(category?.displayLabel(), item.notes.takeIf { it.isNotBlank() }).joinToString(" • ").ifBlank { stringResource(R.string.uncategorized) },
                 selected = item.id in selected,
                 onToggle = { onToggle(item.id) },
             )
@@ -76,7 +79,7 @@ private fun ListDetailHeader(doc: PacklyAppDocument, listId: ListId, onUseForTri
     val list = doc.lists.first { it.id == listId }
     val categoryLabels = list.entries
         .sortedBy { it.sortOrder }
-        .mapNotNull { entry -> doc.categories.firstOrNull { it.id == entry.categoryIdSnapshot }?.label }
+        .mapNotNull { entry -> doc.categories.firstOrNull { it.id == entry.categoryIdSnapshot }?.displayLabel() }
         .distinct()
         .take(4)
 
@@ -93,12 +96,12 @@ private fun ListDetailHeader(doc: PacklyAppDocument, listId: ListId, onUseForTri
             verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
         ) {
             Text(
-                text = list.name,
+                text = list.displayName(),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                text = list.description.ifBlank { stringResource(R.string.list_detail_default_description) },
+                text = list.displayDescription().ifBlank { stringResource(R.string.list_detail_default_description) },
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

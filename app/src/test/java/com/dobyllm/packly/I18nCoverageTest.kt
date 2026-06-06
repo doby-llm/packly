@@ -70,6 +70,49 @@ class I18nCoverageTest {
         )
     }
 
+    @Test
+    fun tripAndListScreensUseLocalizedSeedDisplayHelpers() {
+        val forbiddenSnippetsByFile = mapOf(
+            "app/src/main/java/com/dobyllm/packly/feature/trips/TripDetailScreen.kt" to listOf(
+                "Text(entry.nameSnapshot",
+                "itemName = entry.nameSnapshot",
+                "a11y_remove_named, entry.nameSnapshot",
+                "item.name.contains(normalizedQuery",
+                ".label.contains(normalizedQuery",
+                "list.name.contains(normalizedQuery",
+                "list.description.contains(normalizedQuery",
+                "label = category.label",
+                "a11y_remove_list_from_trip, list.name",
+                "a11y_add_list_to_trip, list.name",
+                "Text(list.name",
+                "a11y_remove_named, list.name",
+                "a11y_add_named, list.name",
+                "a11y_remove_item_from_trip, item.name",
+                "a11y_add_named, item.name",
+                "Text(item.name",
+                "text = category.label",
+                "sourceList?.name?.let",
+            ),
+            "app/src/main/java/com/dobyllm/packly/feature/lists/ListDetailScreen.kt" to listOf(
+                "title = item.name",
+                "category?.label",
+                "text = list.name",
+                "text = list.description",
+            ),
+        )
+
+        val violations = forbiddenSnippetsByFile.flatMap { (relativePath, forbiddenSnippets) ->
+            val source = projectFile(relativePath).readUtf8Text()
+            forbiddenSnippets.filter(source::contains).map { snippet -> "$relativePath contains `$snippet`" }
+        }
+
+        assertTrue(
+            "Seed-backed UI fields must go through displayName/displayLabel/displayDescription helpers. Violations:\n" +
+                violations.joinToString("\n"),
+            violations.isEmpty(),
+        )
+    }
+
     private fun stringKeys(relativePath: String): Set<String> {
         val document = DocumentBuilderFactory.newInstance()
             .newDocumentBuilder()

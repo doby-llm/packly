@@ -88,6 +88,10 @@ import com.dobyllm.packly.ui.theme.PacklySurfaceContainer
 import com.dobyllm.packly.ui.theme.PacklySurfaceContainerHigh
 import com.dobyllm.packly.ui.theme.PacklySurfaceContainerLow
 import com.dobyllm.packly.ui.theme.PacklySurfaceContainerLowest
+import com.dobyllm.packly.ui.i18n.displayDescription
+import com.dobyllm.packly.ui.i18n.displayLabel
+import com.dobyllm.packly.ui.i18n.displayName
+import com.dobyllm.packly.ui.i18n.displayNameSnapshot
 import com.dobyllm.packly.ui.token.CategoryTokens
 import com.dobyllm.packly.ui.token.PacklyElevation
 import com.dobyllm.packly.ui.token.PacklyRadius
@@ -497,13 +501,14 @@ private fun CurrentPlanEntryRow(
     onQuantityChange: (Int) -> Unit,
     onRemoveEntry: () -> Unit,
 ) {
+    val displayName = entry.displayNameSnapshot()
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
-            Text(entry.nameSnapshot, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(displayName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(
                 text = sourceLabel.displayText(),
                 style = MaterialTheme.typography.labelMedium,
@@ -513,9 +518,9 @@ private fun CurrentPlanEntryRow(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        QuantityStepper(quantity = entry.quantity, itemName = entry.nameSnapshot, onQuantityChange = onQuantityChange)
+        QuantityStepper(quantity = entry.quantity, itemName = displayName, onQuantityChange = onQuantityChange)
         IconButton(onClick = onRemoveEntry, modifier = Modifier.size(48.dp)) {
-            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.a11y_remove_named, entry.nameSnapshot), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.a11y_remove_named, displayName), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -571,9 +576,9 @@ private fun BrowseTripContent(
     val normalizedQuery = query.trim()
     val filteredItems = activeItems
         .filter { item -> selectedCategoryId == null || item.categoryId == selectedCategoryId }
-        .filter { item -> normalizedQuery.isBlank() || item.name.contains(normalizedQuery, ignoreCase = true) || doc.categoryFor(item.categoryId, fallbackCategoryLabel).label.contains(normalizedQuery, ignoreCase = true) }
+        .filter { item -> normalizedQuery.isBlank() || item.displayName().contains(normalizedQuery, ignoreCase = true) || doc.categoryFor(item.categoryId, fallbackCategoryLabel).displayLabel().contains(normalizedQuery, ignoreCase = true) }
     val filteredLists = activeLists.filter { list ->
-        val matchesQuery = normalizedQuery.isBlank() || list.name.contains(normalizedQuery, ignoreCase = true) || list.description.contains(normalizedQuery, ignoreCase = true)
+        val matchesQuery = normalizedQuery.isBlank() || list.displayName().contains(normalizedQuery, ignoreCase = true) || list.displayDescription().contains(normalizedQuery, ignoreCase = true)
         val matchesCategory = selectedCategoryId == null || list.entries.any { it.categoryIdSnapshot == selectedCategoryId }
         matchesQuery && matchesCategory
     }
@@ -601,7 +606,7 @@ private fun BrowseTripContent(
             BrowseCategoryChip(label = stringResource(R.string.browse_category_all), selected = selectedCategoryId == null, onClick = { selectedCategoryId = null })
             categories.forEach { category ->
                 BrowseCategoryChip(
-                    label = category.label,
+                    label = category.displayLabel(),
                     selected = selectedCategoryId == category.id,
                     onClick = { selectedCategoryId = category.id },
                 )
@@ -690,10 +695,11 @@ private fun BrowseListCard(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val displayName = list.displayName()
     val inTripDescription = stringResource(R.string.a11y_in_trip)
     val notInTripDescription = stringResource(R.string.a11y_not_in_trip)
-    val removeListDescription = stringResource(R.string.a11y_remove_list_from_trip, list.name)
-    val addListDescription = stringResource(R.string.a11y_add_list_to_trip, list.name)
+    val removeListDescription = stringResource(R.string.a11y_remove_list_from_trip, displayName)
+    val addListDescription = stringResource(R.string.a11y_add_list_to_trip, displayName)
     Surface(
         modifier = modifier
             .defaultMinSize(minHeight = 164.dp)
@@ -715,12 +721,12 @@ private fun BrowseListCard(
                     }
                 }
                 Spacer(Modifier.height(PacklySpacing.base))
-                Text(list.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(stringResource(R.string.item_count_lower, list.entries.size), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
             }
             AddStateButton(
                 alreadyAdded = alreadyAdded,
-                contentDescription = if (alreadyAdded) stringResource(R.string.a11y_remove_named, list.name) else stringResource(R.string.a11y_add_named, list.name),
+                contentDescription = if (alreadyAdded) stringResource(R.string.a11y_remove_named, displayName) else stringResource(R.string.a11y_add_named, displayName),
                 modifier = Modifier.align(Alignment.BottomEnd),
             )
         }
@@ -734,10 +740,12 @@ private fun BrowseItemRow(
     alreadyAdded: Boolean,
     onToggle: () -> Unit,
 ) {
+    val displayName = item.displayName()
+    val categoryLabel = category.displayLabel()
     val inTripDescription = stringResource(R.string.a11y_in_trip)
     val notInTripDescription = stringResource(R.string.a11y_not_in_trip)
-    val removeItemFromTripDescription = stringResource(R.string.a11y_remove_item_from_trip, item.name)
-    val addItemDescription = stringResource(R.string.a11y_add_named, item.name)
+    val removeItemFromTripDescription = stringResource(R.string.a11y_remove_item_from_trip, displayName)
+    val addItemDescription = stringResource(R.string.a11y_add_named, displayName)
     Surface(
         onClick = onToggle,
         modifier = Modifier
@@ -764,10 +772,10 @@ private fun BrowseItemRow(
                 }
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
-                Text(item.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Surface(shape = RoundedCornerShape(PacklyRadius.full), color = PacklySurfaceContainer) {
                     Text(
-                        text = category.label,
+                        text = categoryLabel,
                         modifier = Modifier.padding(horizontal = PacklySpacing.base, vertical = 2.dp),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.outline,
@@ -777,7 +785,7 @@ private fun BrowseItemRow(
             }
             AddStateButton(
                 alreadyAdded = alreadyAdded,
-                contentDescription = if (alreadyAdded) stringResource(R.string.a11y_remove_named, item.name) else addItemDescription,
+                contentDescription = if (alreadyAdded) stringResource(R.string.a11y_remove_named, displayName) else addItemDescription,
             )
         }
     }
@@ -825,9 +833,10 @@ private sealed interface TripSourceLabel {
     object IndividualItem : TripSourceLabel
 }
 
+@Composable
 private fun TripEntry.sourceLabel(doc: PacklyAppDocument): TripSourceLabel {
     val sourceList = sourceListEntryId?.let { entryId -> doc.lists.firstOrNull { list -> list.entries.any { it.id == entryId } } }
-    return sourceList?.name?.let { TripSourceLabel.FromList(it) } ?: TripSourceLabel.IndividualItem
+    return sourceList?.displayName()?.let { TripSourceLabel.FromList(it) } ?: TripSourceLabel.IndividualItem
 }
 
 private fun PacklyAppDocument.categoryFor(categoryId: String, fallbackLabel: String): PacklyCategory =
