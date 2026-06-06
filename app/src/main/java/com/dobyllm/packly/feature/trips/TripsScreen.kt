@@ -22,6 +22,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.dobyllm.packly.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.InstantString
@@ -48,6 +50,7 @@ fun TripsScreen(
 ) {
     var showCreate by remember { mutableStateOf(false) }
     var tripToDelete by remember { mutableStateOf<PacklyTrip?>(null) }
+    val createTripLabel = stringResource(R.string.action_create_trip)
     val visibleTrips = doc.trips.filter { it.status != TripStatus.Archived }
     val activeTrips = visibleTrips
         .filter { it.status != TripStatus.Completed }
@@ -56,8 +59,8 @@ fun TripsScreen(
         .filter { it.status == TripStatus.Completed }
         .sortedByDescending { it.updatedAt }
 
-    DisposableEffect(onFabActionChange) {
-        onFabActionChange?.invoke(PacklyFabAction(contentDescription = "Create trip", onClick = { showCreate = true }))
+    DisposableEffect(onFabActionChange, createTripLabel) {
+        onFabActionChange?.invoke(PacklyFabAction(contentDescription = createTripLabel, onClick = { showCreate = true }))
         onDispose { onFabActionChange?.invoke(null) }
     }
 
@@ -72,15 +75,15 @@ fun TripsScreen(
         if (visibleTrips.isEmpty()) {
             item {
                 EmptyState(
-                    title = "No trips planned",
-                    body = "Build a trip checklist from a packing list or individual items.",
-                    actionLabel = "Create trip",
+                    title = stringResource(R.string.trips_empty_title),
+                    body = stringResource(R.string.trips_empty_body),
+                    actionLabel = createTripLabel,
                     onAction = { showCreate = true },
                 )
             }
         } else {
             if (activeTrips.isNotEmpty()) {
-                item { TripsSectionTitle("Active trips") }
+                item { TripsSectionTitle(stringResource(R.string.trips_section_active)) }
                 items(activeTrips, key = { it.id }) { trip ->
                     TripCard(
                         trip,
@@ -91,7 +94,7 @@ fun TripsScreen(
                 }
             }
             if (completedTrips.isNotEmpty()) {
-                item { TripsSectionTitle("Completed trips") }
+                item { TripsSectionTitle(stringResource(R.string.trips_section_completed)) }
                 items(completedTrips, key = { it.id }) { trip ->
                     TripCard(
                         trip,
@@ -108,8 +111,8 @@ fun TripsScreen(
     tripToDelete?.let { trip ->
         AlertDialog(
             onDismissRequest = { tripToDelete = null },
-            title = { Text("Archive ${trip.name}?") },
-            text = { Text("The trip will be hidden from active trips. Its packed state can’t be changed after archiving.") },
+            title = { Text(stringResource(R.string.archive_trip_title, trip.name)) },
+            text = { Text(stringResource(R.string.archive_trip_body)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -117,9 +120,9 @@ fun TripsScreen(
                         tripToDelete = null
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                ) { Text("Archive") }
+                ) { Text(stringResource(R.string.action_archive)) }
             },
-            dismissButton = { TextButton(onClick = { tripToDelete = null }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { tripToDelete = null }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }
@@ -133,14 +136,19 @@ private fun TripsHeader(activeCount: Int, completedCount: Int) {
         verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
     ) {
         Text(
-            text = "Trips",
+            text = stringResource(R.string.trips_header_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        val completedCopy = completedCount.takeIf { it > 0 }?.let { " Completed trips stay lower priority." } ?: ""
+        val completedCopy = completedCount.takeIf { it > 0 }?.let { stringResource(R.string.trips_header_completed_suffix) } ?: ""
         Text(
-            text = "Prepare ${activeCount.coerceAtLeast(0)} active ${if (activeCount == 1) "trip" else "trips"}.$completedCopy",
+            text = stringResource(
+                R.string.trips_header_summary,
+                activeCount.coerceAtLeast(0),
+                stringResource(if (activeCount == 1) R.string.trip_singular else R.string.trip_plural),
+                completedCopy,
+            ),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

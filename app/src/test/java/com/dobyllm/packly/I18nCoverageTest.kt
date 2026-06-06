@@ -24,37 +24,50 @@ class I18nCoverageTest {
     }
 
     @Test
-    fun tripAndPackingComposeFlowsDoNotBypassLocalizationForKnownUiCopy() {
-        val targetFiles = listOf(
-            "app/src/main/java/com/dobyllm/packly/feature/trips/TripDetailScreen.kt",
-            "app/src/main/java/com/dobyllm/packly/feature/packing/PackingModeScreen.kt",
-            "app/src/main/java/com/dobyllm/packly/ui/component/TripCard.kt",
-            "app/src/main/java/com/dobyllm/packly/ui/component/PacklyProgress.kt",
-            "app/src/main/java/com/dobyllm/packly/ui/component/PacklySearchBar.kt",
+    fun composeUiCodeDoesNotBypassStringResourcesForVisibleCopy() {
+        val sourceRoot = projectPath("app/src/main/java/com/dobyllm/packly")
+        val sourceFiles = Files.walk(sourceRoot)
+            .filter { Files.isRegularFile(it) }
+            .filter { it.toString().endsWith(".kt") }
+            .filterNot { it.toString().endsWith("ui/i18n/SeedDisplayNames.kt") }
+            .toList()
+        val uiLiteralPatterns = listOf(
+            Regex("\\bText\\s*\\(\\s*\"[^\"]*[A-Za-z][^\"]*\""),
+            Regex("\\bcontentDescription\\s*=\\s*\"[^\"]*[A-Za-z][^\"]*\""),
+            Regex("\\bstateDescription\\s*=\\s*\"[^\"]*[A-Za-z][^\"]*\""),
+            Regex("\\b(title|body|actionLabel|label|placeholder|supportingText|percentLabel|metadata)\\s*=\\s*\"[^\"]*[A-Za-z][^\"]*\""),
         )
-        val localizedUiSnippets = listOf(
-            "Packing progress",
-            "Start packing",
-            "Continue packing",
-            "Reset packed items",
-            "Trip settings",
-            "Items in this trip",
-            "Search templates and items",
-            "No matches found",
-            "All Packed",
-            "Filter items",
-            "Pack-by reminder due soon with unpacked items",
+        val allowedNonUiLiterals = listOf(
+            "DateTimeFormatter.ofPattern",
+            "item(key =",
+            "const val",
+            "getString(\"",
+            "Regex(\"",
+            "JsonPrimitive",
+            "schemaVersion",
+            "@Suppress",
+            "CategoryToken(",
+            "normalizedForDedupe",
+            "stableRequestCode",
+            "Text(\"$",
+            "packing-progress",
         )
 
-        targetFiles.forEach { relativePath ->
-            val source = projectFile(relativePath).readUtf8Text()
-            localizedUiSnippets.forEach { snippet ->
-                assertTrue(
-                    "$snippet should come from string resources in $relativePath",
-                    !source.contains(snippet),
-                )
-            }
+        val violations = sourceFiles.flatMap { file ->
+            val relativePath = sourceRoot.relativize(file).toString()
+            file.readUtf8Text().lineSequence().mapIndexedNotNull { index, line ->
+                val trimmed = line.trim()
+                val isAllowed = allowedNonUiLiterals.any(trimmed::contains)
+                val isViolation = !isAllowed && uiLiteralPatterns.any { it.containsMatchIn(line) }
+                if (isViolation) "$relativePath:${index + 1}: $trimmed" else null
+            }.toList()
         }
+
+        assertTrue(
+            "User-visible Compose literals must use stringResource/pluralStringResource. Violations:\n" +
+                violations.joinToString("\n"),
+            violations.isEmpty(),
+        )
     }
 
     private fun stringKeys(relativePath: String): Set<String> {
@@ -70,11 +83,17 @@ class I18nCoverageTest {
         }
     }
 
-    private fun projectFile(relativePath: String): Path {
+    private fun projectFile(relativePath: String): Path = projectPath(relativePath).also { path ->
+        if (!Files.isRegularFile(path)) {
+            throw FileNotFoundException("Could not find regular file $relativePath at $path")
+        }
+    }
+
+    private fun projectPath(relativePath: String): Path {
         val searchedPaths = generateSequence(testWorkingDirectory) { it.parent }
             .map { it.resolve(relativePath).normalize() }
             .toList()
-        return searchedPaths.firstOrNull { Files.isRegularFile(it) }
+        return searchedPaths.firstOrNull { Files.exists(it) }
             ?: throw FileNotFoundException(
                 "Could not find $relativePath from Gradle/JUnit working directory " +
                     "$testWorkingDirectory. Searched: ${searchedPaths.joinToString()}",

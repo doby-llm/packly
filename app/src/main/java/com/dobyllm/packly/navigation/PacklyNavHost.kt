@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -51,6 +52,7 @@ fun PacklyNavHost(
     initialTripId: String? = null,
 ) {
     val doc = vm.document.collectAsStateWithLifecycle().value
+    val context = LocalContext.current
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val isTopLevelRoute = packlyTopLevelDestinations().any { it.route == currentRoute }
@@ -146,7 +148,7 @@ fun PacklyNavHost(
                     contentPadding = shellPadding,
                     onToggle = { itemId -> vm.toggleListItem(id, itemId) },
                     onUseForTrip = { listId ->
-                        vm.createTrip("Trip from list", "", listId, emptySet())
+                        vm.createTrip(context.getString(R.string.trip_from_list_default_name), "", listId, emptySet())
                         navController.navigate(PacklyRoute.Trips)
                     },
                 )

@@ -15,6 +15,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.dobyllm.packly.R
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -33,7 +35,11 @@ fun SelectableItemCard(
     modifier: Modifier = Modifier,
     compact: Boolean = false,
 ) {
-    val description = "$title, $subtitle, ${if (selected) "selected" else "not selected"}"
+    val description = stringResource(
+        if (selected) R.string.a11y_selectable_item_selected else R.string.a11y_selectable_item_not_selected,
+        title,
+        subtitle,
+    )
     Surface(
         onClick = onToggle,
         modifier = modifier

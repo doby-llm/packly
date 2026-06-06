@@ -27,6 +27,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.dobyllm.packly.R
 import androidx.compose.ui.text.font.FontWeight
 import com.dobyllm.packly.core.model.CategoryId
 import com.dobyllm.packly.core.model.PacklyAppDocument
@@ -54,7 +56,7 @@ fun AddItemsToListSheet(doc: PacklyAppDocument, selectedIds: Set<String>, onTogg
                 item.notes.contains(query, ignoreCase = true) ||
                 categoryLabel.contains(query, ignoreCase = true)
         }
-    val sections = buildItemSections(filteredItems, doc)
+    val sections = buildItemSections(filteredItems, doc, stringResource(R.string.uncategorized))
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -68,7 +70,7 @@ fun AddItemsToListSheet(doc: PacklyAppDocument, selectedIds: Set<String>, onTogg
         ) {
             item {
                 Text(
-                    "Select items",
+                    stringResource(R.string.select_items_title),
                     modifier = Modifier.padding(bottom = PacklySpacing.xs),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
@@ -76,7 +78,7 @@ fun AddItemsToListSheet(doc: PacklyAppDocument, selectedIds: Set<String>, onTogg
             }
             item {
                 Text(
-                    "${selectedIds.size} selected • grouped by category",
+                    stringResource(R.string.selected_grouped_by_category, selectedIds.size),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -85,7 +87,7 @@ fun AddItemsToListSheet(doc: PacklyAppDocument, selectedIds: Set<String>, onTogg
                 PacklySelectionSearchField(
                     value = query,
                     onValueChange = { query = it },
-                    label = "Search ${activeItems.size} items",
+                    label = stringResource(R.string.search_items_count_label, activeItems.size),
                 )
             }
             item {
@@ -94,7 +96,7 @@ fun AddItemsToListSheet(doc: PacklyAppDocument, selectedIds: Set<String>, onTogg
                     verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
                 ) {
                     PacklyCategoryFilterChip(
-                        label = "All",
+                        label = stringResource(R.string.filter_all_label),
                         selected = selectedCategoryId == null,
                         onClick = { selectedCategoryId = null },
                     )
@@ -110,7 +112,7 @@ fun AddItemsToListSheet(doc: PacklyAppDocument, selectedIds: Set<String>, onTogg
             if (sections.isEmpty()) {
                 item {
                     Text(
-                        "No items match this filter.",
+                        stringResource(R.string.no_items_match_filter),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -118,7 +120,7 @@ fun AddItemsToListSheet(doc: PacklyAppDocument, selectedIds: Set<String>, onTogg
                 sections.forEach { section ->
                     item(key = "header-${section.categoryId}") {
                         Text(
-                            text = "${section.label} (${section.items.size})",
+                            text = stringResource(R.string.category_count_label, section.label, section.items.size),
                             modifier = Modifier.padding(top = PacklySpacing.base),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary,
@@ -179,7 +181,7 @@ private fun PacklyCategoryFilterChip(label: String, selected: Boolean, onClick: 
     )
 }
 
-private fun buildItemSections(items: List<PacklyItem>, doc: PacklyAppDocument): List<ItemSection> {
+private fun buildItemSections(items: List<PacklyItem>, doc: PacklyAppDocument, fallbackLabel: String): List<ItemSection> {
     val categories = doc.categories.associateBy { it.id }
     return items
         .groupBy { it.categoryId }
@@ -187,7 +189,7 @@ private fun buildItemSections(items: List<PacklyItem>, doc: PacklyAppDocument): 
             val category = categories[categoryId]
             ItemSection(
                 categoryId = categoryId,
-                label = category?.label ?: "Uncategorized",
+                label = category?.label ?: fallbackLabel,
                 sortOrder = category?.sortOrder ?: Int.MAX_VALUE,
                 items = categoryItems.sortedBy { it.name.lowercase() },
             )

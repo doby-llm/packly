@@ -34,6 +34,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.dobyllm.packly.R
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.CategoryId
 import com.dobyllm.packly.core.model.ItemId
@@ -74,14 +76,15 @@ fun ItemsScreen(
             .filterValues { it.size > 1 }
             .keys
     }
+    val addItemLabel = stringResource(R.string.action_add_item)
     val filteredItems = filterLibraryItems(
         items = activeItems,
         query = query,
         selectedCategoryIds = selectedCategoryIds,
     )
 
-    DisposableEffect(onFabActionChange) {
-        onFabActionChange?.invoke(PacklyFabAction(contentDescription = "Add item", onClick = { showAdd = true }))
+    DisposableEffect(onFabActionChange, addItemLabel) {
+        onFabActionChange?.invoke(PacklyFabAction(contentDescription = addItemLabel, onClick = { showAdd = true }))
         onDispose { onFabActionChange?.invoke(null) }
     }
 
@@ -135,16 +138,16 @@ fun ItemsScreen(
             item {
                 if (activeItems.isEmpty()) {
                     EmptyState(
-                        title = "Your item library is empty",
-                        body = "Add reusable essentials so future lists and trips start faster.",
-                        actionLabel = "Add item",
+                        title = stringResource(R.string.items_empty_library_title),
+                        body = stringResource(R.string.items_empty_library_body),
+                        actionLabel = addItemLabel,
                         onAction = { showAdd = true },
                     )
                 } else {
                     EmptyState(
-                        title = "No items found",
-                        body = "Try a different search or category filter.",
-                        actionLabel = "Add item",
+                        title = stringResource(R.string.items_no_results_title),
+                        body = stringResource(R.string.items_no_results_body),
+                        actionLabel = addItemLabel,
                         onAction = { showAdd = true },
                     )
                 }
@@ -181,8 +184,8 @@ fun ItemsScreen(
     itemToDelete?.let { item ->
         AlertDialog(
             onDismissRequest = { itemToDelete = null },
-            title = { Text("Archive ${item.name}?") },
-            text = { Text("The item will be hidden from new lists and trips. Existing list and trip snapshots stay unchanged.") },
+            title = { Text(stringResource(R.string.archive_item_title, item.name)) },
+            text = { Text(stringResource(R.string.archive_item_body)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -190,9 +193,9 @@ fun ItemsScreen(
                         itemToDelete = null
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                ) { Text("Archive") }
+                ) { Text(stringResource(R.string.action_archive)) }
             },
-            dismissButton = { TextButton(onClick = { itemToDelete = null }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { itemToDelete = null }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }
@@ -217,7 +220,7 @@ private fun ItemsFilterSheet(
                 .imePadding(),
         ) {
             Text(
-                text = "Filter items",
+                text = stringResource(R.string.filter_items_title),
                 modifier = Modifier
                     .padding(horizontal = PacklySpacing.md)
                     .padding(top = PacklySpacing.base, bottom = PacklySpacing.sm),
@@ -230,7 +233,7 @@ private fun ItemsFilterSheet(
                     .padding(horizontal = PacklySpacing.md),
                 verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
             ) {
-                Text("Categories", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.categories_title), style = MaterialTheme.typography.labelLarge)
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
                     verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
@@ -238,7 +241,7 @@ private fun ItemsFilterSheet(
                     ItemsFilterChip(
                         selected = selectedCategoryIds.isEmpty(),
                         onClick = { onCategorySelectionChange(emptySet()) },
-                        label = "All categories (${allItems.countFor()})",
+                        label = stringResource(R.string.all_categories_count, allItems.countFor()),
                     )
                     categories.forEach { category ->
                         val selected = category.id in selectedCategoryIds
@@ -252,7 +255,7 @@ private fun ItemsFilterSheet(
                                 }
                                 onCategorySelectionChange(nextSelection)
                             },
-                            label = "${category.label} (${allItems.countFor(category.id)})",
+                            label = stringResource(R.string.category_count_label, category.label, allItems.countFor(category.id)),
                         )
                     }
                 }
@@ -262,7 +265,7 @@ private fun ItemsFilterSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(PacklySpacing.md),
-            ) { Text("Done") }
+            ) { Text(stringResource(R.string.action_done)) }
         }
     }
 }
@@ -307,7 +310,12 @@ private fun PacklyItem.matchesCategory(selectedCategoryIds: Set<CategoryId>): Bo
 private fun List<PacklyItem>.countFor(categoryId: CategoryId? = null): Int =
     count { item -> !item.isArchived && (categoryId == null || item.categoryId == categoryId) }
 
+@Composable
 private fun List<PacklyItem>.itemCountLabel(): String {
     val count = size
-    return "$count ${if (count == 1) "Item" else "Items"}"
+    return stringResource(
+        R.string.items_count_label,
+        count,
+        stringResource(if (count == 1) R.string.item_singular else R.string.item_plural),
+    )
 }

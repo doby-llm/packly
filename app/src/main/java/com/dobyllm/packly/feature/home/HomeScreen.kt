@@ -18,6 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.dobyllm.packly.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.InstantString
@@ -54,7 +56,7 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(PacklySpacing.md),
     ) {
         item { HomeHero(activeTripCount = activeTrips.size) }
-        item { SectionTitle("Active Trips") }
+        item { SectionTitle(stringResource(R.string.home_active_trips_title)) }
         if (activeTrips.isEmpty()) {
             item {
                 Box(
@@ -62,9 +64,9 @@ fun HomeScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     EmptyState(
-                        title = "No trips yet",
-                        body = "Create your first trip and Packly will keep you ready.",
-                        actionLabel = "Create trip",
+                        title = stringResource(R.string.home_empty_trips_title),
+                        body = stringResource(R.string.home_empty_trips_body),
+                        actionLabel = stringResource(R.string.action_create_trip),
                         onAction = { showCreateTrip = true },
                     )
                 }
@@ -78,19 +80,19 @@ fun HomeScreen(
                 val metadata = listOfNotNull(
                     trip.startDate?.let { start -> trip.endDate?.let { end -> "$start - $end" } ?: start },
                     trip.destination.takeIf { it.isNotBlank() },
-                    "$packed/${trip.entries.size} packed",
-                    packBy?.let { "Pack by $it" },
+                    stringResource(R.string.packed_fraction_short, packed, trip.entries.size),
+                    packBy?.let { stringResource(R.string.pack_by_value, it) },
                 ).joinToString(" • ")
                 val chips = listOfNotNull(
                     trip.destination.takeIf { it.isNotBlank() },
-                    packBy?.let { "Pack by $it" },
-                    trip.entries.size.takeIf { it > 0 }?.let { "$it items" },
+                    packBy?.let { stringResource(R.string.pack_by_value, it) },
+                    trip.entries.size.takeIf { it > 0 }?.let { stringResource(R.string.item_count_lower, it) },
                 )
 
                 TripSummaryCard(
                     title = trip.name,
                     metadata = metadata,
-                    percentLabel = "${(progress * 100).roundToInt()}% Packed",
+                    percentLabel = stringResource(R.string.percent_packed_label, (progress * 100).roundToInt()),
                     progress = progress,
                     chips = chips,
                     accentColor = MaterialTheme.colorScheme.primaryContainer,
@@ -111,7 +113,7 @@ fun HomeScreen(
 
 @Composable
 private fun HomeHero(activeTripCount: Int) {
-    val greeting = remember { greetingFor(LocalTime.now()) }
+    val greeting = greetingFor(LocalTime.now())
 
     Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm)) {
         Text(
@@ -121,18 +123,23 @@ private fun HomeHero(activeTripCount: Int) {
             fontWeight = FontWeight.ExtraBold,
         )
         Text(
-            text = "You have $activeTripCount upcoming ${if (activeTripCount == 1) "trip" else "trips"}. Let's get you prepared and ready to go.",
+            text = stringResource(
+                R.string.home_summary,
+                activeTripCount,
+                stringResource(if (activeTripCount == 1) R.string.trip_singular else R.string.trip_plural),
+            ),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
 
+@Composable
 private fun greetingFor(localTime: LocalTime): String = when (localTime.hour) {
-    in 5..11 -> "Good Morning."
-    in 12..16 -> "Good Afternoon."
-    in 17..21 -> "Good Evening."
-    else -> "Good Night."
+    in 5..11 -> stringResource(R.string.greeting_morning)
+    in 12..16 -> stringResource(R.string.greeting_afternoon)
+    in 17..21 -> stringResource(R.string.greeting_evening)
+    else -> stringResource(R.string.greeting_night)
 }
 
 @Composable

@@ -59,6 +59,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.dobyllm.packly.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.CategoryId
@@ -128,7 +130,7 @@ fun CreateTripSheet(
     ) {
         Column(Modifier.fillMaxHeight(0.9f).navigationBarsPadding().imePadding()) {
             Text(
-                "Create trip",
+                stringResource(R.string.create_trip_title),
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .widthIn(max = 560.dp)
@@ -152,11 +154,11 @@ fun CreateTripSheet(
                 PacklyTripTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = "Trip name *",
+                    label = stringResource(R.string.field_trip_name_required),
                     supportingText = when {
-                        duplicateName -> "An active trip with this name already exists."
-                        isTripNameMissing -> "Required. Enter a trip name to enable Create trip."
-                        else -> "Required."
+                        duplicateName -> stringResource(R.string.error_duplicate_trip_name)
+                        isTripNameMissing -> stringResource(R.string.trip_name_required_enable)
+                        else -> stringResource(R.string.field_required)
                     },
                     isError = duplicateName,
                     singleLine = true,
@@ -165,19 +167,19 @@ fun CreateTripSheet(
                     PacklyTripTextField(
                         value = destination,
                         onValueChange = { destination = it },
-                        label = "Destination (optional)",
+                        label = stringResource(R.string.field_destination_optional),
                     )
                 } else {
-                    TextButton(onClick = { showDestination = true }) { Text("Add destination (optional)") }
+                    TextButton(onClick = { showDestination = true }) { Text(stringResource(R.string.action_add_destination_optional)) }
                 }
                 PacklyDeadlinePickerField(
                     deadline = packByDeadline,
                     onDeadlineChange = { packByDeadline = it },
                     onIncompleteChange = { reminderDraftIncomplete = it },
                     supportingText = when {
-                        reminderDraftIncomplete -> "Choose a time to continue."
-                        packByDeadline != null && !notificationPermissionGranted -> "Notifications are off. We can still show the deadline in Packly."
-                        else -> "Choose a date and time to enable the reminder."
+                        reminderDraftIncomplete -> stringResource(R.string.deadline_choose_time_supporting)
+                        packByDeadline != null && !notificationPermissionGranted -> stringResource(R.string.deadline_notifications_off)
+                        else -> stringResource(R.string.deadline_supporting_text)
                     },
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
@@ -186,21 +188,21 @@ fun CreateTripSheet(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("Start from lists", style = MaterialTheme.typography.labelLarge)
+                        Text(stringResource(R.string.section_start_from_lists), style = MaterialTheme.typography.labelLarge)
                         Text(
-                            "${selectedSourceListIds.size} selected",
+                            stringResource(R.string.selected_count_label, selectedSourceListIds.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     Text(
-                        "Choose one or more packing lists. Duplicate items are included once.",
+                        stringResource(R.string.start_from_lists_body),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     if (activeLists.isEmpty()) {
                         Text(
-                            "No packing lists yet. Create reusable lists from the Lists tab, or add individual items below.",
+                            stringResource(R.string.no_packing_lists_yet_body),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall,
                         )
@@ -216,19 +218,19 @@ fun CreateTripSheet(
                                     onClick = {
                                         if (selected) selectedSourceListIds.remove(list.id) else selectedSourceListIds.add(list.id)
                                     },
-                                    label = "${list.name} (${list.entries.size})",
+                                    label = stringResource(R.string.category_count_label, list.name, list.entries.size),
                                 )
                             }
                         }
                     }
                     if (selectedLists.isEmpty()) {
                         Text(
-                            "No lists selected — start blank or add individual items below.",
+                            stringResource(R.string.no_lists_selected_body),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     } else {
-                        Text("Selected lists", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.selected_lists_title), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
                             verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
@@ -237,17 +239,17 @@ fun CreateTripSheet(
                                 PacklyTripFilterChip(
                                     selected = true,
                                     onClick = { selectedSourceListIds.remove(list.id) },
-                                    label = "${list.name} ×",
+                                    label = stringResource(R.string.selected_list_remove_label, list.name),
                                 )
                             }
                         }
                     }
                 }
-                Text("Add individual items", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.section_add_individual_items), style = MaterialTheme.typography.labelLarge)
                 PacklyTripTextField(
                     value = itemQuery,
                     onValueChange = { itemQuery = it },
-                    label = "Search all ${activeItems.size} items",
+                    label = stringResource(R.string.search_all_items_count_label, activeItems.size),
                 )
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
@@ -258,23 +260,27 @@ fun CreateTripSheet(
                         PacklyTripFilterChip(
                             selected = item.id in selectedItems || alreadyIncludedFromList,
                             onClick = { if (item.id in selectedItems) selectedItems.remove(item.id) else selectedItems.add(item.id) },
-                            label = if (alreadyIncludedFromList) "${item.name} · Already included" else item.name,
+                            label = if (alreadyIncludedFromList) {
+                                stringResource(R.string.item_already_included_label, item.name, stringResource(R.string.already_included_suffix))
+                            } else {
+                                item.name
+                            },
                         )
                     }
                 }
-                if (matchingItems.isEmpty()) Text("No items match this search.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (matchingItems.isEmpty()) Text(stringResource(R.string.no_items_match_search), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (duplicateSourceCount > 0) {
                     Text(
-                        "$duplicateSourceCount duplicate item(s) across selected lists and individual items will be packed once.",
+                        stringResource(R.string.duplicate_source_warning, duplicateSourceCount),
                         color = MaterialTheme.colorScheme.tertiary,
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
                 if (reviewItems.isNotEmpty()) {
-                    Text("Review quantities", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.section_review_quantities), style = MaterialTheme.typography.labelLarge)
                     Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
                         reviewItems.forEach { reviewItem ->
-                            val category = doc.categories.firstOrNull { it.id == reviewItem.categoryId }?.label ?: "Unknown"
+                            val category = doc.categories.firstOrNull { it.id == reviewItem.categoryId }?.label ?: stringResource(R.string.unknown_category)
                             QuantityReviewRow(
                                 name = reviewItem.name,
                                 category = category,
@@ -303,9 +309,9 @@ fun CreateTripSheet(
                         if (!canSaveTrip) {
                             Text(
                                 text = when {
-                                    isTripNameMissing -> "Create trip is disabled until you enter a trip name."
-                                    duplicateName -> "Create trip is disabled until the trip name is unique."
-                                    else -> "Choose a time to continue, or clear Pack by to create without a reminder."
+                                    isTripNameMissing -> stringResource(R.string.create_trip_disabled_missing_name)
+                                    duplicateName -> stringResource(R.string.create_trip_disabled_duplicate_name)
+                                    else -> stringResource(R.string.create_trip_disabled_time_required)
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -325,7 +331,7 @@ fun CreateTripSheet(
                                 .defaultMinSize(minHeight = 48.dp),
                             shape = RoundedCornerShape(PacklyRadius.default),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        ) { Text("Create trip") }
+                        ) { Text(stringResource(R.string.action_create_trip)) }
                     }
                 }
             }
@@ -345,7 +351,7 @@ internal fun PacklyDeadlinePickerField(
     onDeadlineChange: (InstantString?) -> Unit,
     supportingText: String,
     modifier: Modifier = Modifier,
-    label: String = "Pack by (optional)",
+    label: String? = null,
     onIncompleteChange: (Boolean) -> Unit = {},
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
@@ -355,9 +361,9 @@ internal fun PacklyDeadlinePickerField(
     val selectedTime = PacklyDeadlineFormatter.localTime(deadline) ?: LocalTime.now()
     val hasIncompleteDraft = pendingDate != null
     val selectedDisplay = when {
-        hasIncompleteDraft -> "Choose a time to continue"
-        deadline == null -> "No reminder set"
-        else -> PacklyDeadlineFormatter.formatDisplay(deadline) ?: "No reminder set"
+        hasIncompleteDraft -> stringResource(R.string.deadline_choose_time_display)
+        deadline == null -> stringResource(R.string.deadline_no_reminder_set)
+        else -> PacklyDeadlineFormatter.formatDisplay(deadline) ?: stringResource(R.string.deadline_no_reminder_set)
     }
 
     LaunchedEffect(hasIncompleteDraft) {
@@ -374,7 +380,7 @@ internal fun PacklyDeadlinePickerField(
             modifier = Modifier.padding(PacklySpacing.sm),
             verticalArrangement = Arrangement.spacedBy(PacklySpacing.base),
         ) {
-            Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(label ?: stringResource(R.string.deadline_pack_by_optional), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 text = selectedDisplay,
                 style = MaterialTheme.typography.titleMedium,
@@ -400,14 +406,14 @@ internal fun PacklyDeadlinePickerField(
                     modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
                     shape = RoundedCornerShape(PacklyRadius.default),
                 ) {
-                    Text(if (deadline == null && !hasIncompleteDraft) "Choose date" else "Change")
+                    Text(if (deadline == null && !hasIncompleteDraft) stringResource(R.string.action_choose_date) else stringResource(R.string.action_change))
                 }
                 OutlinedButton(
                     enabled = deadline != null || hasIncompleteDraft,
                     onClick = { showTimePicker = true },
                     modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
                     shape = RoundedCornerShape(PacklyRadius.default),
-                ) { Text(if (hasIncompleteDraft) "Choose time" else "Change time") }
+                ) { Text(if (hasIncompleteDraft) stringResource(R.string.action_choose_time) else stringResource(R.string.action_change_time)) }
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -421,7 +427,7 @@ internal fun PacklyDeadlinePickerField(
                         onDeadlineChange(null)
                     },
                     modifier = Modifier.defaultMinSize(minWidth = 72.dp, minHeight = 48.dp),
-                ) { Text("Clear", maxLines = 1, softWrap = false) }
+                ) { Text(stringResource(R.string.action_clear), maxLines = 1, softWrap = false) }
             }
         }
     }
@@ -438,9 +444,9 @@ internal fun PacklyDeadlinePickerField(
                         showDatePicker = false
                         showTimePicker = true
                     },
-                ) { Text("Next: choose time") }
+                ) { Text(stringResource(R.string.action_next_choose_time)) }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.action_cancel)) } },
         ) {
             DatePicker(state = datePickerState)
         }
@@ -450,7 +456,7 @@ internal fun PacklyDeadlinePickerField(
         val timePickerState = rememberTimePickerState(initialHour = selectedTime.hour, initialMinute = selectedTime.minute, is24Hour = true)
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
-            title = { Text("Pack by time") },
+            title = { Text(stringResource(R.string.deadline_time_title)) },
             text = { TimePicker(state = timePickerState) },
             confirmButton = {
                 TextButton(
@@ -461,9 +467,9 @@ internal fun PacklyDeadlinePickerField(
                         pendingDate = null
                         showTimePicker = false
                     },
-                ) { Text("Save time") }
+                ) { Text(stringResource(R.string.action_save_time)) }
             },
-            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }
@@ -519,11 +525,11 @@ private fun QuantityReviewRow(name: String, category: String, quantity: Int, onQ
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
                 IconButton(onClick = { onQuantityChange(quantity - 1) }, enabled = quantity > 1) {
-                    Icon(Icons.Rounded.Remove, contentDescription = "Decrease $name quantity")
+                    Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.a11y_decrease_quantity, name))
                 }
-                Text("×$quantity", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.quantity_times, quantity), style = MaterialTheme.typography.titleMedium)
                 IconButton(onClick = { onQuantityChange(quantity + 1) }) {
-                    Icon(Icons.Rounded.Add, contentDescription = "Increase $name quantity")
+                    Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.a11y_increase_quantity, name))
                 }
             }
         }

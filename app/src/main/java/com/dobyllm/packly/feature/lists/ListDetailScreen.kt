@@ -19,6 +19,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.dobyllm.packly.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.ItemId
@@ -42,8 +44,8 @@ fun ListDetailScreen(
 
     if (list == null) {
         EmptyState(
-            title = "This list could not be found",
-            body = "Go back to Lists and choose another template.",
+            title = stringResource(R.string.list_not_found_title),
+            body = stringResource(R.string.list_not_found_body),
             modifier = Modifier.padding(contentPadding).padding(PacklySpacing.md),
         )
         return
@@ -61,7 +63,7 @@ fun ListDetailScreen(
             val category = doc.categories.firstOrNull { it.id == item.categoryId }
             SelectableItemCard(
                 title = item.name,
-                subtitle = listOfNotNull(category?.label, item.notes.takeIf { it.isNotBlank() }).joinToString(" • ").ifBlank { "Uncategorized" },
+                subtitle = listOfNotNull(category?.label, item.notes.takeIf { it.isNotBlank() }).joinToString(" • ").ifBlank { stringResource(R.string.uncategorized) },
                 selected = item.id in selected,
                 onToggle = { onToggle(item.id) },
             )
@@ -96,12 +98,12 @@ private fun ListDetailHeader(doc: PacklyAppDocument, listId: ListId, onUseForTri
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                text = list.description.ifBlank { "Select items from your library. Changes snapshot names and quantities into this template." },
+                text = list.description.ifBlank { stringResource(R.string.list_detail_default_description) },
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                text = "${list.entries.size} Items",
+                text = stringResource(R.string.list_item_count, list.entries.size),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -131,7 +133,7 @@ private fun ListDetailHeader(doc: PacklyAppDocument, listId: ListId, onUseForTri
                 shape = RoundedCornerShape(PacklyRadius.default),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             ) {
-                Text("Use for trip")
+                Text(stringResource(R.string.action_use_for_trip))
             }
         }
     }

@@ -46,6 +46,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.dobyllm.packly.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.CategoryId
@@ -78,10 +80,12 @@ fun ListsScreen(
     var listToDelete by remember { mutableStateOf<PacklyList?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val createListLabel = stringResource(R.string.action_create_list)
     val lists = doc.lists.filterNot { it.isArchived }
 
-    DisposableEffect(onFabActionChange) {
-        onFabActionChange?.invoke(PacklyFabAction(contentDescription = "Create list", onClick = { showCreate = true }))
+    DisposableEffect(onFabActionChange, createListLabel) {
+        onFabActionChange?.invoke(PacklyFabAction(contentDescription = createListLabel, onClick = { showCreate = true }))
         onDispose { onFabActionChange?.invoke(null) }
     }
 
@@ -101,9 +105,9 @@ fun ListsScreen(
             if (lists.isEmpty()) {
                 item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
                     EmptyState(
-                        title = "No packing lists yet",
-                        body = "Start with a reusable template for trips you take often.",
-                        actionLabel = "Create list",
+                        title = stringResource(R.string.lists_empty_title),
+                        body = stringResource(R.string.lists_empty_body),
+                        actionLabel = createListLabel,
                         onAction = { showCreate = true },
                     )
                 }
@@ -116,7 +120,7 @@ fun ListsScreen(
                     onRename = { listToRename = list },
                     onDuplicate = {
                         onDuplicate(list.id)
-                        scope.launch { snackbarHostState.showSnackbar("${list.name} duplicated") }
+                        scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.list_duplicated_snackbar, list.name)) }
                     },
                     onDelete = { listToDelete = list },
                 )
@@ -146,8 +150,8 @@ fun ListsScreen(
     listToDelete?.let { list ->
         AlertDialog(
             onDismissRequest = { listToDelete = null },
-            title = { Text("Archive ${list.name}?") },
-            text = { Text("The list will be hidden, but trips already created from it keep their snapshots.") },
+            title = { Text(stringResource(R.string.archive_list_title, list.name)) },
+            text = { Text(stringResource(R.string.archive_list_body)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -155,9 +159,9 @@ fun ListsScreen(
                         listToDelete = null
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                ) { Text("Archive") }
+                ) { Text(stringResource(R.string.action_archive)) }
             },
-            dismissButton = { TextButton(onClick = { listToDelete = null }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { listToDelete = null }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }
@@ -171,13 +175,13 @@ private fun ListsHeader() {
         verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
     ) {
         Text(
-            text = "My Lists",
+            text = stringResource(R.string.lists_header_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
         )
         Text(
-            text = "Manage your packing templates and upcoming trips.",
+            text = stringResource(R.string.lists_header_body),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -197,13 +201,13 @@ private fun RenameListDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Rename ${list.name}") },
+        title = { Text(stringResource(R.string.rename_list_title, list.name)) },
         text = {
             PacklyTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = "List name",
-                supportingText = if (duplicateName) "An active list with this name already exists." else null,
+                label = stringResource(R.string.field_list_name),
+                supportingText = if (duplicateName) stringResource(R.string.error_duplicate_list_name) else null,
                 isError = duplicateName,
             )
         },
@@ -211,9 +215,9 @@ private fun RenameListDialog(
             TextButton(
                 enabled = trimmedName.isNotEmpty() && !duplicateName,
                 onClick = { onRename(trimmedName) },
-            ) { Text("Rename") }
+            ) { Text(stringResource(R.string.action_rename)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -239,7 +243,7 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
                 item.notes.contains(itemQuery, ignoreCase = true) ||
                 categoryLabel.contains(itemQuery, ignoreCase = true)
         }
-    val itemSections = buildListBuilderItemSections(matchingItems, doc)
+    val itemSections = buildListBuilderItemSections(matchingItems, doc, stringResource(R.string.uncategorized))
     val duplicateName = doc.lists.any { !it.isArchived && it.name.equals(name.trim(), ignoreCase = true) }
 
     ModalBottomSheet(
@@ -249,7 +253,7 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
     ) {
         Column(Modifier.fillMaxHeight(0.9f).navigationBarsPadding().imePadding()) {
             Text(
-                "Create list",
+                stringResource(R.string.create_list_title),
                 modifier = Modifier.padding(horizontal = PacklySpacing.md).padding(top = PacklySpacing.base, bottom = PacklySpacing.sm),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
@@ -261,28 +265,28 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
                 PacklyTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = "List name",
-                    supportingText = if (duplicateName) "An active list with this name already exists." else null,
+                    label = stringResource(R.string.field_list_name),
+                    supportingText = if (duplicateName) stringResource(R.string.error_duplicate_list_name) else null,
                     isError = duplicateName,
                 )
                 PacklyTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = "Description",
+                    label = stringResource(R.string.field_description),
                 )
                 Text(
-                    text = "Checklist items • ${selected.size} selected",
+                    text = stringResource(R.string.checklist_items_selected, selected.size),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 PacklyTextField(
                     value = itemQuery,
                     onValueChange = { itemQuery = it },
-                    label = "Search ${activeItems.size} items",
+                    label = stringResource(R.string.search_items_count_label, activeItems.size),
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base), verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
                     PacklyCategoryFilterChip(
-                        label = "All",
+                        label = stringResource(R.string.filter_all_label),
                         selected = selectedCategoryId == null,
                         onClick = { selectedCategoryId = null },
                     )
@@ -295,11 +299,11 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
                     }
                 }
                 if (itemSections.isEmpty()) {
-                    Text("No items match this filter.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.no_items_match_filter), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     itemSections.forEach { section ->
                         Text(
-                            text = "${section.label} (${section.items.size})",
+                            text = stringResource(R.string.category_count_label, section.label, section.items.size),
                             modifier = Modifier.padding(top = PacklySpacing.base),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary,
@@ -328,7 +332,7 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
                 modifier = Modifier.padding(PacklySpacing.md).fillMaxWidth().defaultMinSize(minHeight = 48.dp),
                 shape = RoundedCornerShape(PacklyRadius.default),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-            ) { Text("Save list") }
+            ) { Text(stringResource(R.string.action_save_list)) }
         }
     }
 }
@@ -354,7 +358,11 @@ private fun PacklyCategoryFilterChip(label: String, selected: Boolean, onClick: 
     )
 }
 
-private fun buildListBuilderItemSections(items: List<PacklyItem>, doc: PacklyAppDocument): List<ListBuilderItemSection> {
+private fun buildListBuilderItemSections(
+    items: List<PacklyItem>,
+    doc: PacklyAppDocument,
+    fallbackLabel: String,
+): List<ListBuilderItemSection> {
     val categories = doc.categories.associateBy { it.id }
     return items
         .groupBy { it.categoryId }
@@ -362,7 +370,7 @@ private fun buildListBuilderItemSections(items: List<PacklyItem>, doc: PacklyApp
             val category = categories[categoryId]
             ListBuilderItemSection(
                 categoryId = categoryId,
-                label = category?.label ?: "Uncategorized",
+                label = category?.label ?: fallbackLabel,
                 sortOrder = category?.sortOrder ?: Int.MAX_VALUE,
                 items = categoryItems.sortedBy { it.name.lowercase() },
             )

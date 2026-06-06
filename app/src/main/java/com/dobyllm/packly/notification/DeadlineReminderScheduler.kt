@@ -16,7 +16,6 @@ import com.dobyllm.packly.core.model.TripStatus
 import com.dobyllm.packly.core.time.toInstantOrNull
 
 private const val CHANNEL_ID = "packly_deadline_reminders"
-private const val CHANNEL_NAME = "Packing reminders"
 private const val ACTION_DEADLINE_REMINDER = "com.dobyllm.packly.action.DEADLINE_REMINDER"
 internal const val EXTRA_TRIP_ID = "com.dobyllm.packly.extra.TRIP_ID"
 
@@ -93,8 +92,12 @@ fun PacklyTrip.remainingPackingCount(): Int = entries.filterNot { it.isPacked }.
 fun createDeadlineReminderChannel(context: Context) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
     val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT).apply {
-        description = "Reminds you when a trip still has unpacked items at its Pack by deadline."
+    val channel = NotificationChannel(
+        CHANNEL_ID,
+        context.getString(com.dobyllm.packly.R.string.notification_channel_name),
+        NotificationManager.IMPORTANCE_DEFAULT,
+    ).apply {
+        description = context.getString(com.dobyllm.packly.R.string.notification_channel_description)
     }
     manager.createNotificationChannel(channel)
 }
