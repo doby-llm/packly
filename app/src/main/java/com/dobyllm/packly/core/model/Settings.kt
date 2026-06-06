@@ -6,11 +6,15 @@ import kotlinx.serialization.Serializable
 enum class ThemeMode { System, Light, Dark }
 
 @Serializable
+enum class LanguagePreference { System, English, Spanish, German }
+
+@Serializable
 data class PacklySettings(
     val themeMode: ThemeMode = ThemeMode.Light,
     val dynamicColorEnabled: Boolean = false,
     val selectedPaletteKey: String = "packly_default",
     val firstLaunchCompleted: Boolean = false,
+    val languagePreference: LanguagePreference = LanguagePreference.System,
 )
 
 @Serializable

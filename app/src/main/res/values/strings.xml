@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Packly</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_items">Items</string>
+    <string name="nav_lists">Lists</string>
+    <string name="nav_trips">Trips</string>
+    <string name="action_back">Back</string>
+    <string name="action_close">Close</string>
+    <string name="action_save">Save</string>
+    <string name="action_options">Options</string>
+    <string name="options_title">Options</string>
+    <string name="modify_trip_title">Modify Trip</string>
+    <string name="options_language_title">Language</string>
+    <string name="options_language_body">Choose the language Packly uses. System default follows your phone language and falls back to English.</string>
+    <string name="language_system_default">System default</string>
+    <string name="language_english">English</string>
+    <string name="language_spanish">Spanish</string>
+    <string name="language_german">German</string>
+    <string name="list_item_count">%1$d Items</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_duplicate">Duplicate</string>
+    <string name="action_archive">Archive</string>
+    <string name="a11y_archive_item">Archive %1$s</string>
+    <string name="a11y_unknown_category">Unknown category</string>
+    <string name="a11y_quantity">quantity %1$d</string>
+    <string name="a11y_packed">packed</string>
+    <string name="a11y_unpacked">unpacked</string>
+    <string name="a11y_duplicate_item_detected">Duplicate item detected</string>
+</resources>

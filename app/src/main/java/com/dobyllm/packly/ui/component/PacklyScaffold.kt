@@ -22,6 +22,7 @@ import androidx.compose.material.icons.rounded.Checklist
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -42,6 +43,8 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.dobyllm.packly.R
 import com.dobyllm.packly.navigation.PacklyRoute
 import com.dobyllm.packly.ui.theme.PacklyOnSecondaryContainer
 import com.dobyllm.packly.ui.theme.PacklyOnSurfaceVariant
@@ -70,13 +73,15 @@ data class PacklyFabAction(
 data class PacklyTopBarAction(
     val label: String,
     val onClick: () -> Unit,
+    val icon: ImageVector? = null,
 )
 
-val PacklyTopLevelDestinations = listOf(
-    PacklyTopLevelDestination(PacklyRoute.Home, "Home", Icons.Rounded.Home),
-    PacklyTopLevelDestination(PacklyRoute.Items, "Items", Icons.Rounded.EditNote),
-    PacklyTopLevelDestination(PacklyRoute.Lists, "Lists", Icons.Rounded.Checklist),
-    PacklyTopLevelDestination(PacklyRoute.Trips, "Trips", Icons.Rounded.Backpack),
+@Composable
+fun packlyTopLevelDestinations() = listOf(
+    PacklyTopLevelDestination(PacklyRoute.Home, stringResource(R.string.nav_home), Icons.Rounded.Home),
+    PacklyTopLevelDestination(PacklyRoute.Items, stringResource(R.string.nav_items), Icons.Rounded.EditNote),
+    PacklyTopLevelDestination(PacklyRoute.Lists, stringResource(R.string.nav_lists), Icons.Rounded.Checklist),
+    PacklyTopLevelDestination(PacklyRoute.Trips, stringResource(R.string.nav_trips), Icons.Rounded.Backpack),
 )
 
 @Composable
@@ -91,7 +96,8 @@ fun PacklyScaffold(
     onDestinationClick: (PacklyTopLevelDestination) -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    val showBottomBar = PacklyTopLevelDestinations.any { it.route == currentRoute }
+    val topLevelDestinations = packlyTopLevelDestinations()
+    val showBottomBar = topLevelDestinations.any { it.route == currentRoute }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -99,7 +105,7 @@ fun PacklyScaffold(
         topBar = {
             PacklyTopBar(
                 canNavigateBack = canNavigateBack,
-                title = if (showBottomBar) "Packly" else nestedTitle.orEmpty(),
+                title = if (showBottomBar) stringResource(R.string.app_name) else nestedTitle.orEmpty(),
                 onBack = onBack,
                 action = topBarAction,
                 useCloseNavigationIcon = useCloseNavigationIcon,
@@ -109,6 +115,7 @@ fun PacklyScaffold(
             if (showBottomBar) {
                 PacklyBottomNavBar(
                     currentRoute = currentRoute,
+                    destinations = topLevelDestinations,
                     onDestinationClick = onDestinationClick,
                 )
             }
@@ -146,7 +153,7 @@ fun PacklyTopBar(
             ) {
                 Icon(
                     imageVector = if (useCloseNavigationIcon) Icons.Rounded.Close else Icons.Rounded.ArrowBack,
-                    contentDescription = if (useCloseNavigationIcon) "Close" else "Back",
+                    contentDescription = if (useCloseNavigationIcon) stringResource(R.string.action_close) else stringResource(R.string.action_back),
                     tint = PacklyOnSurfaceVariant,
                 )
             }
@@ -164,16 +171,25 @@ fun PacklyTopBar(
             // Right-side spacer keeps the centered title optically balanced after removing settings.
             Box(modifier = Modifier.align(Alignment.CenterEnd).size(48.dp))
         } else {
-            androidx.compose.material3.TextButton(
-                onClick = action.onClick,
-                modifier = Modifier.align(Alignment.CenterEnd).defaultMinSize(minHeight = 48.dp),
-            ) {
-                Text(
-                    text = action.label,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = PacklyPrimary,
-                    fontWeight = FontWeight.Bold,
-                )
+            if (action.icon == null) {
+                androidx.compose.material3.TextButton(
+                    onClick = action.onClick,
+                    modifier = Modifier.align(Alignment.CenterEnd).defaultMinSize(minHeight = 48.dp),
+                ) {
+                    Text(
+                        text = action.label,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = PacklyPrimary,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            } else {
+                IconButton(
+                    onClick = action.onClick,
+                    modifier = Modifier.align(Alignment.CenterEnd).size(48.dp),
+                ) {
+                    Icon(imageVector = action.icon, contentDescription = action.label, tint = PacklyPrimary)
+                }
             }
         }
     }
@@ -182,6 +198,7 @@ fun PacklyTopBar(
 @Composable
 fun PacklyBottomNavBar(
     currentRoute: String?,
+    destinations: List<PacklyTopLevelDestination>,
     onDestinationClick: (PacklyTopLevelDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -202,7 +219,7 @@ fun PacklyBottomNavBar(
         horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PacklyTopLevelDestinations.forEach { destination ->
+        destinations.forEach { destination ->
             val selected = currentRoute == destination.route
             PacklyBottomNavItem(
                 destination = destination,

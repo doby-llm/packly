@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.PacklyCategory
+import com.dobyllm.packly.ui.i18n.displayLabel
 import com.dobyllm.packly.ui.token.CategoryTokens
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
@@ -42,7 +43,7 @@ fun CategoryHeader(category: PacklyCategory, countLabel: String, modifier: Modif
     ) {
         Icon(CategoryTokens.icon(category.iconKey), contentDescription = null, tint = token.accent)
         Text(
-            text = category.label,
+            text = category.displayLabel(),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),

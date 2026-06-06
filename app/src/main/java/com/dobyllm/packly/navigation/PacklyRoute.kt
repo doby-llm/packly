@@ -5,6 +5,7 @@ object PacklyRoute {
     const val Items = "items"
     const val Lists = "lists"
     const val Trips = "trips"
+    const val Options = "options"
     const val ListDetail = "lists/{listId}"
     const val TripDetail = "trips/{tripId}"
     const val PackingMode = "trips/{tripId}/packing"

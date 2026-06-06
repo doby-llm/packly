@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Packly</string>
+    <string name="nav_home">Inicio</string>
+    <string name="nav_items">Objetos</string>
+    <string name="nav_lists">Listas</string>
+    <string name="nav_trips">Viajes</string>
+    <string name="action_back">Atrás</string>
+    <string name="action_close">Cerrar</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_options">Opciones</string>
+    <string name="options_title">Opciones</string>
+    <string name="modify_trip_title">Modificar viaje</string>
+    <string name="options_language_title">Idioma</string>
+    <string name="options_language_body">Elige el idioma que usa Packly. Predeterminado del sistema sigue el idioma del teléfono y usa inglés como respaldo.</string>
+    <string name="language_system_default">Predeterminado del sistema</string>
+    <string name="language_english">Inglés</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_german">Alemán</string>
+    <string name="list_item_count">%1$d objetos</string>
+    <string name="action_rename">Renombrar</string>
+    <string name="action_duplicate">Duplicar</string>
+    <string name="action_archive">Archivar</string>
+    <string name="a11y_archive_item">Archivar %1$s</string>
+    <string name="a11y_unknown_category">Categoría desconocida</string>
+    <string name="a11y_quantity">cantidad %1$d</string>
+    <string name="a11y_packed">preparado</string>
+    <string name="a11y_unpacked">sin preparar</string>
+    <string name="a11y_duplicate_item_detected">Objeto duplicado detectado</string>
+</resources>

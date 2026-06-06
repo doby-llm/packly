@@ -298,6 +298,10 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
     fun updateThemeMode(themeMode: ThemeMode) = viewModelScope.launch {
         repository.updateSettings { settings -> settings.copy(themeMode = themeMode) }
     }
+
+    fun updateLanguagePreference(languagePreference: LanguagePreference) = viewModelScope.launch {
+        repository.updateSettings { settings -> settings.copy(languagePreference = languagePreference) }
+    }
 }
 
 private data class TripEntryDraft(

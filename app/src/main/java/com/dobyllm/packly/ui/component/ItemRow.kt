@@ -32,13 +32,18 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.dobyllm.packly.R
 import com.dobyllm.packly.core.model.PacklyCategory
 import com.dobyllm.packly.core.model.PacklyItem
 import com.dobyllm.packly.core.model.TripEntry
+import com.dobyllm.packly.ui.i18n.displayLabel
+import com.dobyllm.packly.ui.i18n.displayName
+import com.dobyllm.packly.ui.i18n.displayNameSnapshot
 import com.dobyllm.packly.ui.token.CategoryTokens
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
@@ -52,8 +57,9 @@ fun ItemRow(
     modifier: Modifier = Modifier,
     hasDuplicate: Boolean = false,
 ) {
+    val displayName = item.displayName()
     CatalogItemRow(
-        name = item.name,
+        name = displayName,
         note = item.notes,
         category = category,
         modifier = modifier,
@@ -61,7 +67,11 @@ fun ItemRow(
         trailingContent = {
             if (hasDuplicate) DuplicateWarningIcon()
             IconButton(onClick = onDelete) {
-                Icon(Icons.Rounded.Delete, contentDescription = "Archive ${item.name}", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(
+                    Icons.Rounded.Delete,
+                    contentDescription = stringResource(R.string.a11y_archive_item, displayName),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         },
     )
@@ -75,25 +85,31 @@ fun PackingItemRow(
     modifier: Modifier = Modifier,
 ) {
     val note = entry.notes.trim()
+    val displayName = entry.displayNameSnapshot()
+    val categoryLabel = category?.displayLabel()
+    val unknownCategory = stringResource(R.string.a11y_unknown_category)
+    val quantityDescription = stringResource(R.string.a11y_quantity, entry.quantity)
+    val packed = stringResource(R.string.a11y_packed)
+    val unpacked = stringResource(R.string.a11y_unpacked)
     val quantityText = when {
         note.isNotBlank() -> "x${entry.quantity} • $note"
         entry.quantity > 1 -> "x${entry.quantity}"
         else -> ""
     }
     CatalogItemRow(
-        name = entry.nameSnapshot,
+        name = displayName,
         note = quantityText,
         category = category,
         completedIndicatorColor = MaterialTheme.colorScheme.secondaryContainer,
         modifier = modifier.semantics {
             contentDescription = listOfNotNull(
-                entry.nameSnapshot,
-                category?.label ?: "Unknown category",
-                "quantity ${entry.quantity}",
+                displayName,
+                categoryLabel ?: unknownCategory,
+                quantityDescription,
                 note.takeIf { it.isNotBlank() },
-                if (entry.isPacked) "packed" else "unpacked",
+                if (entry.isPacked) packed else unpacked,
             ).joinToString(", ")
-            stateDescription = if (entry.isPacked) "packed" else "unpacked"
+            stateDescription = if (entry.isPacked) packed else unpacked
             role = Role.Checkbox
         },
         onClick = onToggle,
@@ -201,10 +217,11 @@ private fun PackingMetadataChip(note: String) {
 
 @Composable
 private fun DuplicateWarningIcon() {
+    val contentDescription = stringResource(R.string.a11y_duplicate_item_detected)
     Box(
         modifier = Modifier
             .size(48.dp)
-            .semantics { contentDescription = "Duplicate item detected" },
+            .semantics { this.contentDescription = contentDescription },
         contentAlignment = Alignment.CenterEnd,
     ) {
         Icon(Icons.Rounded.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)

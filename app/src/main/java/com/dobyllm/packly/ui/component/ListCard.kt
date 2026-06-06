@@ -32,11 +32,16 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.dobyllm.packly.R
 import com.dobyllm.packly.core.model.PacklyCategory
 import com.dobyllm.packly.core.model.PacklyList
+import com.dobyllm.packly.ui.i18n.displayDescription
+import com.dobyllm.packly.ui.i18n.displayLabel
+import com.dobyllm.packly.ui.i18n.displayName
 import com.dobyllm.packly.ui.theme.PacklyOnPrimaryFixedVariant
 import com.dobyllm.packly.ui.theme.PacklyOnSecondaryFixedVariant
 import com.dobyllm.packly.ui.theme.PacklyOnTertiaryFixedVariant
@@ -58,9 +63,11 @@ fun ListCard(
     modifier: Modifier = Modifier,
 ) {
     val accent = rememberListAccent(list.name)
+    val displayName = list.displayName()
+    val displayDescription = list.displayDescription()
     val categoryChips = list.entries
         .sortedBy { it.sortOrder }
-        .mapNotNull { entry -> categories.firstOrNull { it.id == entry.categoryIdSnapshot }?.label }
+        .mapNotNull { entry -> categories.firstOrNull { it.id == entry.categoryIdSnapshot }?.displayLabel() }
         .distinct()
         .take(3)
 
@@ -86,14 +93,14 @@ fun ListCard(
                     verticalArrangement = Arrangement.spacedBy(PacklySpacing.base),
                 ) {
                     Text(
-                        text = list.name,
+                        text = displayName,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = "${list.entries.size} Items",
+                        text = stringResource(R.string.list_item_count, list.entries.size),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -107,9 +114,9 @@ fun ListCard(
                             }
                         }
                     }
-                    if (list.description.isNotBlank()) {
+                    if (displayDescription.isNotBlank()) {
                         Text(
-                            text = list.description,
+                            text = displayDescription,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
@@ -132,7 +139,7 @@ fun ListCard(
                     ) {
                         Icon(Icons.Rounded.Edit, contentDescription = null)
                         Spacer(Modifier.width(PacklySpacing.xs))
-                        Text("Rename")
+                        Text(stringResource(R.string.action_rename))
                     }
                     TextButton(
                         onClick = onDuplicate,
@@ -140,7 +147,7 @@ fun ListCard(
                     ) {
                         Icon(Icons.Rounded.ContentCopy, contentDescription = null)
                         Spacer(Modifier.width(PacklySpacing.xs))
-                        Text("Duplicate")
+                        Text(stringResource(R.string.action_duplicate))
                     }
                     Spacer(Modifier.weight(1f))
                     TextButton(
@@ -153,7 +160,7 @@ fun ListCard(
                     ) {
                         Icon(Icons.Rounded.Archive, contentDescription = null)
                         Spacer(Modifier.width(PacklySpacing.xs))
-                        Text("Archive")
+                        Text(stringResource(R.string.action_archive))
                     }
                 }
             }

@@ -16,9 +16,11 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dobyllm.packly.navigation.PacklyNavHost
 import com.dobyllm.packly.notification.EXTRA_TRIP_ID
 import com.dobyllm.packly.notification.createDeadlineReminderChannel
+import com.dobyllm.packly.ui.i18n.PacklyLocalizedContent
 import com.dobyllm.packly.ui.theme.PacklyTheme
 
 class MainActivity : ComponentActivity() {
@@ -28,17 +30,20 @@ class MainActivity : ComponentActivity() {
         val notificationTripId = intent?.getStringExtra(EXTRA_TRIP_ID)
         setContent {
             val vm: PacklyAppViewModel = viewModel()
+            val doc = vm.document.collectAsStateWithLifecycle().value
 
-            PacklyTheme(
-                darkTheme = false,
-                dynamicColor = false,
-            ) {
-                SyncSystemBars()
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
+            PacklyLocalizedContent(languagePreference = doc.settings.languagePreference) {
+                PacklyTheme(
+                    darkTheme = false,
+                    dynamicColor = false,
                 ) {
-                    PacklyNavHost(vm = vm, initialTripId = notificationTripId)
+                    SyncSystemBars()
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background,
+                    ) {
+                        PacklyNavHost(vm = vm, initialTripId = notificationTripId)
+                    }
                 }
             }
         }

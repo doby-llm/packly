@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Packly</string>
+    <string name="nav_home">Start</string>
+    <string name="nav_items">Gegenstände</string>
+    <string name="nav_lists">Listen</string>
+    <string name="nav_trips">Reisen</string>
+    <string name="action_back">Zurück</string>
+    <string name="action_close">Schließen</string>
+    <string name="action_save">Speichern</string>
+    <string name="action_options">Optionen</string>
+    <string name="options_title">Optionen</string>
+    <string name="modify_trip_title">Reise bearbeiten</string>
+    <string name="options_language_title">Sprache</string>
+    <string name="options_language_body">Wähle die Sprache für Packly. Systemstandard folgt der Telefonsprache und fällt auf Englisch zurück.</string>
+    <string name="language_system_default">Systemstandard</string>
+    <string name="language_english">Englisch</string>
+    <string name="language_spanish">Spanisch</string>
+    <string name="language_german">Deutsch</string>
+    <string name="list_item_count">%1$d Gegenstände</string>
+    <string name="action_rename">Umbenennen</string>
+    <string name="action_duplicate">Duplizieren</string>
+    <string name="action_archive">Archivieren</string>
+    <string name="a11y_archive_item">%1$s archivieren</string>
+    <string name="a11y_unknown_category">Unbekannte Kategorie</string>
+    <string name="a11y_quantity">Anzahl %1$d</string>
+    <string name="a11y_packed">gepackt</string>
+    <string name="a11y_unpacked">nicht gepackt</string>
+    <string name="a11y_duplicate_item_detected">Doppelter Gegenstand erkannt</string>
+</resources>
