@@ -80,7 +80,6 @@ fun ListsScreen(
     var listToDelete by remember { mutableStateOf<PacklyList?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val context = androidx.compose.ui.platform.LocalContext.current
     val createListLabel = stringResource(R.string.action_create_list)
     val lists = doc.lists.filterNot { it.isArchived }
 
@@ -113,6 +112,8 @@ fun ListsScreen(
                 }
             }
             items(lists, key = { it.id }) { list ->
+                val duplicateSnackbarMessage = stringResource(R.string.list_duplicated_snackbar, list.name)
+
                 ListCard(
                     list = list,
                     categories = doc.categories,
@@ -120,7 +121,7 @@ fun ListsScreen(
                     onRename = { listToRename = list },
                     onDuplicate = {
                         onDuplicate(list.id)
-                        scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.list_duplicated_snackbar, list.name)) }
+                        scope.launch { snackbarHostState.showSnackbar(duplicateSnackbarMessage) }
                     },
                     onDelete = { listToDelete = list },
                 )
