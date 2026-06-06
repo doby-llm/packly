@@ -29,7 +29,7 @@ class I18nCoverageTest {
         val sourceFiles = Files.walk(sourceRoot)
             .filter { Files.isRegularFile(it) }
             .filter { it.toString().endsWith(".kt") }
-            .filterNot { it.toString().endsWith("ui/i18n/SeedDisplayNames.kt") }
+            .filter { !it.toString().endsWith("ui/i18n/SeedDisplayNames.kt") }
             .toList()
         val uiLiteralPatterns = listOf(
             Regex("\\bText\\s*\\(\\s*\"[^\"]*[A-Za-z][^\"]*\""),
