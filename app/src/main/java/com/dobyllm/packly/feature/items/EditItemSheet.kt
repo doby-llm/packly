@@ -14,6 +14,7 @@ import com.dobyllm.packly.core.model.CategoryId
 import com.dobyllm.packly.core.model.PacklyCategory
 import com.dobyllm.packly.core.model.PacklyItem
 import com.dobyllm.packly.ui.component.CategoryChip
+import com.dobyllm.packly.ui.i18n.displayLabel
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
 
@@ -71,7 +72,7 @@ fun EditItemSheet(
             ) {
                 categories.filterNot { it.isArchived }.forEach { category ->
                     CategoryChip(
-                        label = category.label,
+                        label = category.displayLabel(),
                         selected = category.id == categoryId,
                         onClick = { categoryId = category.id },
                     )

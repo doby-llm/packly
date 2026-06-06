@@ -60,6 +60,8 @@ import com.dobyllm.packly.ui.component.EmptyState
 import com.dobyllm.packly.ui.component.ListCard
 import com.dobyllm.packly.ui.component.PacklyFabAction
 import com.dobyllm.packly.ui.component.SelectableItemCard
+import com.dobyllm.packly.ui.i18n.displayLabel
+import com.dobyllm.packly.ui.i18n.displayName
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
 import kotlinx.coroutines.launch
@@ -112,7 +114,8 @@ fun ListsScreen(
                 }
             }
             items(lists, key = { it.id }) { list ->
-                val duplicateSnackbarMessage = stringResource(R.string.list_duplicated_snackbar, list.name)
+                val displayName = list.displayName()
+                val duplicateSnackbarMessage = stringResource(R.string.list_duplicated_snackbar, displayName)
 
                 ListCard(
                     list = list,
@@ -151,7 +154,7 @@ fun ListsScreen(
     listToDelete?.let { list ->
         AlertDialog(
             onDismissRequest = { listToDelete = null },
-            title = { Text(stringResource(R.string.archive_list_title, list.name)) },
+            title = { Text(stringResource(R.string.archive_list_title, list.displayName())) },
             text = { Text(stringResource(R.string.archive_list_body)) },
             confirmButton = {
                 TextButton(
@@ -202,7 +205,7 @@ private fun RenameListDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.rename_list_title, list.name)) },
+        title = { Text(stringResource(R.string.rename_list_title, list.displayName())) },
         text = {
             PacklyTextField(
                 value = name,
@@ -234,17 +237,24 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
         .filterNot { it.isArchived }
         .filter { category -> activeItems.any { it.categoryId == category.id } }
         .sortedBy { it.sortOrder }
-    val categoryLabelById = doc.categories.associate { it.id to it.label }
+    val categoryLabelById = doc.categories.associate { it.id to it.displayLabel() }
+    val itemNameById = activeItems.associate { it.id to it.displayName() }
     val matchingItems = activeItems
         .filter { selectedCategoryId == null || it.categoryId == selectedCategoryId }
         .filter { item ->
             val categoryLabel = categoryLabelById[item.categoryId].orEmpty()
             itemQuery.isBlank() ||
-                item.name.contains(itemQuery, ignoreCase = true) ||
+                (itemNameById[item.id] ?: item.name).contains(itemQuery, ignoreCase = true) ||
                 item.notes.contains(itemQuery, ignoreCase = true) ||
                 categoryLabel.contains(itemQuery, ignoreCase = true)
         }
-    val itemSections = buildListBuilderItemSections(matchingItems, doc, stringResource(R.string.uncategorized))
+    val itemSections = buildListBuilderItemSections(
+        items = matchingItems,
+        doc = doc,
+        fallbackLabel = stringResource(R.string.uncategorized),
+        categoryLabelById = categoryLabelById,
+        itemNameById = itemNameById,
+    )
     val duplicateName = doc.lists.any { !it.isArchived && it.name.equals(name.trim(), ignoreCase = true) }
 
     ModalBottomSheet(
@@ -293,7 +303,7 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
                     )
                     activeCategories.forEach { category ->
                         PacklyCategoryFilterChip(
-                            label = category.label,
+                            label = category.displayLabel(),
                             selected = selectedCategoryId == category.id,
                             onClick = { selectedCategoryId = if (selectedCategoryId == category.id) null else category.id },
                         )
@@ -313,7 +323,7 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
                         Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
                             section.items.forEach { item ->
                                 SelectableItemCard(
-                                    title = item.name,
+                                    title = itemNameById[item.id] ?: item.name,
                                     subtitle = item.notes.takeIf { it.isNotBlank() } ?: section.label,
                                     selected = item.id in selected,
                                     onToggle = { if (item.id in selected) selected.remove(item.id) else selected.add(item.id) },
@@ -363,6 +373,8 @@ private fun buildListBuilderItemSections(
     items: List<PacklyItem>,
     doc: PacklyAppDocument,
     fallbackLabel: String,
+    categoryLabelById: Map<CategoryId, String>,
+    itemNameById: Map<ItemId, String>,
 ): List<ListBuilderItemSection> {
     val categories = doc.categories.associateBy { it.id }
     return items
@@ -371,9 +383,9 @@ private fun buildListBuilderItemSections(
             val category = categories[categoryId]
             ListBuilderItemSection(
                 categoryId = categoryId,
-                label = category?.label ?: fallbackLabel,
+                label = categoryLabelById[categoryId] ?: fallbackLabel,
                 sortOrder = category?.sortOrder ?: Int.MAX_VALUE,
-                items = categoryItems.sortedBy { it.name.lowercase() },
+                items = categoryItems.sortedBy { (itemNameById[it.id] ?: it.name).lowercase() },
             )
         }
         .sortedWith(compareBy<ListBuilderItemSection> { it.sortOrder }.thenBy { it.label })

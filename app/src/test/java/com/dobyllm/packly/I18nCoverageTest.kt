@@ -99,6 +99,42 @@ class I18nCoverageTest {
                 "text = list.name",
                 "text = list.description",
             ),
+            "app/src/main/java/com/dobyllm/packly/feature/lists/AddItemsToListSheet.kt" to listOf(
+                "it.id to it.label",
+                "item.name.contains(query",
+                "label = category.label",
+                "title = item.name",
+                "category?.label",
+                "sortedBy { it.name.lowercase()",
+            ),
+            "app/src/main/java/com/dobyllm/packly/feature/lists/ListsScreen.kt" to listOf(
+                "list_duplicated_snackbar, list.name",
+                "archive_list_title, list.name",
+                "rename_list_title, list.name",
+                "it.id to it.label",
+                "item.name.contains(itemQuery",
+                "label = category.label",
+                "title = item.name",
+                "category?.label",
+                "sortedBy { it.name.lowercase()",
+            ),
+            "app/src/main/java/com/dobyllm/packly/feature/items/ItemsScreen.kt" to listOf(
+                "archive_item_title, item.name",
+                "category_count_label, category.label",
+                "name.contains(query",
+            ),
+            "app/src/main/java/com/dobyllm/packly/feature/items/EditItemSheet.kt" to listOf(
+                "label = category.label",
+            ),
+            "app/src/main/java/com/dobyllm/packly/feature/trips/CreateTripScreen.kt" to listOf(
+                "item.name.contains(itemQuery",
+                "category_count_label, list.name",
+                "selected_list_remove_label, list.name",
+                "item_already_included_label, item.name",
+                "TripReviewItem(itemId, entry.itemNameSnapshot",
+                "TripReviewItem(item.id, item.name",
+                "?.label ?: stringResource(R.string.unknown_category)",
+            ),
         )
 
         val violations = forbiddenSnippetsByFile.flatMap { (relativePath, forbiddenSnippets) ->

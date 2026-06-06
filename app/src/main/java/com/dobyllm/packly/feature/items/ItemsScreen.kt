@@ -49,6 +49,8 @@ import com.dobyllm.packly.ui.component.ItemRow
 import com.dobyllm.packly.ui.component.ItemRowDivider
 import com.dobyllm.packly.ui.component.PacklyFabAction
 import com.dobyllm.packly.ui.component.PacklySearchFilterRow
+import com.dobyllm.packly.ui.i18n.displayLabel
+import com.dobyllm.packly.ui.i18n.displayName
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
 
@@ -77,10 +79,12 @@ fun ItemsScreen(
             .keys
     }
     val addItemLabel = stringResource(R.string.action_add_item)
+    val displayItemNameById = activeItems.associate { it.id to it.displayName() }
     val filteredItems = filterLibraryItems(
         items = activeItems,
         query = query,
         selectedCategoryIds = selectedCategoryIds,
+        displayNameById = displayItemNameById,
     )
 
     DisposableEffect(onFabActionChange, addItemLabel) {
@@ -184,7 +188,7 @@ fun ItemsScreen(
     itemToDelete?.let { item ->
         AlertDialog(
             onDismissRequest = { itemToDelete = null },
-            title = { Text(stringResource(R.string.archive_item_title, item.name)) },
+            title = { Text(stringResource(R.string.archive_item_title, item.displayName())) },
             text = { Text(stringResource(R.string.archive_item_body)) },
             confirmButton = {
                 TextButton(
@@ -255,7 +259,7 @@ private fun ItemsFilterSheet(
                                 }
                                 onCategorySelectionChange(nextSelection)
                             },
-                            label = stringResource(R.string.category_count_label, category.label, allItems.countFor(category.id)),
+                            label = stringResource(R.string.category_count_label, category.displayLabel(), allItems.countFor(category.id)),
                         )
                     }
                 }
@@ -295,14 +299,15 @@ internal fun filterLibraryItems(
     items: List<PacklyItem>,
     query: String,
     selectedCategoryIds: Set<CategoryId>,
+    displayNameById: Map<ItemId, String> = emptyMap(),
 ): List<PacklyItem> = items.filter { item ->
-    item.matchesQuery(query) &&
+    item.matchesQuery(query, displayNameById[item.id] ?: item.name) &&
         item.matchesCategory(selectedCategoryIds) &&
         !item.isArchived
 }
 
-private fun PacklyItem.matchesQuery(query: String): Boolean =
-    query.isBlank() || name.contains(query, ignoreCase = true) || notes.contains(query, ignoreCase = true)
+private fun PacklyItem.matchesQuery(query: String, displayName: String): Boolean =
+    query.isBlank() || displayName.contains(query, ignoreCase = true) || notes.contains(query, ignoreCase = true)
 
 private fun PacklyItem.matchesCategory(selectedCategoryIds: Set<CategoryId>): Boolean =
     selectedCategoryIds.isEmpty() || categoryId in selectedCategoryIds

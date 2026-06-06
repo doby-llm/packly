@@ -31,9 +31,12 @@ import androidx.compose.ui.res.stringResource
 import com.dobyllm.packly.R
 import androidx.compose.ui.text.font.FontWeight
 import com.dobyllm.packly.core.model.CategoryId
+import com.dobyllm.packly.core.model.ItemId
 import com.dobyllm.packly.core.model.PacklyAppDocument
 import com.dobyllm.packly.core.model.PacklyItem
 import com.dobyllm.packly.ui.component.SelectableItemCard
+import com.dobyllm.packly.ui.i18n.displayLabel
+import com.dobyllm.packly.ui.i18n.displayName
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
 
@@ -46,17 +49,24 @@ fun AddItemsToListSheet(doc: PacklyAppDocument, selectedIds: Set<String>, onTogg
         .filterNot { it.isArchived }
         .filter { category -> activeItems.any { it.categoryId == category.id } }
         .sortedBy { it.sortOrder }
-    val categoryLabelById = doc.categories.associate { it.id to it.label }
+    val categoryLabelById = doc.categories.associate { it.id to it.displayLabel() }
+    val itemNameById = activeItems.associate { it.id to it.displayName() }
     val filteredItems = activeItems
         .filter { selectedCategoryId == null || it.categoryId == selectedCategoryId }
         .filter { item ->
             val categoryLabel = categoryLabelById[item.categoryId].orEmpty()
             query.isBlank() ||
-                item.name.contains(query, ignoreCase = true) ||
+                (itemNameById[item.id] ?: item.name).contains(query, ignoreCase = true) ||
                 item.notes.contains(query, ignoreCase = true) ||
                 categoryLabel.contains(query, ignoreCase = true)
         }
-    val sections = buildItemSections(filteredItems, doc, stringResource(R.string.uncategorized))
+    val sections = buildItemSections(
+        items = filteredItems,
+        doc = doc,
+        fallbackLabel = stringResource(R.string.uncategorized),
+        categoryLabelById = categoryLabelById,
+        itemNameById = itemNameById,
+    )
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -102,7 +112,7 @@ fun AddItemsToListSheet(doc: PacklyAppDocument, selectedIds: Set<String>, onTogg
                     )
                     activeCategories.forEach { category ->
                         PacklyCategoryFilterChip(
-                            label = category.label,
+                            label = category.displayLabel(),
                             selected = selectedCategoryId == category.id,
                             onClick = { selectedCategoryId = if (selectedCategoryId == category.id) null else category.id },
                         )
@@ -129,7 +139,7 @@ fun AddItemsToListSheet(doc: PacklyAppDocument, selectedIds: Set<String>, onTogg
                     }
                     items(section.items, key = { it.id }) { item ->
                         SelectableItemCard(
-                            title = item.name,
+                            title = itemNameById[item.id] ?: item.name,
                             subtitle = item.notes.takeIf { it.isNotBlank() } ?: section.label,
                             selected = item.id in selectedIds,
                             onToggle = { onToggle(item.id) },
@@ -181,7 +191,13 @@ private fun PacklyCategoryFilterChip(label: String, selected: Boolean, onClick: 
     )
 }
 
-private fun buildItemSections(items: List<PacklyItem>, doc: PacklyAppDocument, fallbackLabel: String): List<ItemSection> {
+private fun buildItemSections(
+    items: List<PacklyItem>,
+    doc: PacklyAppDocument,
+    fallbackLabel: String,
+    categoryLabelById: Map<CategoryId, String>,
+    itemNameById: Map<ItemId, String>,
+): List<ItemSection> {
     val categories = doc.categories.associateBy { it.id }
     return items
         .groupBy { it.categoryId }
@@ -189,9 +205,9 @@ private fun buildItemSections(items: List<PacklyItem>, doc: PacklyAppDocument, f
             val category = categories[categoryId]
             ItemSection(
                 categoryId = categoryId,
-                label = category?.label ?: fallbackLabel,
+                label = categoryLabelById[categoryId] ?: fallbackLabel,
                 sortOrder = category?.sortOrder ?: Int.MAX_VALUE,
-                items = categoryItems.sortedBy { it.name.lowercase() },
+                items = categoryItems.sortedBy { (itemNameById[it.id] ?: it.name).lowercase() },
             )
         }
         .sortedWith(compareBy<ItemSection> { it.sortOrder }.thenBy { it.label })

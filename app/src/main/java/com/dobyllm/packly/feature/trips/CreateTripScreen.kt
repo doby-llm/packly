@@ -73,6 +73,9 @@ import com.dobyllm.packly.core.model.PacklyListEntry
 import com.dobyllm.packly.core.model.TripStatus
 import com.dobyllm.packly.core.time.PacklyDeadlineFormatter
 import com.dobyllm.packly.notification.canPostPacklyNotifications
+import com.dobyllm.packly.ui.i18n.displayItemNameSnapshot
+import com.dobyllm.packly.ui.i18n.displayLabel
+import com.dobyllm.packly.ui.i18n.displayName
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
 import java.time.Instant
@@ -102,7 +105,7 @@ fun CreateTripSheet(
     val quantities = remember { mutableStateMapOf<ItemId, Int>() }
     val activeItems = doc.items.filterNot { it.isArchived }
     val activeLists = doc.lists.filterNot { it.isArchived }
-    val matchingItems = activeItems.filter { it.name.contains(itemQuery, ignoreCase = true) }
+    val matchingItems = activeItems.filter { it.displayName().contains(itemQuery, ignoreCase = true) }
     val duplicateName = doc.trips.any { it.status != TripStatus.Archived && it.name.equals(name.trim(), ignoreCase = true) }
     val selectedLists = selectedSourceListIds.mapNotNull { listId -> activeLists.firstOrNull { it.id == listId } }
     val sourceEntries = selectedLists.flatMap { list -> list.entries.sortedBy { it.sortOrder } }
@@ -111,9 +114,7 @@ fun CreateTripSheet(
     val duplicateAcrossListsCount = sourceEntries.mapNotNull { it.itemId }.let { ids -> ids.size - ids.toSet().size }
     val duplicateIndividualCount = selectedItems.count { it in sourceItemIds }
     val duplicateSourceCount = duplicateAcrossListsCount + duplicateIndividualCount
-    val reviewItems = remember(selectedItemIds, doc.items, sourceEntries) {
-        buildTripReviewItems(selectedItemIds, doc.items, sourceEntries)
-    }
+    val reviewItems = buildTripReviewItems(selectedItemIds, doc.items, sourceEntries)
     val trimmedName = name.trim()
     val isTripNameMissing = trimmedName.isEmpty()
     val canSaveTrip = !isTripNameMissing && !duplicateName && !reminderDraftIncomplete
@@ -218,7 +219,7 @@ fun CreateTripSheet(
                                     onClick = {
                                         if (selected) selectedSourceListIds.remove(list.id) else selectedSourceListIds.add(list.id)
                                     },
-                                    label = stringResource(R.string.category_count_label, list.name, list.entries.size),
+                                    label = stringResource(R.string.category_count_label, list.displayName(), list.entries.size),
                                 )
                             }
                         }
@@ -239,7 +240,7 @@ fun CreateTripSheet(
                                 PacklyTripFilterChip(
                                     selected = true,
                                     onClick = { selectedSourceListIds.remove(list.id) },
-                                    label = stringResource(R.string.selected_list_remove_label, list.name),
+                                    label = stringResource(R.string.selected_list_remove_label, list.displayName()),
                                 )
                             }
                         }
@@ -261,9 +262,9 @@ fun CreateTripSheet(
                             selected = item.id in selectedItems || alreadyIncludedFromList,
                             onClick = { if (item.id in selectedItems) selectedItems.remove(item.id) else selectedItems.add(item.id) },
                             label = if (alreadyIncludedFromList) {
-                                stringResource(R.string.item_already_included_label, item.name, stringResource(R.string.already_included_suffix))
+                                stringResource(R.string.item_already_included_label, item.displayName(), stringResource(R.string.already_included_suffix))
                             } else {
-                                item.name
+                                item.displayName()
                             },
                         )
                     }
@@ -280,7 +281,7 @@ fun CreateTripSheet(
                     Text(stringResource(R.string.section_review_quantities), style = MaterialTheme.typography.labelLarge)
                     Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
                         reviewItems.forEach { reviewItem ->
-                            val category = doc.categories.firstOrNull { it.id == reviewItem.categoryId }?.label ?: stringResource(R.string.unknown_category)
+                            val category = doc.categories.firstOrNull { it.id == reviewItem.categoryId }?.displayLabel() ?: stringResource(R.string.unknown_category)
                             QuantityReviewRow(
                                 name = reviewItem.name,
                                 category = category,
@@ -488,6 +489,7 @@ private data class TripReviewItem(
     val sortOrder: Int,
 )
 
+@Composable
 private fun buildTripReviewItems(
     selectedItemIds: Set<ItemId>,
     items: List<PacklyItem>,
@@ -496,12 +498,12 @@ private fun buildTripReviewItems(
     val sourceReviewItems = sourceEntries.mapNotNull { entry ->
         val itemId = entry.itemId ?: return@mapNotNull null
         if (itemId !in selectedItemIds) return@mapNotNull null
-        TripReviewItem(itemId, entry.itemNameSnapshot, entry.categoryIdSnapshot, entry.sortOrder)
+        TripReviewItem(itemId, entry.displayItemNameSnapshot(), entry.categoryIdSnapshot, entry.sortOrder)
     }
     val sourceIds = sourceReviewItems.map { it.itemId }.toSet()
     val isolatedReviewItems = items
         .filter { item -> item.id in selectedItemIds && item.id !in sourceIds }
-        .mapIndexed { index, item -> TripReviewItem(item.id, item.name, item.categoryId, sourceEntries.size + index) }
+        .mapIndexed { index, item -> TripReviewItem(item.id, item.displayName(), item.categoryId, sourceEntries.size + index) }
     return (sourceReviewItems + isolatedReviewItems).distinctBy { it.itemId }.sortedBy { it.sortOrder }
 }
 
