@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -74,6 +75,7 @@ fun PackingModeScreen(
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val resources = LocalContext.current.resources
     var undoSnackbarJob by remember { mutableStateOf<Job?>(null) }
 
     if (trip == null) {
@@ -84,8 +86,8 @@ fun PackingModeScreen(
                 .padding(PacklySpacing.marginMobile),
         ) {
             EmptyState(
-                title = "This trip could not be found",
-                body = "Back to Trips and choose an active trip to continue packing.",
+                title = stringResource(R.string.trip_not_found_title),
+                body = stringResource(R.string.packing_trip_not_found_body),
             )
         }
         return
@@ -132,8 +134,8 @@ fun PackingModeScreen(
                 item(key = "packing_empty") {
                     Box(Modifier.padding(horizontal = PacklySpacing.marginMobile)) {
                         EmptyState(
-                            title = "Nothing to pack yet",
-                            body = "Add items to this trip before entering packing mode.",
+                            title = stringResource(R.string.packing_empty_title),
+                            body = stringResource(R.string.packing_empty_body),
                         )
                     }
                 }
@@ -151,8 +153,6 @@ fun PackingModeScreen(
                     )
                 }
                 item(key = "packing_section_card_$sectionKey") {
-                    val packedMessage = stringResource(R.string.snackbar_packed_item)
-                    val unpackedMessage = stringResource(R.string.snackbar_unpacked_item)
                     val undoLabel = stringResource(R.string.action_undo)
                     PackingRowsCard(
                         entries = sectionEntries,
@@ -165,7 +165,10 @@ fun PackingModeScreen(
                             snackbarHostState.currentSnackbarData?.dismiss()
                             undoSnackbarJob = scope.launch {
                                 val result = snackbarHostState.showSnackbar(
-                                    message = "${if (nextState) packedMessage else unpackedMessage} \"${entry.nameSnapshot}\"",
+                                    message = resources.getString(
+                                        if (nextState) R.string.snackbar_packed_named_item else R.string.snackbar_unpacked_named_item,
+                                        entry.nameSnapshot,
+                                    ),
                                     actionLabel = undoLabel,
                                     withDismissAction = false,
                                     duration = SnackbarDuration.Short,
@@ -184,8 +187,8 @@ fun PackingModeScreen(
                 item(key = "packing_filtered_empty") {
                     Box(Modifier.padding(horizontal = PacklySpacing.marginMobile)) {
                         EmptyState(
-                            title = "No ${filter.label.lowercase()} items",
-                            body = "Switch filters to review the rest of your packing list.",
+                            title = stringResource(R.string.packing_no_filtered_items, filter.localizedLabel().lowercase()),
+                            body = stringResource(R.string.packing_filtered_empty_body),
                         )
                     }
                 }
@@ -244,9 +247,9 @@ private fun PackingProgressHeader(
                 horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
                 verticalArrangement = Arrangement.spacedBy(PacklySpacing.base),
             ) {
-                PackingFilterChip("All Items", currentFilter == PackingFilter.All) { onFilterChange(PackingFilter.All) }
-                PackingFilterChip("Unpacked ($unpackedCount)", currentFilter == PackingFilter.Unpacked) { onFilterChange(PackingFilter.Unpacked) }
-                PackingFilterChip("Packed ($packedCount)", currentFilter == PackingFilter.Packed) { onFilterChange(PackingFilter.Packed) }
+                PackingFilterChip(stringResource(R.string.filter_all_items), currentFilter == PackingFilter.All) { onFilterChange(PackingFilter.All) }
+                PackingFilterChip(stringResource(R.string.filter_unpacked_count, unpackedCount), currentFilter == PackingFilter.Unpacked) { onFilterChange(PackingFilter.Unpacked) }
+                PackingFilterChip(stringResource(R.string.filter_packed_count, packedCount), currentFilter == PackingFilter.Packed) { onFilterChange(PackingFilter.Packed) }
             }
         }
     }
@@ -254,12 +257,14 @@ private fun PackingProgressHeader(
 
 @Composable
 private fun PackingFilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    val filterDescription = stringResource(R.string.a11y_filter, label)
+    val selectedFilterDescription = stringResource(R.string.a11y_filter_selected, label)
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(PacklyRadius.full),
         color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer,
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = if (selected) 0f else 1f)),
-        modifier = Modifier.semantics { contentDescription = "$label filter${if (selected) ", selected" else ""}" },
+        modifier = Modifier.semantics { contentDescription = if (selected) selectedFilterDescription else filterDescription },
     ) {
         Text(
             text = label,
@@ -294,7 +299,7 @@ private fun PackingCategoryHeader(
                 modifier = Modifier.size(20.dp),
             )
             Text(
-                text = category?.label ?: "Other",
+                text = category?.label ?: stringResource(R.string.category_other),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
@@ -370,13 +375,13 @@ private fun AllPackedPanel(modifier: Modifier = Modifier) {
             )
             Column {
                 Text(
-                    text = "All Packed",
+                    text = stringResource(R.string.all_packed_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "Everything on this trip is ready to go.",
+                    text = stringResource(R.string.all_packed_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
@@ -385,9 +390,9 @@ private fun AllPackedPanel(modifier: Modifier = Modifier) {
     }
 }
 
-private val PackingFilter.label: String
-    get() = when (this) {
-        PackingFilter.All -> "All"
-        PackingFilter.Unpacked -> "Unpacked"
-        PackingFilter.Packed -> "Packed"
-    }
+@Composable
+private fun PackingFilter.localizedLabel(): String = when (this) {
+    PackingFilter.All -> stringResource(R.string.filter_all)
+    PackingFilter.Unpacked -> stringResource(R.string.filter_unpacked)
+    PackingFilter.Packed -> stringResource(R.string.filter_packed)
+}

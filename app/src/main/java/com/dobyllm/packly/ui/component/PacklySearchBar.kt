@@ -27,7 +27,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.dobyllm.packly.R
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
 
@@ -36,9 +38,10 @@ fun PacklySearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "Search items...",
+    placeholder: String? = null,
 ) {
     val shape = RoundedCornerShape(PacklyRadius.full)
+    val resolvedPlaceholder = placeholder ?: stringResource(R.string.search_items_placeholder)
     BasicTextField(
         value = query,
         onValueChange = onQueryChange,
@@ -49,7 +52,7 @@ fun PacklySearchBar(
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .border(1.dp, MaterialTheme.colorScheme.surfaceContainerLow, shape)
-            .semantics { contentDescription = placeholder },
+            .semantics { contentDescription = resolvedPlaceholder },
         decorationBox = { innerTextField ->
             Row(
                 modifier = Modifier
@@ -61,7 +64,7 @@ fun PacklySearchBar(
                 Icon(Icons.Rounded.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                     if (query.isEmpty()) {
-                        Text(placeholder, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(resolvedPlaceholder, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     innerTextField()
                 }
@@ -76,6 +79,8 @@ fun PacklyFilterButton(
     modifier: Modifier = Modifier,
 ) {
     val enabled = onClick != null
+    val filterDescription = stringResource(R.string.a11y_filter_items)
+    val filtersUnavailableDescription = stringResource(R.string.a11y_filters_unavailable)
     IconButton(
         onClick = { onClick?.invoke() },
         enabled = enabled,
@@ -88,7 +93,7 @@ fun PacklyFilterButton(
         modifier = modifier
             .size(48.dp)
             .semantics {
-                contentDescription = if (enabled) "Filter items" else "Filters unavailable"
+                contentDescription = if (enabled) filterDescription else filtersUnavailableDescription
                 if (!enabled) disabled()
             },
     ) {

@@ -58,22 +58,26 @@ import kotlin.math.roundToInt
 @Composable
 fun TripCard(trip: PacklyTrip, onOpen: () -> Unit, onPack: () -> Unit, onDelete: () -> Unit) {
     val summary = computeTripSummary(trip)
+    val packByLabel = summary.packBy?.let { stringResource(R.string.deadline_pack_by, it) }
+    val fallbackPackedLabel = stringResource(R.string.packed_fraction, summary.packedItems, summary.totalItems)
+    val itemCountLabel = stringResource(R.string.item_count_lower, summary.totalItems)
     val deadlineWarning = summary.unpackedItems > 0 && PacklyDeadlineFormatter.isCloseOrOverdue(trip.packBy)
     val archiveDescription = stringResource(R.string.a11y_archive_trip, trip.name)
+    val modifyDescription = stringResource(R.string.a11y_modify_trip, trip.name)
 
     TripSummaryCard(
         title = trip.name,
-        metadata = summary.metadata,
-        percentLabel = "${summary.progressPercent}% Packed",
+        metadata = summary.metadata(packByLabel, fallbackPackedLabel),
+        percentLabel = stringResource(R.string.percent_packed, summary.progressPercent),
         progress = summary.progress,
-        chips = summary.chips,
+        chips = summary.chips(packByLabel, itemCountLabel),
         accentColor = MaterialTheme.colorScheme.primaryContainer,
         onClick = null,
     ) {
         if (deadlineWarning) {
             AssistChip(
                 onClick = onOpen,
-                label = { Text("Pack-by reminder due soon with unpacked items") },
+                label = { Text(stringResource(R.string.trip_deadline_due_soon)) },
                 colors = AssistChipDefaults.assistChipColors(labelColor = MaterialTheme.colorScheme.error),
             )
         }
@@ -85,15 +89,15 @@ fun TripCard(trip: PacklyTrip, onOpen: () -> Unit, onPack: () -> Unit, onDelete:
             Button(
                 onClick = onPack,
                 contentPadding = CompactTripButtonPadding,
-            ) { Text(if (summary.packedItems == 0) "Start packing" else "Continue packing") }
+            ) { Text(if (summary.packedItems == 0) stringResource(R.string.action_start_packing) else stringResource(R.string.action_continue_packing)) }
             OutlinedButton(
                 onClick = onOpen,
                 contentPadding = CompactTripButtonPadding,
                 modifier = Modifier.semantics {
-                    contentDescription = "Modify ${trip.name}"
+                    contentDescription = modifyDescription
                     role = Role.Button
                 },
-            ) { Text("Modify") }
+            ) { Text(stringResource(R.string.action_modify)) }
             TextButton(
                 onClick = onDelete,
                 contentPadding = CompactTripButtonPadding,
@@ -287,11 +291,24 @@ private fun TripMetadataChip(label: String, useTertiaryAccent: Boolean) {
 private data class TripSummary(
     val packedItems: Int,
     val unpackedItems: Int,
+    val totalItems: Int,
     val progress: Float,
     val progressPercent: Int,
-    val metadata: String,
-    val chips: List<String>,
-)
+    val dateRange: String?,
+    val packBy: String?,
+    val destination: String,
+) {
+    fun metadata(packByLabel: String?, fallbackPackedLabel: String): String = dateRange
+        ?: packByLabel
+        ?: destination.takeIf { it.isNotBlank() }
+        ?: fallbackPackedLabel
+
+    fun chips(packByLabel: String?, itemCountLabel: String): List<String> = listOfNotNull(
+        destination.takeIf { it.isNotBlank() },
+        packByLabel,
+        totalItems.takeIf { it > 0 }?.let { itemCountLabel },
+    )
+}
 
 private fun computeTripSummary(trip: PacklyTrip): TripSummary {
     val packed = trip.entries.count { it.isPacked }
@@ -300,23 +317,15 @@ private fun computeTripSummary(trip: PacklyTrip): TripSummary {
     val progress = packed / safeTotal.toFloat()
     val packBy = PacklyDeadlineFormatter.formatDisplay(trip.packBy)
     val dateRange = listOfNotNull(trip.startDate, trip.endDate).joinToString(" - ").ifBlank { null }
-    val metadata = dateRange
-        ?: packBy?.let { "Pack by $it" }
-        ?: trip.destination.takeIf { it.isNotBlank() }
-        ?: "$packed/$total packed"
-    val chips = listOfNotNull(
-        trip.destination.takeIf { it.isNotBlank() },
-        packBy?.let { "Pack by $it" },
-        total.takeIf { it > 0 }?.let { "$it items" },
-    )
-
     return TripSummary(
         packedItems = packed,
         unpackedItems = total - packed,
+        totalItems = total,
         progress = progress,
         progressPercent = (progress * 100).roundToInt(),
-        metadata = metadata,
-        chips = chips,
+        dateRange = dateRange,
+        packBy = packBy,
+        destination = trip.destination,
     )
 }
 

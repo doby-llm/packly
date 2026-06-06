@@ -24,7 +24,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.dobyllm.packly.R
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
 
@@ -39,6 +41,7 @@ fun PacklyProgress(
     val rawProgress = packed / safeTotal.toFloat()
     val progress = rawProgress.coerceIn(0f, 1f)
     val percent = (progress * 100).toInt()
+    val progressDescription = stringResource(R.string.a11y_packing_progress, percent, packed, total)
     val animatedProgress by animateFloatAsState(
         targetValue = progress,
         animationSpec = tween(durationMillis = 500),
@@ -62,7 +65,7 @@ fun PacklyProgress(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "PACKING PROGRESS",
+                    text = stringResource(R.string.packing_progress_label),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -80,7 +83,7 @@ fun PacklyProgress(
                     .clip(RoundedCornerShape(PacklyRadius.full))
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                     .semantics {
-                        contentDescription = "$percent% packing progress, $packed of $total packed"
+                        contentDescription = progressDescription
                         progressBarRangeInfo = ProgressBarRangeInfo(progress, 0f..1f)
                     },
             ) {
@@ -93,7 +96,7 @@ fun PacklyProgress(
                 )
             }
             Text(
-                text = "$packed of $total packed",
+                text = stringResource(R.string.packed_fraction, packed, total),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp),

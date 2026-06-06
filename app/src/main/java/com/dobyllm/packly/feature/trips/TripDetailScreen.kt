@@ -60,10 +60,12 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.dobyllm.packly.R
 import com.dobyllm.packly.core.model.InstantString
 import com.dobyllm.packly.core.model.ItemId
 import com.dobyllm.packly.core.model.ListId
@@ -119,8 +121,8 @@ fun TripDetailScreen(
 
     if (trip == null) {
         EmptyState(
-            title = "This trip could not be found",
-            body = "Go back to Trips and choose another trip.",
+            title = stringResource(R.string.trip_not_found_title),
+            body = stringResource(R.string.trip_not_found_body),
             modifier = Modifier.padding(contentPadding).padding(PacklySpacing.md),
         )
     } else {
@@ -211,8 +213,8 @@ fun TripDetailScreen(
     if (trip != null && showResetConfirm) {
         AlertDialog(
             onDismissRequest = { showResetConfirm = false },
-            title = { Text("Reset packed items?") },
-            text = { Text("All packed checkmarks for ${trip.name} will be cleared.") },
+            title = { Text(stringResource(R.string.reset_packed_items_title)) },
+            text = { Text(stringResource(R.string.reset_packed_items_body, trip.name)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -220,9 +222,9 @@ fun TripDetailScreen(
                         showResetConfirm = false
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                ) { Text("Reset") }
+                ) { Text(stringResource(R.string.action_reset)) }
             },
-            dismissButton = { TextButton(onClick = { showResetConfirm = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { showResetConfirm = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }
@@ -258,7 +260,7 @@ private fun ModifyTripHeader(
             ) {
                 Icon(Icons.Rounded.CalendarMonth, contentDescription = null, tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(18.dp))
                 Text(
-                    text = dateRange ?: "Dates not set",
+                    text = dateRange ?: stringResource(R.string.dates_not_set),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.outline,
                 )
@@ -275,13 +277,13 @@ private fun ModifyTripTabs(
 ) {
     Row(Modifier.fillMaxWidth()) {
         ModifyTripTabButton(
-            label = "Current Plan",
+            label = stringResource(R.string.trip_tab_current_plan),
             selected = activeTab == ModifyTripTab.CurrentPlan,
             onClick = { onTabChange(ModifyTripTab.CurrentPlan) },
             modifier = Modifier.weight(1f),
         )
         ModifyTripTabButton(
-            label = "Browse",
+            label = stringResource(R.string.trip_tab_browse),
             selected = activeTab == ModifyTripTab.Browse,
             onClick = { onTabChange(ModifyTripTab.Browse) },
             modifier = Modifier.weight(1f),
@@ -345,29 +347,29 @@ private fun PackingProgressCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Packing progress", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.packing_progress_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Text(
-                    text = "${(progress * 100).roundToInt()}% Packed",
+                    text = stringResource(R.string.percent_packed, (progress * 100).roundToInt()),
                     style = MaterialTheme.typography.labelMedium,
                     color = PacklyPrimary,
                     fontWeight = FontWeight.Bold,
                 )
             }
-            Text("$packedItems of $totalItems items packed", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.items_packed_count, packedItems, totalItems), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             // Stacked full-width actions keep equal 48dp height on 360dp phones and prevent Reset copy wrapping.
             Button(
                 onClick = onPack,
                 modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
                 shape = RoundedCornerShape(PacklyRadius.default),
             ) {
-                Text(if (packedItems == 0) "Start packing" else "Continue packing", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(if (packedItems == 0) stringResource(R.string.action_start_packing) else stringResource(R.string.action_continue_packing), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             OutlinedButton(
                 onClick = onReset,
                 modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
                 shape = RoundedCornerShape(PacklyRadius.default),
             ) {
-                Text("Reset packed items", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(R.string.action_reset_packed_items), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
             }
         }
     }
@@ -391,13 +393,13 @@ private fun DeadlineSection(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
     ) {
-        Text("Trip settings", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.trip_settings_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
         packBy?.let { displayValue ->
             Text(
                 if (deadlineWarning) {
-                    "Reminder: pack by $displayValue — $unpackedItems item(s) still unpacked"
+                    stringResource(R.string.deadline_reminder_warning, displayValue, unpackedItems)
                 } else {
-                    "Pack by $displayValue"
+                    stringResource(R.string.deadline_pack_by, displayValue)
                 },
                 color = if (deadlineWarning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -405,10 +407,10 @@ private fun DeadlineSection(
         PacklyDeadlinePickerField(
             deadline = deadlineDraft,
             onDeadlineChange = onDeadlineDraftChange,
-            label = "Pack by",
+            label = stringResource(R.string.deadline_pack_by_label),
             supportingText = when {
-                deadlineDraft != null && !notificationPermissionGranted -> "Notifications are off. We can still show the deadline in Packly."
-                else -> "Choose a date and time to enable the reminder."
+                deadlineDraft != null && !notificationPermissionGranted -> stringResource(R.string.deadline_notifications_off)
+                else -> stringResource(R.string.deadline_supporting_text)
             },
         )
         Row(
@@ -420,13 +422,13 @@ private fun DeadlineSection(
                 onClick = onSaveDeadline,
                 modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
                 shape = RoundedCornerShape(PacklyRadius.default),
-            ) { Text("Save Pack by", maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            ) { Text(stringResource(R.string.action_save_pack_by), maxLines = 1, overflow = TextOverflow.Ellipsis) }
             OutlinedButton(
                 enabled = canClearDeadline,
                 onClick = onClearDeadline,
                 modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
                 shape = RoundedCornerShape(PacklyRadius.default),
-            ) { Text("Clear", maxLines = 1, softWrap = false) }
+            ) { Text(stringResource(R.string.action_clear), maxLines = 1, softWrap = false) }
         }
     }
 }
@@ -448,20 +450,20 @@ private fun CurrentPlanSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Items in this trip", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
-            CountChip("${entries.size} ITEMS")
+            Text(stringResource(R.string.current_plan_items_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+            CountChip(stringResource(R.string.items_uppercase_count, entries.size))
         }
 
         if (entries.isEmpty()) {
             EmptyState(
-                title = "Nothing in this trip yet",
-                body = "Browse lists and items to build this trip.",
+                title = stringResource(R.string.empty_trip_items_title),
+                body = stringResource(R.string.empty_trip_items_body),
             )
             Button(
                 onClick = onBrowseClick,
                 modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
                 shape = RoundedCornerShape(PacklyRadius.default),
-            ) { Text("Browse items") }
+            ) { Text(stringResource(R.string.action_browse_items)) }
         } else {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -491,7 +493,7 @@ private fun CurrentPlanSection(
 @Composable
 private fun CurrentPlanEntryRow(
     entry: TripEntry,
-    sourceLabel: String,
+    sourceLabel: TripSourceLabel,
     onQuantityChange: (Int) -> Unit,
     onRemoveEntry: () -> Unit,
 ) {
@@ -503,17 +505,17 @@ private fun CurrentPlanEntryRow(
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
             Text(entry.nameSnapshot, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(
-                text = sourceLabel,
+                text = sourceLabel.displayText(),
                 style = MaterialTheme.typography.labelMedium,
-                color = if (sourceLabel.startsWith("FROM ")) PacklySecondary else MaterialTheme.colorScheme.onSurfaceVariant,
-                fontStyle = if (sourceLabel == "Individual Item") FontStyle.Italic else FontStyle.Normal,
+                color = if (sourceLabel is TripSourceLabel.FromList) PacklySecondary else MaterialTheme.colorScheme.onSurfaceVariant,
+                fontStyle = if (sourceLabel is TripSourceLabel.IndividualItem) FontStyle.Italic else FontStyle.Normal,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
         QuantityStepper(quantity = entry.quantity, itemName = entry.nameSnapshot, onQuantityChange = onQuantityChange)
         IconButton(onClick = onRemoveEntry, modifier = Modifier.size(48.dp)) {
-            Icon(Icons.Rounded.Close, contentDescription = "Remove ${entry.nameSnapshot}", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.a11y_remove_named, entry.nameSnapshot), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -538,14 +540,14 @@ private fun QuantityStepper(
                 enabled = quantity > 1,
                 modifier = Modifier.size(48.dp),
             ) {
-                Icon(Icons.Rounded.Remove, contentDescription = "Decrease $itemName quantity")
+                Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.a11y_decrease_quantity, itemName))
             }
             Text("$quantity", modifier = Modifier.width(24.dp), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             IconButton(
                 onClick = { onQuantityChange(quantity + 1) },
                 modifier = Modifier.size(48.dp),
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = "Increase $itemName quantity")
+                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.a11y_increase_quantity, itemName))
             }
         }
     }
@@ -564,11 +566,12 @@ private fun BrowseTripContent(
     val activeLists = doc.lists.filterNot { it.isArchived }
     val activeItems = doc.items.filterNot { it.isArchived }
     val categories = doc.categories.filterNot { it.isArchived }.sortedBy { it.sortOrder }
+    val fallbackCategoryLabel = stringResource(R.string.category_miscellaneous)
     val existingKeys = remember(tripEntries) { tripEntries.map { it.dedupeKey() }.toSet() }
     val normalizedQuery = query.trim()
     val filteredItems = activeItems
         .filter { item -> selectedCategoryId == null || item.categoryId == selectedCategoryId }
-        .filter { item -> normalizedQuery.isBlank() || item.name.contains(normalizedQuery, ignoreCase = true) || doc.categoryFor(item.categoryId).label.contains(normalizedQuery, ignoreCase = true) }
+        .filter { item -> normalizedQuery.isBlank() || item.name.contains(normalizedQuery, ignoreCase = true) || doc.categoryFor(item.categoryId, fallbackCategoryLabel).label.contains(normalizedQuery, ignoreCase = true) }
     val filteredLists = activeLists.filter { list ->
         val matchesQuery = normalizedQuery.isBlank() || list.name.contains(normalizedQuery, ignoreCase = true) || list.description.contains(normalizedQuery, ignoreCase = true)
         val matchesCategory = selectedCategoryId == null || list.entries.any { it.categoryIdSnapshot == selectedCategoryId }
@@ -581,7 +584,7 @@ private fun BrowseTripContent(
             onValueChange = { query = it },
             modifier = Modifier.fillMaxWidth(),
             leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = MaterialTheme.colorScheme.outline) },
-            placeholder = { Text("Search templates and items…") },
+            placeholder = { Text(stringResource(R.string.search_templates_items)) },
             singleLine = true,
             shape = RoundedCornerShape(PacklyRadius.lg),
             colors = OutlinedTextFieldDefaults.colors(
@@ -595,7 +598,7 @@ private fun BrowseTripContent(
             horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
             verticalArrangement = Arrangement.spacedBy(PacklySpacing.base),
         ) {
-            BrowseCategoryChip(label = "All", selected = selectedCategoryId == null, onClick = { selectedCategoryId = null })
+            BrowseCategoryChip(label = stringResource(R.string.browse_category_all), selected = selectedCategoryId == null, onClick = { selectedCategoryId = null })
             categories.forEach { category ->
                 BrowseCategoryChip(
                     label = category.label,
@@ -606,19 +609,19 @@ private fun BrowseTripContent(
         }
         if (filteredLists.isEmpty() && filteredItems.isEmpty()) {
             EmptyState(
-                title = "No matches found",
-                body = "Try another search or category.",
+                title = stringResource(R.string.no_matches_title),
+                body = stringResource(R.string.no_matches_body),
             )
         } else {
             if (filteredLists.isNotEmpty()) {
-                BrowseSectionHeader(title = "Lists")
+                BrowseSectionHeader(title = stringResource(R.string.browse_lists_title))
                 filteredLists.chunked(2).forEach { rowLists ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm)) {
                         rowLists.forEach { list ->
                             val fullyAdded = list.entries.isNotEmpty() && list.entries.all { it.dedupeKey() in existingKeys }
                             BrowseListCard(
                                 list = list,
-                                primaryCategory = list.entries.firstOrNull()?.let { doc.categoryFor(it.categoryIdSnapshot) },
+                                primaryCategory = list.entries.firstOrNull()?.let { doc.categoryFor(it.categoryIdSnapshot, fallbackCategoryLabel) },
                                 alreadyAdded = fullyAdded,
                                 onToggle = { onToggleSourceList(list.id) },
                                 modifier = Modifier.weight(1f),
@@ -629,10 +632,10 @@ private fun BrowseTripContent(
                 }
             }
             if (filteredItems.isNotEmpty()) {
-                BrowseSectionHeader(title = "Items")
+                BrowseSectionHeader(title = stringResource(R.string.browse_items_title))
                 Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
                     filteredItems.forEach { item ->
-                        val category = doc.categoryFor(item.categoryId)
+                        val category = doc.categoryFor(item.categoryId, fallbackCategoryLabel)
                         val alreadyAdded = item.dedupeKey() in existingKeys
                         BrowseItemRow(
                             item = item,
@@ -687,13 +690,17 @@ private fun BrowseListCard(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val inTripDescription = stringResource(R.string.a11y_in_trip)
+    val notInTripDescription = stringResource(R.string.a11y_not_in_trip)
+    val removeListDescription = stringResource(R.string.a11y_remove_list_from_trip, list.name)
+    val addListDescription = stringResource(R.string.a11y_add_list_to_trip, list.name)
     Surface(
         modifier = modifier
             .defaultMinSize(minHeight = 164.dp)
             .shadow(12.dp, RoundedCornerShape(PacklyRadius.xl), ambientColor = PacklySecondary.copy(alpha = 0.08f), spotColor = PacklySecondary.copy(alpha = 0.08f))
             .semantics {
-                stateDescription = if (alreadyAdded) "In this trip" else "Not in this trip"
-                contentDescription = if (alreadyAdded) "Remove ${list.name} list from this trip" else "Add ${list.name} list"
+                stateDescription = if (alreadyAdded) inTripDescription else notInTripDescription
+                contentDescription = if (alreadyAdded) removeListDescription else addListDescription
             },
         onClick = onToggle,
         shape = RoundedCornerShape(PacklyRadius.xl),
@@ -709,11 +716,11 @@ private fun BrowseListCard(
                 }
                 Spacer(Modifier.height(PacklySpacing.base))
                 Text(list.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text("${list.entries.size} items", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
+                Text(stringResource(R.string.item_count_lower, list.entries.size), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
             }
             AddStateButton(
                 alreadyAdded = alreadyAdded,
-                contentDescription = if (alreadyAdded) "Remove ${list.name}" else "Add ${list.name}",
+                contentDescription = if (alreadyAdded) stringResource(R.string.a11y_remove_named, list.name) else stringResource(R.string.a11y_add_named, list.name),
                 modifier = Modifier.align(Alignment.BottomEnd),
             )
         }
@@ -727,14 +734,18 @@ private fun BrowseItemRow(
     alreadyAdded: Boolean,
     onToggle: () -> Unit,
 ) {
+    val inTripDescription = stringResource(R.string.a11y_in_trip)
+    val notInTripDescription = stringResource(R.string.a11y_not_in_trip)
+    val removeItemFromTripDescription = stringResource(R.string.a11y_remove_item_from_trip, item.name)
+    val addItemDescription = stringResource(R.string.a11y_add_named, item.name)
     Surface(
         onClick = onToggle,
         modifier = Modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = 92.dp)
             .semantics {
-                stateDescription = if (alreadyAdded) "In this trip" else "Not in this trip"
-                contentDescription = if (alreadyAdded) "Remove ${item.name} from this trip" else "Add ${item.name}"
+                stateDescription = if (alreadyAdded) inTripDescription else notInTripDescription
+                contentDescription = if (alreadyAdded) removeItemFromTripDescription else addItemDescription
             },
         shape = RoundedCornerShape(PacklyRadius.lg),
         color = PacklySurfaceContainerLowest,
@@ -766,7 +777,7 @@ private fun BrowseItemRow(
             }
             AddStateButton(
                 alreadyAdded = alreadyAdded,
-                contentDescription = if (alreadyAdded) "Remove ${item.name}" else "Add ${item.name}",
+                contentDescription = if (alreadyAdded) stringResource(R.string.a11y_remove_named, item.name) else addItemDescription,
             )
         }
     }
@@ -803,16 +814,27 @@ private fun CountChip(label: String) {
     }
 }
 
-private fun TripEntry.sourceLabel(doc: PacklyAppDocument): String {
-    val sourceList = sourceListEntryId?.let { entryId -> doc.lists.firstOrNull { list -> list.entries.any { it.id == entryId } } }
-    return sourceList?.name?.let { "FROM $it" } ?: "Individual Item"
+@Composable
+private fun TripSourceLabel.displayText(): String = when (this) {
+    is TripSourceLabel.FromList -> stringResource(R.string.source_from_list, listName)
+    TripSourceLabel.IndividualItem -> stringResource(R.string.source_individual_item)
 }
 
-private fun PacklyAppDocument.categoryFor(categoryId: String): PacklyCategory =
+private sealed interface TripSourceLabel {
+    data class FromList(val listName: String) : TripSourceLabel
+    object IndividualItem : TripSourceLabel
+}
+
+private fun TripEntry.sourceLabel(doc: PacklyAppDocument): TripSourceLabel {
+    val sourceList = sourceListEntryId?.let { entryId -> doc.lists.firstOrNull { list -> list.entries.any { it.id == entryId } } }
+    return sourceList?.name?.let { TripSourceLabel.FromList(it) } ?: TripSourceLabel.IndividualItem
+}
+
+private fun PacklyAppDocument.categoryFor(categoryId: String, fallbackLabel: String): PacklyCategory =
     categories.firstOrNull { it.id == categoryId } ?: categories.firstOrNull() ?: PacklyCategory(
         id = categoryId,
         key = "misc",
-        label = "Miscellaneous",
+        label = fallbackLabel,
         iconKey = "category",
         accentColorHex = "#3b4a44",
         softColorHex = "#e1e3e4",
