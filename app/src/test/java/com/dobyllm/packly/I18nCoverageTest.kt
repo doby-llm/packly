@@ -24,6 +24,35 @@ class I18nCoverageTest {
     }
 
     @Test
+    fun nonEnglishStringResourcesDoNotContainUntranslatedDeadlineCopy() {
+        val localizedStringResources = listOf(
+            "app/src/main/res/values-es/strings.xml",
+            "app/src/main/res/values-de/strings.xml",
+        )
+        val forbiddenEnglishPhrases = listOf(
+            Regex("\\bPack[ -]by\\b", RegexOption.IGNORE_CASE),
+        )
+        val allowedProductTerms = listOf("Packly")
+
+        val violations = localizedStringResources.flatMap { relativePath ->
+            projectFile(relativePath).readUtf8Text().lineSequence().mapIndexedNotNull { index, line ->
+                val trimmed = line.trim()
+                val textWithoutAllowedTerms = allowedProductTerms.fold(trimmed) { text, allowedTerm ->
+                    text.replace(allowedTerm, "")
+                }
+                val containsForbiddenPhrase = forbiddenEnglishPhrases.any { it.containsMatchIn(textWithoutAllowedTerms) }
+                if (containsForbiddenPhrase) "$relativePath:${index + 1}: $trimmed" else null
+            }.toList()
+        }
+
+        assertTrue(
+            "Localized string resources must translate deadline copy; only intentional product terms are allowed. Violations:\n" +
+                violations.joinToString("\n"),
+            violations.isEmpty(),
+        )
+    }
+
+    @Test
     fun composeUiCodeDoesNotBypassStringResourcesForVisibleCopy() {
         val sourceRoot = projectPath("app/src/main/java/com/dobyllm/packly")
         val sourceFiles = Files.walk(sourceRoot)

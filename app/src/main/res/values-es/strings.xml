@@ -195,18 +195,18 @@
     <string name="unknown_category">Desconocida</string>
     <string name="create_trip_disabled_missing_name">Crear viaje está desactivado hasta que introduzcas un nombre.</string>
     <string name="create_trip_disabled_duplicate_name">Crear viaje está desactivado hasta que el nombre sea único.</string>
-    <string name="create_trip_disabled_time_required">Elige una hora para continuar o borra Pack by para crear sin recordatorio.</string>
-    <string name="deadline_pack_by_optional">Pack by (opcional)</string>
+    <string name="create_trip_disabled_time_required">Elige una hora para continuar o borra Preparar antes de para crear sin recordatorio.</string>
+    <string name="deadline_pack_by_optional">Preparar antes de (opcional)</string>
     <string name="deadline_choose_time_display">Elige una hora para continuar</string>
     <string name="deadline_no_reminder_set">Sin recordatorio</string>
-    <string name="deadline_time_title">Hora de Pack by</string>
+    <string name="deadline_time_title">Hora para preparar antes de</string>
     <string name="quantity_times">×%1$d</string>
 
     <string name="home_active_trips_title">Viajes activos</string>
     <string name="home_empty_trips_title">Aún no hay viajes</string>
     <string name="home_empty_trips_body">Crea tu primer viaje y Packly te mantendrá preparado.</string>
     <string name="packed_fraction_short">%1$d/%2$d empacados</string>
-    <string name="pack_by_value">Pack by %1$s</string>
+    <string name="pack_by_value">Preparar antes de %1$s</string>
     <string name="percent_packed_label">%1$d%% empacado</string>
     <string name="home_summary">Tienes %1$d %2$s próximos. Vamos a prepararte para salir.</string>
     <string name="greeting_morning">Buenos días.</string>
@@ -220,6 +220,6 @@
     <string name="notification_reminder_title">Recordatorio de Packly</string>
     <string name="notification_reminder_body">%1$d artículos aún necesitan empacarse para %2$s.</string>
     <string name="notification_channel_name">Recordatorios de equipaje</string>
-    <string name="notification_channel_description">Te recuerda cuando un viaje aún tiene artículos sin empacar en su fecha límite Pack by.</string>
+    <string name="notification_channel_description">Te recuerda cuando un viaje aún tiene artículos sin empacar en su fecha límite para preparar.</string>
     <string name="trip_from_list_default_name">Viaje desde lista</string>
 </resources>
