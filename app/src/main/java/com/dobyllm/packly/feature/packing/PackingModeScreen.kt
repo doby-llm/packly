@@ -156,12 +156,16 @@ fun PackingModeScreen(
                 }
                 item(key = "packing_section_card_$sectionKey") {
                     val undoLabel = stringResource(R.string.action_undo)
+                    val displayNamesByEntryId = sectionEntries.associate { entry ->
+                        entry.id to entry.displayNameSnapshot()
+                    }
                     PackingRowsCard(
                         entries = sectionEntries,
                         category = category,
                         onToggle = { entry ->
                             val previousState = entry.isPacked
                             val nextState = !previousState
+                            val displayName = displayNamesByEntryId.getValue(entry.id)
                             onSetPacked(entry.id, nextState)
                             undoSnackbarJob?.cancel()
                             snackbarHostState.currentSnackbarData?.dismiss()
@@ -169,7 +173,7 @@ fun PackingModeScreen(
                                 val result = snackbarHostState.showSnackbar(
                                     message = resources.getString(
                                         if (nextState) R.string.snackbar_packed_named_item else R.string.snackbar_unpacked_named_item,
-                                        entry.displayNameSnapshot(),
+                                        displayName,
                                     ),
                                     actionLabel = undoLabel,
                                     withDismissAction = false,
