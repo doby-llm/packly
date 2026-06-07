@@ -135,6 +135,11 @@ class I18nCoverageTest {
                 "TripReviewItem(item.id, item.name",
                 "?.label ?: stringResource(R.string.unknown_category)",
             ),
+            "app/src/main/java/com/dobyllm/packly/feature/packing/PackingModeScreen.kt" to listOf(
+                "entry.nameSnapshot",
+                "text = category?.label",
+                "category?.label ?: stringResource(R.string.category_other)",
+            ),
         )
 
         val violations = forbiddenSnippetsByFile.flatMap { (relativePath, forbiddenSnippets) ->

@@ -55,6 +55,8 @@ import com.dobyllm.packly.core.model.TripId
 import com.dobyllm.packly.ui.component.EmptyState
 import com.dobyllm.packly.ui.component.PackingItemRow
 import com.dobyllm.packly.ui.component.PacklyProgress
+import com.dobyllm.packly.ui.i18n.displayLabel
+import com.dobyllm.packly.ui.i18n.displayNameSnapshot
 import com.dobyllm.packly.ui.token.CategoryTokens
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
@@ -167,7 +169,7 @@ fun PackingModeScreen(
                                 val result = snackbarHostState.showSnackbar(
                                     message = resources.getString(
                                         if (nextState) R.string.snackbar_packed_named_item else R.string.snackbar_unpacked_named_item,
-                                        entry.nameSnapshot,
+                                        entry.displayNameSnapshot(),
                                     ),
                                     actionLabel = undoLabel,
                                     withDismissAction = false,
@@ -299,7 +301,7 @@ private fun PackingCategoryHeader(
                 modifier = Modifier.size(20.dp),
             )
             Text(
-                text = category?.label ?: stringResource(R.string.category_other),
+                text = category?.displayLabel() ?: stringResource(R.string.category_other),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
