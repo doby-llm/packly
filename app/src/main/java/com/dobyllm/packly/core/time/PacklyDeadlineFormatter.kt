@@ -12,10 +12,7 @@ import java.time.format.DateTimeParseException
 import java.util.Locale
 
 object PacklyDeadlineFormatter {
-    private val inputFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.getDefault())
-    private val displayFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, MMM d 'at' HH:mm", Locale.getDefault())
-    private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, MMM d", Locale.getDefault())
-    private val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+    private const val TimePattern = "HH:mm"
 
     const val InputPattern: String = "yyyy-MM-dd HH:mm"
     val DefaultPackByTime: LocalTime = LocalTime.of(18, 0)
@@ -24,7 +21,7 @@ object PacklyDeadlineFormatter {
         val trimmed = input.trim()
         if (trimmed.isEmpty()) return null
         return try {
-            LocalDateTime.parse(trimmed, inputFormatter)
+            LocalDateTime.parse(trimmed, inputFormatter())
                 .atZone(zoneId)
                 .toInstant()
                 .toString()
@@ -36,23 +33,23 @@ object PacklyDeadlineFormatter {
     fun formatInput(deadline: InstantString?, zoneId: ZoneId = ZoneId.systemDefault()): String =
         deadline.toInstantOrNull()
             ?.atZone(zoneId)
-            ?.format(inputFormatter)
+            ?.format(inputFormatter())
             .orEmpty()
 
     fun formatDisplay(deadline: InstantString?, zoneId: ZoneId = ZoneId.systemDefault()): String? =
         deadline.toInstantOrNull()
             ?.atZone(zoneId)
-            ?.format(displayFormatter)
+            ?.format(localizedFormatter(FormatterKind.Display))
 
     fun formatDate(deadline: InstantString?, zoneId: ZoneId = ZoneId.systemDefault()): String? =
         deadline.toInstantOrNull()
             ?.atZone(zoneId)
-            ?.format(dateFormatter)
+            ?.format(localizedFormatter(FormatterKind.Date))
 
     fun formatTime(deadline: InstantString?, zoneId: ZoneId = ZoneId.systemDefault()): String? =
         deadline.toInstantOrNull()
             ?.atZone(zoneId)
-            ?.format(timeFormatter)
+            ?.format(DateTimeFormatter.ofPattern(TimePattern, supportedDisplayLocale()))
 
     fun localDate(deadline: InstantString?, zoneId: ZoneId = ZoneId.systemDefault()): LocalDate? =
         deadline.toInstantOrNull()?.atZone(zoneId)?.toLocalDate()
@@ -69,6 +66,40 @@ object PacklyDeadlineFormatter {
     fun isCloseOrOverdue(deadline: InstantString?, now: Instant = Instant.now()): Boolean {
         val instant = deadline.toInstantOrNull() ?: return false
         return !instant.isAfter(now.plus(Duration.ofHours(24)))
+    }
+
+    private fun inputFormatter(): DateTimeFormatter =
+        DateTimeFormatter.ofPattern(InputPattern, Locale.ROOT)
+
+    private fun localizedFormatter(kind: FormatterKind): DateTimeFormatter {
+        val locale = supportedDisplayLocale()
+        return DateTimeFormatter.ofPattern(kind.patternFor(locale), locale)
+    }
+
+    private fun supportedDisplayLocale(locale: Locale = Locale.getDefault()): Locale =
+        when (locale.language) {
+            Locale.ENGLISH.language -> Locale.ENGLISH
+            "es" -> Locale.forLanguageTag("es")
+            Locale.GERMAN.language -> Locale.GERMAN
+            else -> Locale.ENGLISH
+        }
+
+    private enum class FormatterKind {
+        Display,
+        Date;
+
+        fun patternFor(locale: Locale): String = when (this) {
+            Display -> when (locale.language) {
+                "es" -> "EEE, d MMM, HH:mm"
+                Locale.GERMAN.language -> "EEE, d. MMM, HH:mm"
+                else -> "EEE, MMM d, HH:mm"
+            }
+            Date -> when (locale.language) {
+                "es" -> "EEE, d MMM"
+                Locale.GERMAN.language -> "EEE, d. MMM"
+                else -> "EEE, MMM d"
+            }
+        }
     }
 }
 
