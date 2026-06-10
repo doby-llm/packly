@@ -27,6 +27,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.dobyllm.packly.PacklyAppViewModel
 import com.dobyllm.packly.R
@@ -38,6 +39,9 @@ import com.dobyllm.packly.feature.options.OptionsScreen
 import com.dobyllm.packly.feature.packing.PackingModeScreen
 import com.dobyllm.packly.feature.trips.TripDetailScreen
 import com.dobyllm.packly.feature.trips.TripsScreen
+import com.dobyllm.packly.feature.trips.create.CreateTripDetailsScreen
+import com.dobyllm.packly.feature.trips.create.CreateTripStepPlaceholderScreen
+import com.dobyllm.packly.feature.trips.create.rememberCreateTripDraftState
 import com.dobyllm.packly.ui.component.PacklyFabAction
 import com.dobyllm.packly.ui.component.PacklyScaffold
 import com.dobyllm.packly.ui.component.PacklyTopBarAction
@@ -57,7 +61,19 @@ fun PacklyNavHost(
     var routeFabAction by remember { mutableStateOf<RouteFabAction?>(null) }
     val fabAction = routeFabAction?.takeIf { it.route == currentRoute }?.action
     val isTripDetailRoute = currentRoute == PacklyRoute.TripDetail
+    val isCreateTripDetailsRoute = currentRoute == PacklyRoute.CreateTripDetails
+    val createTripDraftState = rememberCreateTripDraftState()
     val tripFromListDefaultName = stringResource(R.string.trip_from_list_default_name)
+
+    fun exitCreateTrip() {
+        createTripDraftState.discard()
+        navController.popBackStack()
+    }
+
+    fun startCreateTrip() {
+        createTripDraftState.discard()
+        navController.navigate(PacklyRoute.CreateTripGraph)
+    }
 
     LaunchedEffect(initialTripId) {
         initialTripId?.let { navController.navigate(PacklyRoute.tripDetail(it)) }
@@ -86,8 +102,14 @@ fun PacklyNavHost(
             )
             else -> null
         },
-        useCloseNavigationIcon = isTripDetailRoute,
-        onBack = { navController.popBackStack() },
+        useCloseNavigationIcon = isTripDetailRoute || isCreateTripDetailsRoute,
+        onBack = {
+            if (isCreateTripDetailsRoute) {
+                createTripDraftState.requestClose { exitCreateTrip() }
+            } else {
+                navController.popBackStack()
+            }
+        },
         onDestinationClick = { destination ->
             navController.navigate(destination.route) {
                 popUpTo(navController.graph.findStartDestination().id) { saveState = true }
@@ -109,7 +131,7 @@ fun PacklyNavHost(
                 HomeScreen(
                     doc = doc,
                     contentPadding = shellPadding,
-                    onCreateTrip = vm::createTrip,
+                    onStartCreateTrip = { startCreateTrip() },
                     onOpenTrip = { tripId -> navController.navigate(PacklyRoute.tripDetail(tripId)) },
                 )
             }
@@ -159,7 +181,7 @@ fun PacklyNavHost(
                     onFabActionChange = { action ->
                         routeFabAction = routeFabAction.updatedForRoute(PacklyRoute.Trips, action)
                     },
-                    onCreate = vm::createTrip,
+                    onStartCreateTrip = { startCreateTrip() },
                     onOpen = { navController.navigate(PacklyRoute.tripDetail(it)) },
                     onPack = { navController.navigate(PacklyRoute.packingMode(it)) },
                     onDelete = vm::deleteTrip,
@@ -196,6 +218,29 @@ fun PacklyNavHost(
                     onLanguagePreferenceChange = vm::updateLanguagePreference,
                 )
             }
+            navigation(
+                startDestination = PacklyRoute.CreateTripDetails,
+                route = PacklyRoute.CreateTripGraph,
+            ) {
+                composable(PacklyRoute.CreateTripDetails) {
+                    CreateTripDetailsScreen(
+                        doc = doc,
+                        draftState = createTripDraftState,
+                        contentPadding = shellPadding,
+                        onNext = { navController.navigate(PacklyRoute.CreateTripDeadline) },
+                        onCloseConfirmed = { exitCreateTrip() },
+                    )
+                }
+                composable(PacklyRoute.CreateTripDeadline) {
+                    CreateTripStepPlaceholderScreen(step = 2, contentPadding = shellPadding)
+                }
+                composable(PacklyRoute.CreateTripLists) {
+                    CreateTripStepPlaceholderScreen(step = 3, contentPadding = shellPadding)
+                }
+                composable(PacklyRoute.CreateTripItems) {
+                    CreateTripStepPlaceholderScreen(step = 4, contentPadding = shellPadding)
+                }
+            }
         }
     }
 
@@ -204,6 +249,13 @@ fun PacklyNavHost(
 private data class RouteFabAction(
     val route: String,
     val action: PacklyFabAction,
+)
+
+private val createTripRoutes = setOf(
+    PacklyRoute.CreateTripDetails,
+    PacklyRoute.CreateTripDeadline,
+    PacklyRoute.CreateTripLists,
+    PacklyRoute.CreateTripItems,
 )
 
 private fun RouteFabAction?.updatedForRoute(route: String, action: PacklyFabAction?): RouteFabAction? = when {
@@ -218,6 +270,7 @@ private fun String?.nestedTitle(): String = when (this) {
     PacklyRoute.TripDetail -> stringResource(R.string.modify_trip_title)
     PacklyRoute.PackingMode -> stringResource(R.string.app_name)
     PacklyRoute.Options -> stringResource(R.string.options_title)
+    in createTripRoutes -> stringResource(R.string.app_name)
     else -> stringResource(R.string.app_name)
 }
 

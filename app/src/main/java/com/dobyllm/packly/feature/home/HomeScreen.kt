@@ -12,24 +12,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.dobyllm.packly.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.dobyllm.packly.core.model.InstantString
-import com.dobyllm.packly.core.model.ItemId
-import com.dobyllm.packly.core.model.ListId
 import com.dobyllm.packly.core.model.PacklyAppDocument
 import com.dobyllm.packly.core.model.TripId
 import com.dobyllm.packly.core.model.TripStatus
 import com.dobyllm.packly.core.time.PacklyDeadlineFormatter
-import com.dobyllm.packly.feature.trips.CreateTripSheet
 import com.dobyllm.packly.ui.component.EmptyState
 import com.dobyllm.packly.ui.component.TripSummaryCard
 import com.dobyllm.packly.ui.token.PacklySpacing
@@ -40,10 +32,9 @@ import kotlin.math.roundToInt
 fun HomeScreen(
     doc: PacklyAppDocument,
     contentPadding: PaddingValues = PaddingValues(0.dp),
-    onCreateTrip: (String, String, List<ListId>, Set<ItemId>, Map<ItemId, Int>, InstantString?) -> Unit,
+    onStartCreateTrip: () -> Unit,
     onOpenTrip: (TripId) -> Unit,
 ) {
-    var showCreateTrip by remember { mutableStateOf(false) }
     val activeTrips = doc.trips
         .filter { it.status != TripStatus.Archived }
         .sortedByDescending { it.updatedAt }
@@ -67,7 +58,7 @@ fun HomeScreen(
                         title = stringResource(R.string.home_empty_trips_title),
                         body = stringResource(R.string.home_empty_trips_body),
                         actionLabel = stringResource(R.string.action_create_trip),
-                        onAction = { showCreateTrip = true },
+                        onAction = onStartCreateTrip,
                     )
                 }
             }
@@ -102,13 +93,6 @@ fun HomeScreen(
         }
     }
 
-    if (showCreateTrip) {
-        CreateTripSheet(
-            doc = doc,
-            onDismiss = { showCreateTrip = false },
-            onCreate = onCreateTrip,
-        )
-    }
 }
 
 @Composable

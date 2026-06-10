@@ -26,9 +26,6 @@ import androidx.compose.ui.res.stringResource
 import com.dobyllm.packly.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.dobyllm.packly.core.model.InstantString
-import com.dobyllm.packly.core.model.ItemId
-import com.dobyllm.packly.core.model.ListId
 import com.dobyllm.packly.core.model.PacklyAppDocument
 import com.dobyllm.packly.core.model.PacklyTrip
 import com.dobyllm.packly.core.model.TripId
@@ -43,12 +40,11 @@ fun TripsScreen(
     doc: PacklyAppDocument,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     onFabActionChange: ((PacklyFabAction?) -> Unit)? = null,
-    onCreate: (String, String, List<ListId>, Set<ItemId>, Map<ItemId, Int>, InstantString?) -> Unit,
+    onStartCreateTrip: () -> Unit,
     onOpen: (TripId) -> Unit,
     onPack: (TripId) -> Unit,
     onDelete: (TripId) -> Unit,
 ) {
-    var showCreate by remember { mutableStateOf(false) }
     var tripToDelete by remember { mutableStateOf<PacklyTrip?>(null) }
     val createTripLabel = stringResource(R.string.action_create_trip)
     val visibleTrips = doc.trips.filter { it.status != TripStatus.Archived }
@@ -60,7 +56,7 @@ fun TripsScreen(
         .sortedByDescending { it.updatedAt }
 
     DisposableEffect(onFabActionChange, createTripLabel) {
-        onFabActionChange?.invoke(PacklyFabAction(contentDescription = createTripLabel, onClick = { showCreate = true }))
+        onFabActionChange?.invoke(PacklyFabAction(contentDescription = createTripLabel, onClick = onStartCreateTrip))
         onDispose { onFabActionChange?.invoke(null) }
     }
 
@@ -78,7 +74,7 @@ fun TripsScreen(
                     title = stringResource(R.string.trips_empty_title),
                     body = stringResource(R.string.trips_empty_body),
                     actionLabel = createTripLabel,
-                    onAction = { showCreate = true },
+                    onAction = onStartCreateTrip,
                 )
             }
         } else {
@@ -107,7 +103,6 @@ fun TripsScreen(
         }
     }
 
-    if (showCreate) CreateTripSheet(doc, onDismiss = { showCreate = false }, onCreate = onCreate)
     tripToDelete?.let { trip ->
         AlertDialog(
             onDismissRequest = { tripToDelete = null },
