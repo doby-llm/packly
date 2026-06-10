@@ -4,6 +4,7 @@ package com.dobyllm.packly.feature.trips
 
 import android.Manifest
 import android.os.Build
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -118,8 +119,14 @@ fun TripDetailScreen(
     var showResetConfirm by remember(tripId) { mutableStateOf(false) }
     var deadlineDraft by remember(trip?.packBy) { mutableStateOf(trip?.packBy) }
     var notificationPermissionGranted by rememberNotificationPermissionState()
-    val requestNotificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        notificationPermissionGranted = granted
+    val activityResultRegistryOwner = LocalActivityResultRegistryOwner.current
+    // Some navigation hosts/previews do not provide a registry; deadline saves must remain safe.
+    val requestNotificationPermission = if (activityResultRegistryOwner != null) {
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            notificationPermissionGranted = granted
+        }
+    } else {
+        null
     }
     val hasDeadlineChange = trip != null && deadlineDraft != trip.packBy
 
@@ -176,7 +183,7 @@ fun TripDetailScreen(
                             hasDeadlineChange = hasDeadlineChange,
                             onSaveDeadline = {
                                 if (deadlineDraft != null && !notificationPermissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                    requestNotificationPermission?.launch(Manifest.permission.POST_NOTIFICATIONS)
                                 }
                                 onDeadlineChange(deadlineDraft)
                             },

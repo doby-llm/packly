@@ -76,8 +76,20 @@ fun PacklyNavHost(
         navController.navigate(PacklyRoute.CreateTripGraph)
     }
 
+    fun navigateSafely(route: String?) {
+        route?.let { navController.navigate(it) }
+    }
+
+    fun navigateToTripDetail(tripId: String) {
+        if (doc.trips.any { it.id == tripId }) navigateSafely(PacklyRoute.tripDetail(tripId))
+    }
+
+    fun navigateToPackingMode(tripId: String) {
+        if (doc.trips.any { it.id == tripId }) navigateSafely(PacklyRoute.packingMode(tripId))
+    }
+
     LaunchedEffect(initialTripId) {
-        initialTripId?.let { navController.navigate(PacklyRoute.tripDetail(it)) }
+        initialTripId?.let { navigateSafely(PacklyRoute.packingMode(it)) }
     }
 
     // Route changes must clear stale screen-scoped actions so nested destinations never inherit a FAB.
@@ -140,7 +152,7 @@ fun PacklyNavHost(
                     doc = doc,
                     contentPadding = shellPadding,
                     onStartCreateTrip = { startCreateTrip() },
-                    onOpenTrip = { tripId -> navController.navigate(PacklyRoute.tripDetail(tripId)) },
+                    onOpenTrip = { tripId -> navigateToPackingMode(tripId) },
                 )
             }
             composable(PacklyRoute.Items) {
@@ -163,7 +175,7 @@ fun PacklyNavHost(
                         routeFabAction = routeFabAction.updatedForRoute(PacklyRoute.Lists, action)
                     },
                     onCreate = vm::createList,
-                    onOpen = { navController.navigate(PacklyRoute.listDetail(it)) },
+                    onOpen = { navigateSafely(PacklyRoute.listDetail(it)) },
                     onRename = vm::renameList,
                     onDuplicate = vm::duplicateList,
                     onDelete = vm::deleteList,
@@ -190,8 +202,8 @@ fun PacklyNavHost(
                         routeFabAction = routeFabAction.updatedForRoute(PacklyRoute.Trips, action)
                     },
                     onStartCreateTrip = { startCreateTrip() },
-                    onOpen = { navController.navigate(PacklyRoute.tripDetail(it)) },
-                    onPack = { navController.navigate(PacklyRoute.packingMode(it)) },
+                    onOpen = { navigateToTripDetail(it) },
+                    onPack = { navigateToPackingMode(it) },
                     onDelete = vm::deleteTrip,
                 )
             }
@@ -201,7 +213,7 @@ fun PacklyNavHost(
                     doc = doc,
                     tripId = id,
                     contentPadding = shellPadding,
-                    onPack = { navController.navigate(PacklyRoute.packingMode(id)) },
+                    onPack = { navigateToPackingMode(id) },
                     onReset = { vm.resetPacking(id) },
                     onQuantityChange = { entryId, quantity -> vm.updateTripEntryQuantity(id, entryId, quantity) },
                     onRemoveEntry = { entryId -> vm.removeTripEntry(id, entryId) },
