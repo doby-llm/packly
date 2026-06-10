@@ -75,6 +75,37 @@ class TripActionsTest {
     }
 
     @Test
+    fun buildTripEntriesHonorsSelectedSourceListEntriesAndKeepsQuantityOverrides() {
+        val document = PacklyAppDocument(
+            items = listOf(
+                item(id = "item_shirt", name = "Shirt", categoryId = "cat_clothes"),
+                item(id = "item_socks", name = "Socks", categoryId = "cat_clothes"),
+                item(id = "item_hat", name = "Hat", categoryId = "cat_clothes"),
+            ),
+            lists = listOf(
+                packingList(
+                    id = "list_weekend",
+                    entries = listOf(
+                        listEntry(id = "list_entry_shirt", itemId = "item_shirt", name = "Shirt", categoryId = "cat_clothes", sortOrder = 0),
+                        listEntry(id = "list_entry_socks", itemId = "item_socks", name = "Socks", categoryId = "cat_clothes", sortOrder = 1),
+                    ),
+                ),
+            ),
+        )
+
+        val entries = document.buildTripEntries(
+            sourceListIds = listOf("list_weekend"),
+            itemIds = setOf("item_hat"),
+            sourceListEntryIds = setOf("list_entry_socks"),
+            itemQuantities = mapOf("item_socks" to 3, "item_hat" to 2),
+        )
+
+        assertEquals(listOf("item_socks", "item_hat"), entries.map { it.sourceItemId })
+        assertEquals(listOf("list_entry_socks", null), entries.map { it.sourceListEntryId })
+        assertEquals(listOf(3, 2), entries.map { it.quantity })
+    }
+
+    @Test
     fun addTripEntriesSkipsSourceItemDuplicatesBySourceItemIdAndPreservesExistingEntries() {
         val existing = tripEntry(
             id = "entry_existing",

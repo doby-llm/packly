@@ -23,6 +23,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -150,17 +150,15 @@ fun ListCard(
                         Text(stringResource(R.string.action_duplicate))
                     }
                     Spacer(Modifier.weight(1f))
-                    TextButton(
+                    IconButton(
                         onClick = onDelete,
-                        modifier = Modifier.defaultMinSize(minHeight = 48.dp),
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error,
-                            containerColor = Color.Transparent,
-                        ),
+                        modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp),
                     ) {
-                        Icon(Icons.Rounded.Archive, contentDescription = null)
-                        Spacer(Modifier.width(PacklySpacing.xs))
-                        Text(stringResource(R.string.action_archive))
+                        Icon(
+                            imageVector = Icons.Rounded.Archive,
+                            contentDescription = stringResource(R.string.action_archive),
+                            tint = MaterialTheme.colorScheme.error,
+                        )
                     }
                 }
             }

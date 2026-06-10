@@ -280,6 +280,7 @@ fun PacklyNavHost(
                                 destination = createTripDraftState.destination,
                                 sourceListIds = createTripDraftState.selectedSourceListIds,
                                 itemIds = createTripDraftState.selectedItemIds,
+                                sourceListEntryIds = createTripDraftState.selectedListEntryIds,
                                 itemQuantities = createTripDraftState.itemQuantities,
                                 packBy = createTripDraftState.packBy,
                             )

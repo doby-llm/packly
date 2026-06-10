@@ -175,6 +175,7 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
         destination: String,
         sourceListIds: List<ListId>,
         itemIds: Set<ItemId>,
+        sourceListEntryIds: Set<ListEntryId>? = null,
         itemQuantities: Map<ItemId, Int> = emptyMap(),
         packBy: InstantString? = null,
     ) = viewModelScope.launch {
@@ -189,6 +190,7 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 val entries = doc.buildTripEntries(
                     sourceListIds = activeSourceListIds,
                     itemIds = itemIds,
+                    sourceListEntryIds = sourceListEntryIds,
                     itemQuantities = itemQuantities,
                 )
                 doc.copy(
@@ -364,6 +366,7 @@ private fun PacklyAppDocument.activeSourceListIdsInSelectedOrder(sourceListIds: 
 internal fun PacklyAppDocument.buildTripEntries(
     sourceListIds: List<ListId>,
     itemIds: Set<ItemId>,
+    sourceListEntryIds: Set<ListEntryId>? = null,
     itemQuantities: Map<ItemId, Int>,
     sortOrderOffset: Int = 0,
 ): List<TripEntry> {
@@ -398,6 +401,7 @@ internal fun PacklyAppDocument.buildTripEntries(
             ?.entries
             .orEmpty()
             .sortedBy { it.sortOrder }
+            .filter { entry -> sourceListEntryIds == null || entry.id in sourceListEntryIds }
             .filter { entry -> entry.itemId == null || entry.itemId in activeItemsById }
             .forEach { entry ->
                 addDraft(

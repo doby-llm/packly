@@ -4,6 +4,7 @@ package com.dobyllm.packly.feature.trips.create
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Remove
@@ -40,7 +42,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -60,6 +62,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -194,6 +197,7 @@ fun CreateTripListsScreen(
     onNext: () -> Unit,
 ) {
     val activeLists = doc.lists.filterNot { it.isArchived }
+    val selectedEntryIds = draftState.selectedListEntryIds
     BackHandler(onBack = onBack)
     CreateTripStepScaffold(
         step = 3,
@@ -202,7 +206,7 @@ fun CreateTripListsScreen(
         contentPadding = contentPadding,
         footer = {
             Text(
-                text = stringResource(R.string.selected_count_label, draftState.selectedSourceListIds.size),
+                text = stringResource(R.string.selected_count_label, activeLists.count { list -> list.entries.any { it.id in selectedEntryIds } }),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -218,10 +222,13 @@ fun CreateTripListsScreen(
             item { EmptyStateCard(R.string.create_trip_lists_empty_title, R.string.create_trip_lists_empty_body) }
         } else {
             items(activeLists, key = { it.id }) { list ->
+                val listEntries = list.entries.sortedBy(PacklyListEntry::sortOrder)
                 ListSelectionCard(
                     list = list,
-                    selected = list.id in draftState.selectedSourceListIds,
-                    onToggle = { draftState.toggleSourceList(list.id) },
+                    entries = listEntries,
+                    selectedEntryIds = selectedEntryIds,
+                    onToggleList = { draftState.toggleSourceList(list.id, listEntries) },
+                    onToggleEntry = { entryId -> draftState.toggleSourceListEntry(list.id, entryId, listEntries.mapTo(mutableSetOf()) { it.id }) },
                 )
             }
         }
@@ -240,7 +247,7 @@ fun CreateTripItemsScreen(
     var selectedCategoryId by remember { mutableStateOf<CategoryId?>(null) }
     val activeItems = doc.items.filterNot { it.isArchived }
     val selectedLists = draftState.selectedSourceListIds.mapNotNull { listId -> doc.lists.firstOrNull { it.id == listId && !it.isArchived } }
-    val sourceEntries = selectedLists.flatMap { it.entries.sortedBy(PacklyListEntry::sortOrder) }
+    val sourceEntries = selectedLists.flatMap { list -> list.entries.sortedBy(PacklyListEntry::sortOrder).filter { it.id in draftState.selectedListEntryIds } }
     val sourceItemIds = sourceEntries.mapNotNull { it.itemId }.toSet()
     val selectedIdsForQuantity = sourceItemIds + draftState.selectedItemIds
     LaunchedEffect(selectedIdsForQuantity) { draftState.syncQuantitiesFor(selectedIdsForQuantity) }
@@ -300,7 +307,7 @@ fun CreateTripItemsScreen(
                     category = doc.categories.firstOrNull { it.id == item.categoryId }?.displayLabel() ?: stringResource(R.string.unknown_category),
                     selected = item.id in draftState.selectedItemIds || includedFromList,
                     includedFromList = includedFromList,
-                    onToggle = { if (!includedFromList) draftState.toggleItem(item.id) },
+                    onToggle = { if (includedFromList) draftState.removeSourceItems(item.id, sourceEntries) else draftState.toggleItem(item.id) },
                 )
             }
         }
@@ -318,6 +325,7 @@ fun CreateTripItemsScreen(
                     category = doc.categories.firstOrNull { it.id == reviewItem.categoryId }?.displayLabel() ?: stringResource(R.string.unknown_category),
                     quantity = draftState.itemQuantities[reviewItem.itemId] ?: 1,
                     onQuantityChange = { draftState.setQuantity(reviewItem.itemId, it) },
+                    onRemove = { if (reviewItem.itemId in sourceItemIds) draftState.removeSourceItems(reviewItem.itemId, sourceEntries) else draftState.toggleItem(reviewItem.itemId) },
                 )
             }
         }
@@ -377,12 +385,20 @@ private fun CreateTripProgressHeader(step: Int, title: String, body: String) {
         )
         Row(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs), modifier = Modifier.fillMaxWidth()) {
             repeat(CREATE_TRIP_TOTAL_STEPS) { index ->
-                LinearProgressIndicator(
-                    progress = { if (index < step) 1f else 0f },
-                    modifier = Modifier.weight(1f).height(6.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(6.dp)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(999.dp)),
+                ) {
+                    if (index < step) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(999.dp)),
+                        )
+                    }
+                }
             }
         }
         Spacer(modifier = Modifier.height(PacklySpacing.xs))
@@ -486,16 +502,33 @@ private fun PackByPickerCard(
 }
 
 @Composable
-private fun ListSelectionCard(list: PacklyList, selected: Boolean, onToggle: () -> Unit) {
+private fun ListSelectionCard(
+    list: PacklyList,
+    entries: List<PacklyListEntry>,
+    selectedEntryIds: Set<com.dobyllm.packly.core.model.ListEntryId>,
+    onToggleList: () -> Unit,
+    onToggleEntry: (com.dobyllm.packly.core.model.ListEntryId) -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     val listName = list.displayName()
+    val selectedCount = entries.count { it.id in selectedEntryIds }
+    val selected = selectedCount > 0
+    val toggleState = when {
+        selectedCount == 0 || entries.isEmpty() -> ToggleableState.Off
+        selectedCount == entries.size -> ToggleableState.On
+        else -> ToggleableState.Indeterminate
+    }
     val selectionContentDescription = stringResource(
         if (selected) R.string.a11y_deselect_list else R.string.a11y_select_list,
         listName,
-        list.entries.size,
+        entries.size,
     )
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        onClick = onToggleList,
+        modifier = Modifier.fillMaxWidth().semantics {
+            role = Role.Checkbox
+            contentDescription = selectionContentDescription
+        },
         shape = RoundedCornerShape(PacklyRadius.lg),
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh),
@@ -503,9 +536,9 @@ private fun ListSelectionCard(list: PacklyList, selected: Boolean, onToggle: () 
     ) {
         Column(modifier = Modifier.padding(PacklySpacing.sm), verticalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
-                Checkbox(
-                    checked = selected,
-                    onCheckedChange = { onToggle() },
+                TriStateCheckbox(
+                    state = toggleState,
+                    onClick = onToggleList,
                     modifier = Modifier.semantics {
                         role = Role.Checkbox
                         contentDescription = selectionContentDescription
@@ -513,7 +546,7 @@ private fun ListSelectionCard(list: PacklyList, selected: Boolean, onToggle: () 
                 )
                 Column(Modifier.weight(1f)) {
                     Text(listName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    val description = list.displayDescription().ifBlank { stringResource(R.string.item_count_lower, list.entries.size) }
+                    val description = list.displayDescription().ifBlank { stringResource(R.string.item_count_lower, entries.size) }
                     Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
                 IconButton(onClick = { expanded = !expanded }) {
@@ -525,13 +558,23 @@ private fun ListSelectionCard(list: PacklyList, selected: Boolean, onToggle: () 
             }
             if (expanded) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
-                list.entries.sortedBy { it.sortOrder }.forEach { entry ->
-                    Text(
-                        text = entry.displayItemNameSnapshot(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = PacklySpacing.md),
-                    )
+                entries.forEach { entry ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+                    ) {
+                        Checkbox(
+                            checked = entry.id in selectedEntryIds,
+                            onCheckedChange = { onToggleEntry(entry.id) },
+                        )
+                        Text(
+                            text = entry.displayItemNameSnapshot(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             }
         }
@@ -564,13 +607,12 @@ private fun ItemSelectionCard(item: PacklyItem, category: String, selected: Bool
             role = Role.Checkbox
             contentDescription = selectionContentDescription
         },
-        enabled = !includedFromList,
         shape = RoundedCornerShape(PacklyRadius.lg),
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
         Row(modifier = Modifier.padding(PacklySpacing.sm), horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base), verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = selected, enabled = !includedFromList, onCheckedChange = { onToggle() })
+            Checkbox(checked = selected, onCheckedChange = { onToggle() })
             Column(Modifier.weight(1f)) {
                 Text(itemName, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(if (includedFromList) stringResource(R.string.already_included_suffix) else category, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -580,7 +622,7 @@ private fun ItemSelectionCard(item: PacklyItem, category: String, selected: Bool
 }
 
 @Composable
-private fun QuantityReviewRow(name: String, category: String, quantity: Int, onQuantityChange: (Int) -> Unit) {
+private fun QuantityReviewRow(name: String, category: String, quantity: Int, onQuantityChange: (Int) -> Unit, onRemove: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(PacklyRadius.lg),
@@ -593,6 +635,7 @@ private fun QuantityReviewRow(name: String, category: String, quantity: Int, onQ
                 Text(category, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
+                IconButton(onClick = onRemove) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.a11y_remove_item_from_trip, name)) }
                 IconButton(onClick = { onQuantityChange(quantity - 1) }, enabled = quantity > 1) { Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.a11y_decrease_quantity, name)) }
                 Text(stringResource(R.string.quantity_times, quantity), style = MaterialTheme.typography.titleMedium)
                 IconButton(onClick = { onQuantityChange(quantity + 1) }) { Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.a11y_increase_quantity, name)) }

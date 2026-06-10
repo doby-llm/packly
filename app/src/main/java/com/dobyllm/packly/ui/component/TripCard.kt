@@ -76,7 +76,7 @@ fun TripCard(trip: PacklyTrip, onOpen: () -> Unit, onPack: () -> Unit, onDelete:
     ) {
         if (deadlineWarning) {
             AssistChip(
-                onClick = onOpen,
+                onClick = onPack,
                 label = { Text(stringResource(R.string.trip_deadline_due_soon)) },
                 colors = AssistChipDefaults.assistChipColors(labelColor = MaterialTheme.colorScheme.error),
             )
