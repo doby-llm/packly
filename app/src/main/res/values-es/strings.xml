@@ -240,4 +240,25 @@
     <string name="notification_channel_name">Recordatorios de equipaje</string>
     <string name="notification_channel_description">Te recuerda cuando un viaje aún tiene artículos sin empacar en su fecha límite para preparar.</string>
     <string name="trip_from_list_default_name">Viaje desde lista</string>
+
+    <string name="action_skip">Omitir</string>
+    <string name="action_continue">Continuar</string>
+    <string name="create_trip_step2_title">Configura un recordatorio de preparar antes de</string>
+    <string name="create_trip_step2_body">Elige una fecha y hora si quieres que Packly te recuerde preparar antes del viaje. Puedes omitirlo y añadirlo más tarde.</string>
+    <string name="create_trip_pack_by_time_title">Hora para preparar antes de</string>
+    <string name="create_trip_pack_by_incomplete">Elige una hora para activar el recordatorio, u omite este paso.</string>
+    <string name="create_trip_reminders_body_enabled">Recibe una notificación antes de la hora de preparación</string>
+    <string name="create_trip_reminders_body_disabled">Elige fecha y hora para activar las notificaciones</string>
+    <string name="create_trip_step3_title">Empieza desde listas</string>
+    <string name="create_trip_step3_body">Elige una o más listas de equipaje para empezar más rápido. No te preocupes, podrás añadir artículos individuales y personalizar estas listas en el siguiente paso.</string>
+    <string name="create_trip_lists_empty_title">Aún no hay listas</string>
+    <string name="create_trip_lists_empty_body">Crea listas reutilizables desde la pestaña Listas, o continúa y añade artículos individuales después.</string>
+    <string name="a11y_select_list">Seleccionar lista %1$s, %2$d artículos</string>
+    <string name="a11y_deselect_list">Deseleccionar lista %1$s, %2$d artículos</string>
+    <string name="a11y_expand_list">Mostrar artículos de %1$s</string>
+    <string name="a11y_collapse_list">Ocultar artículos de %1$s</string>
+    <string name="create_trip_step4_title">Añade artículos individuales</string>
+    <string name="create_trip_step4_body">Selecciona los artículos específicos que quieres incluir en este viaje.</string>
+    <string name="create_trip_items_empty_title">Aún no hay artículos</string>
+    <string name="create_trip_items_empty_body">Crea artículos reutilizables desde la pestaña Artículos, o termina este viaje con las listas seleccionadas.</string>
 </resources>

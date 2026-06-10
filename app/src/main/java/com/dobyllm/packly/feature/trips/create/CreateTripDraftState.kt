@@ -1,12 +1,15 @@
 package com.dobyllm.packly.feature.trips.create
 
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import com.dobyllm.packly.core.model.InstantString
+import com.dobyllm.packly.core.model.ItemId
+import com.dobyllm.packly.core.model.ListId
 import com.dobyllm.packly.core.model.PacklyAppDocument
 import com.dobyllm.packly.core.model.TripStatus
 
@@ -14,6 +17,10 @@ import com.dobyllm.packly.core.model.TripStatus
 class CreateTripDraftState(
     initialName: String = "",
     initialDestination: String = "",
+    initialPackBy: InstantString? = null,
+    initialSelectedSourceListIds: List<ListId> = emptyList(),
+    initialSelectedItemIds: Set<ItemId> = emptySet(),
+    initialItemQuantities: Map<ItemId, Int> = emptyMap(),
 ) {
     var name by mutableStateOf(initialName)
         private set
@@ -21,11 +28,28 @@ class CreateTripDraftState(
     var destination by mutableStateOf(initialDestination)
         private set
 
+    var packBy by mutableStateOf(initialPackBy)
+        private set
+
+    var reminderDraftIncomplete by mutableStateOf(false)
+        private set
+
+    var selectedSourceListIds by mutableStateOf(initialSelectedSourceListIds.distinct())
+        private set
+
+    var selectedItemIds by mutableStateOf(initialSelectedItemIds)
+        private set
+
+    var itemQuantities by mutableStateOf(initialItemQuantities.mapValues { (_, quantity) -> quantity.coerceAtLeast(1) })
+        private set
+
     var showDiscardDialog by mutableStateOf(false)
         private set
 
     val isDirty: Boolean
-        get() = name.isNotBlank() || destination.isNotBlank()
+        get() = name.isNotBlank() || destination.isNotBlank() || packBy != null ||
+            selectedSourceListIds.isNotEmpty() || selectedItemIds.isNotEmpty() || itemQuantities.isNotEmpty() ||
+            reminderDraftIncomplete
 
     fun updateName(value: String) {
         name = value
@@ -33,6 +57,45 @@ class CreateTripDraftState(
 
     fun updateDestination(value: String) {
         destination = value
+    }
+
+    fun updatePackBy(value: InstantString?) {
+        packBy = value
+        if (value != null) reminderDraftIncomplete = false
+    }
+
+    fun updateReminderDraftIncomplete(value: Boolean) {
+        reminderDraftIncomplete = value
+    }
+
+    fun clearPackBy() {
+        packBy = null
+        reminderDraftIncomplete = false
+    }
+
+    fun toggleSourceList(listId: ListId) {
+        selectedSourceListIds = if (listId in selectedSourceListIds) {
+            selectedSourceListIds - listId
+        } else {
+            selectedSourceListIds + listId
+        }
+    }
+
+    fun toggleItem(itemId: ItemId) {
+        selectedItemIds = if (itemId in selectedItemIds) selectedItemIds - itemId else selectedItemIds + itemId
+        syncQuantitiesFor(selectedItemIds)
+    }
+
+    fun setQuantity(itemId: ItemId, quantity: Int) {
+        if (itemId !in selectedItemIds) return
+        itemQuantities = itemQuantities + (itemId to quantity.coerceAtLeast(1))
+    }
+
+    fun syncQuantitiesFor(itemIds: Set<ItemId>) {
+        itemQuantities = itemQuantities
+            .filterKeys { it in itemIds }
+            .toMutableMap()
+            .apply { itemIds.forEach { putIfAbsent(it, 1) } }
     }
 
     fun requestClose(onCleanClose: () -> Unit) {
@@ -50,6 +113,11 @@ class CreateTripDraftState(
     fun discard() {
         name = ""
         destination = ""
+        packBy = null
+        reminderDraftIncomplete = false
+        selectedSourceListIds = emptyList()
+        selectedItemIds = emptySet()
+        itemQuantities = emptyMap()
         showDiscardDialog = false
     }
 
@@ -61,12 +129,46 @@ class CreateTripDraftState(
     }
 
     companion object {
-        val Saver: Saver<CreateTripDraftState, List<String>> = Saver(
-            save = { state -> listOf(state.name, state.destination) },
+        val Saver: Saver<CreateTripDraftState, List<Any?>> = Saver(
+            save = { state ->
+                listOf(
+                    state.name,
+                    state.destination,
+                    state.packBy,
+                    state.selectedSourceListIds.joinToString("\u0001"),
+                    state.selectedItemIds.joinToString("\u0001"),
+                    state.itemQuantities.entries.joinToString("\u0001") { "${it.key}\u0002${it.value}" },
+                )
+            },
             restore = { saved ->
+                val quantityMap = saved.getOrNull(5)
+                    ?.toString()
+                    .orEmpty()
+                    .split("\u0001")
+                    .filter { it.isNotBlank() }
+                    .mapNotNull { encoded ->
+                        val parts = encoded.split("\u0002", limit = 2)
+                        parts.getOrNull(0)?.takeIf { it.isNotBlank() }?.let { key ->
+                            key to (parts.getOrNull(1)?.toIntOrNull() ?: 1)
+                        }
+                    }
+                    .toMap()
                 CreateTripDraftState(
-                    initialName = saved.getOrElse(0) { "" },
-                    initialDestination = saved.getOrElse(1) { "" },
+                    initialName = saved.getOrNull(0)?.toString().orEmpty(),
+                    initialDestination = saved.getOrNull(1)?.toString().orEmpty(),
+                    initialPackBy = saved.getOrNull(2)?.toString()?.takeIf { it.isNotBlank() },
+                    initialSelectedSourceListIds = saved.getOrNull(3)
+                        ?.toString()
+                        .orEmpty()
+                        .split("\u0001")
+                        .filter { it.isNotBlank() },
+                    initialSelectedItemIds = saved.getOrNull(4)
+                        ?.toString()
+                        .orEmpty()
+                        .split("\u0001")
+                        .filter { it.isNotBlank() }
+                        .toSet(),
+                    initialItemQuantities = quantityMap,
                 )
             },
         )

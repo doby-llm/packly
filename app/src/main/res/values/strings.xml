@@ -240,4 +240,25 @@
     <string name="notification_channel_name">Packing reminders</string>
     <string name="notification_channel_description">Reminds you when a trip still has unpacked items at its Pack by deadline.</string>
     <string name="trip_from_list_default_name">Trip from list</string>
+
+    <string name="action_skip">Skip</string>
+    <string name="action_continue">Continue</string>
+    <string name="create_trip_step2_title">Set a pack-by reminder</string>
+    <string name="create_trip_step2_body">Choose a date and time if you want Packly to remind you before your trip. You can skip this and add it later.</string>
+    <string name="create_trip_pack_by_time_title">Pack by time</string>
+    <string name="create_trip_pack_by_incomplete">Choose a time to enable the reminder, or skip this step.</string>
+    <string name="create_trip_reminders_body_enabled">Get notified before your pack-by time</string>
+    <string name="create_trip_reminders_body_disabled">Choose a date and time to enable notifications</string>
+    <string name="create_trip_step3_title">Start from lists</string>
+    <string name="create_trip_step3_body">Choose one or more packing lists to start faster. Don’t worry, you can add individual items and fully customize these lists in the next step.</string>
+    <string name="create_trip_lists_empty_title">No lists yet</string>
+    <string name="create_trip_lists_empty_body">Create reusable lists from the Lists tab, or continue and add individual items next.</string>
+    <string name="a11y_select_list">Select %1$s list, %2$d items</string>
+    <string name="a11y_deselect_list">Deselect %1$s list, %2$d items</string>
+    <string name="a11y_expand_list">Show items in %1$s</string>
+    <string name="a11y_collapse_list">Hide items in %1$s</string>
+    <string name="create_trip_step4_title">Add individual items</string>
+    <string name="create_trip_step4_body">Select specific items you want to include in this trip.</string>
+    <string name="create_trip_items_empty_title">No items yet</string>
+    <string name="create_trip_items_empty_body">Create reusable items from the Items tab, or finish this trip with the selected lists.</string>
 </resources>

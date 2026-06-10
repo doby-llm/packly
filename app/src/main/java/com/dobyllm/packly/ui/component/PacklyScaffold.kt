@@ -163,7 +163,7 @@ fun PacklyTopBar(
             text = title,
             modifier = Modifier.align(Alignment.Center),
             style = if (canNavigateBack) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineMedium,
-            color = if (canNavigateBack) MaterialTheme.colorScheme.onSurface else PacklyPrimary,
+            color = if (title == stringResource(R.string.app_name)) PacklyPrimary else if (canNavigateBack) MaterialTheme.colorScheme.onSurface else PacklyPrimary,
             fontWeight = FontWeight.Bold,
         )
 
