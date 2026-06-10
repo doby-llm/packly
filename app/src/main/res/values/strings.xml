@@ -72,7 +72,7 @@
     <string name="a11y_add_named">Add %1$s</string>
     <string name="a11y_decrease_quantity">Decrease %1$s quantity</string>
     <string name="a11y_increase_quantity">Increase %1$s quantity</string>
-    <string name="search_templates_items">Search templates and items…</string>
+    <string name="search_templates_items">Search lists and items…</string>
     <string name="search_items_placeholder">Search items...</string>
     <string name="browse_category_all">All</string>
     <string name="no_matches_title">No matches found</string>
@@ -146,12 +146,12 @@
     <string name="item_singular">Item</string>
     <string name="item_plural">Items</string>
     <string name="lists_empty_title">No packing lists yet</string>
-    <string name="lists_empty_body">Start with a reusable template for trips you take often.</string>
+    <string name="lists_empty_body">Start with a reusable list for trips you take often.</string>
     <string name="list_duplicated_snackbar">%1$s duplicated</string>
     <string name="archive_list_title">Archive %1$s?</string>
     <string name="archive_list_body">The list will be hidden, but trips already created from it keep their snapshots.</string>
     <string name="lists_header_title">My Lists</string>
-    <string name="lists_header_body">Manage your packing templates and upcoming trips.</string>
+    <string name="lists_header_body">Manage your packing lists and upcoming trips.</string>
     <string name="rename_list_title">Rename %1$s</string>
     <string name="field_list_name">List name</string>
     <string name="field_description">Description</string>
@@ -162,8 +162,8 @@
     <string name="no_items_match_filter">No items match this filter.</string>
     <string name="uncategorized">Uncategorized</string>
     <string name="list_not_found_title">This list could not be found</string>
-    <string name="list_not_found_body">Go back to Lists and choose another template.</string>
-    <string name="list_detail_default_description">Select items from your library. Changes snapshot names and quantities into this template.</string>
+    <string name="list_not_found_body">Go back to Lists and choose another list.</string>
+    <string name="list_detail_default_description">Select items from your library. Changes snapshot names and quantities into this list.</string>
     <string name="trips_empty_title">No trips planned</string>
     <string name="trips_empty_body">Build a trip checklist from a packing list or individual items.</string>
     <string name="trips_section_active">Active trips</string>

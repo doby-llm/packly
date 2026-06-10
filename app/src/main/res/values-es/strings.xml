@@ -72,7 +72,7 @@
     <string name="a11y_add_named">Añadir %1$s</string>
     <string name="a11y_decrease_quantity">Disminuir cantidad de %1$s</string>
     <string name="a11y_increase_quantity">Aumentar cantidad de %1$s</string>
-    <string name="search_templates_items">Buscar plantillas y objetos…</string>
+    <string name="search_templates_items">Buscar listas y objetos…</string>
     <string name="search_items_placeholder">Buscar objetos...</string>
     <string name="browse_category_all">Todo</string>
     <string name="no_matches_title">No se encontraron resultados</string>
@@ -146,12 +146,12 @@
     <string name="item_singular">artículo</string>
     <string name="item_plural">artículos</string>
     <string name="lists_empty_title">Aún no hay listas de equipaje</string>
-    <string name="lists_empty_body">Empieza con una plantilla reutilizable para viajes frecuentes.</string>
+    <string name="lists_empty_body">Empieza con una lista reutilizable para viajes frecuentes.</string>
     <string name="list_duplicated_snackbar">%1$s duplicada</string>
     <string name="archive_list_title">¿Archivar %1$s?</string>
     <string name="archive_list_body">La lista se ocultará, pero los viajes ya creados desde ella conservarán sus copias.</string>
     <string name="lists_header_title">Mis listas</string>
-    <string name="lists_header_body">Gestiona tus plantillas de equipaje y próximos viajes.</string>
+    <string name="lists_header_body">Gestiona tus listas de equipaje y próximos viajes.</string>
     <string name="rename_list_title">Renombrar %1$s</string>
     <string name="field_list_name">Nombre de la lista</string>
     <string name="field_description">Descripción</string>
@@ -162,8 +162,8 @@
     <string name="no_items_match_filter">Ningún artículo coincide con este filtro.</string>
     <string name="uncategorized">Sin categoría</string>
     <string name="list_not_found_title">No se pudo encontrar esta lista</string>
-    <string name="list_not_found_body">Vuelve a Listas y elige otra plantilla.</string>
-    <string name="list_detail_default_description">Selecciona artículos de tu biblioteca. Los cambios guardan nombres y cantidades en esta plantilla.</string>
+    <string name="list_not_found_body">Vuelve a Listas y elige otra lista.</string>
+    <string name="list_detail_default_description">Selecciona artículos de tu biblioteca. Los cambios guardan nombres y cantidades en esta lista.</string>
     <string name="trips_empty_title">No hay viajes planificados</string>
     <string name="trips_empty_body">Crea una lista de viaje desde una lista de equipaje o artículos individuales.</string>
     <string name="trips_section_active">Viajes activos</string>

@@ -25,7 +25,7 @@ Forbidden local commands include:
 - `./gradlew test*`
 - `./gradlew connectedAndroidTest`
 
-Local contributors may inspect files, review diffs, and run Git-only checks such as `git diff --check`.
+Local contributors may inspect files, review diffs, run Git-only checks such as `git diff --check`, and run non-Android static checks such as `python3 tools/check_string_parity.py`.
 
 ## CI / APK validation
 

@@ -72,7 +72,7 @@
     <string name="a11y_add_named">%1$s hinzufügen</string>
     <string name="a11y_decrease_quantity">Anzahl von %1$s verringern</string>
     <string name="a11y_increase_quantity">Anzahl von %1$s erhöhen</string>
-    <string name="search_templates_items">Vorlagen und Gegenstände suchen…</string>
+    <string name="search_templates_items">Listen und Gegenstände suchen…</string>
     <string name="search_items_placeholder">Gegenstände suchen...</string>
     <string name="browse_category_all">Alle</string>
     <string name="no_matches_title">Keine Treffer gefunden</string>
@@ -146,12 +146,12 @@
     <string name="item_singular">Artikel</string>
     <string name="item_plural">Artikel</string>
     <string name="lists_empty_title">Noch keine Packlisten</string>
-    <string name="lists_empty_body">Starte mit einer wiederverwendbaren Vorlage für häufige Reisen.</string>
+    <string name="lists_empty_body">Starte mit einer wiederverwendbaren Liste für häufige Reisen.</string>
     <string name="list_duplicated_snackbar">%1$s dupliziert</string>
     <string name="archive_list_title">%1$s archivieren?</string>
     <string name="archive_list_body">Die Liste wird ausgeblendet, aber Reisen, die daraus erstellt wurden, behalten ihre Snapshots.</string>
     <string name="lists_header_title">Meine Listen</string>
-    <string name="lists_header_body">Verwalte deine Packvorlagen und anstehenden Reisen.</string>
+    <string name="lists_header_body">Verwalte deine Packlisten und anstehenden Reisen.</string>
     <string name="rename_list_title">%1$s umbenennen</string>
     <string name="field_list_name">Listenname</string>
     <string name="field_description">Beschreibung</string>
@@ -162,8 +162,8 @@
     <string name="no_items_match_filter">Keine Artikel passen zu diesem Filter.</string>
     <string name="uncategorized">Nicht kategorisiert</string>
     <string name="list_not_found_title">Diese Liste wurde nicht gefunden</string>
-    <string name="list_not_found_body">Gehe zurück zu Listen und wähle eine andere Vorlage.</string>
-    <string name="list_detail_default_description">Wähle Artikel aus deiner Bibliothek. Änderungen speichern Namen und Mengen in dieser Vorlage.</string>
+    <string name="list_not_found_body">Gehe zurück zu Listen und wähle eine andere Liste.</string>
+    <string name="list_detail_default_description">Wähle Artikel aus deiner Bibliothek. Änderungen speichern Namen und Mengen in dieser Liste.</string>
     <string name="trips_empty_title">Keine Reisen geplant</string>
     <string name="trips_empty_body">Erstelle eine Reise-Checkliste aus einer Packliste oder einzelnen Artikeln.</string>
     <string name="trips_section_active">Aktive Reisen</string>
