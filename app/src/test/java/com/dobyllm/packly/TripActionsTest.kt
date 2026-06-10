@@ -43,6 +43,38 @@ class TripActionsTest {
     }
 
     @Test
+    fun buildTripEntriesAppliesListDerivedQuantityOverridesWithoutDuplicatingSelectedItems() {
+        val document = PacklyAppDocument(
+            items = listOf(
+                item(id = "item_shirt", name = "Shirt", categoryId = "cat_clothes"),
+                item(id = "item_socks", name = "Socks", categoryId = "cat_clothes"),
+            ),
+            lists = listOf(
+                packingList(
+                    id = "list_weekend",
+                    entries = listOf(
+                        listEntry(
+                            id = "list_entry_shirt",
+                            itemId = "item_shirt",
+                            name = "Shirt",
+                            categoryId = "cat_clothes",
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        val entries = document.buildTripEntries(
+            sourceListIds = listOf("list_weekend"),
+            itemIds = setOf("item_shirt", "item_socks"),
+            itemQuantities = mapOf("item_shirt" to 4, "item_socks" to 2),
+        )
+
+        assertEquals(listOf("item_shirt", "item_socks"), entries.map { it.sourceItemId })
+        assertEquals(listOf(4, 2), entries.map { it.quantity })
+    }
+
+    @Test
     fun addTripEntriesSkipsSourceItemDuplicatesBySourceItemIdAndPreservesExistingEntries() {
         val existing = tripEntry(
             id = "entry_existing",
