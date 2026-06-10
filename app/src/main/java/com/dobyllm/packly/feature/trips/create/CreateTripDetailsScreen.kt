@@ -489,6 +489,11 @@ private fun PackByPickerCard(
 private fun ListSelectionCard(list: PacklyList, selected: Boolean, onToggle: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val listName = list.displayName()
+    val selectionContentDescription = stringResource(
+        if (selected) R.string.a11y_deselect_list else R.string.a11y_select_list,
+        listName,
+        list.entries.size,
+    )
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(PacklyRadius.lg),
@@ -503,7 +508,7 @@ private fun ListSelectionCard(list: PacklyList, selected: Boolean, onToggle: () 
                     onCheckedChange = { onToggle() },
                     modifier = Modifier.semantics {
                         role = Role.Checkbox
-                        contentDescription = stringResource(if (selected) R.string.a11y_deselect_list else R.string.a11y_select_list, listName, list.entries.size)
+                        contentDescription = selectionContentDescription
                     },
                 )
                 Column(Modifier.weight(1f)) {
@@ -547,11 +552,17 @@ private fun CategoryFilterRow(categories: List<com.dobyllm.packly.core.model.Pac
 
 @Composable
 private fun ItemSelectionCard(item: PacklyItem, category: String, selected: Boolean, includedFromList: Boolean, onToggle: () -> Unit) {
+    val itemName = item.displayName()
+    val selectionContentDescription = stringResource(
+        if (selected) R.string.a11y_selectable_item_selected else R.string.a11y_selectable_item_not_selected,
+        itemName,
+        category,
+    )
     Surface(
         onClick = onToggle,
         modifier = Modifier.fillMaxWidth().semantics {
             role = Role.Checkbox
-            contentDescription = stringResource(if (selected) R.string.a11y_selectable_item_selected else R.string.a11y_selectable_item_not_selected, item.displayName(), category)
+            contentDescription = selectionContentDescription
         },
         enabled = !includedFromList,
         shape = RoundedCornerShape(PacklyRadius.lg),
@@ -561,7 +572,7 @@ private fun ItemSelectionCard(item: PacklyItem, category: String, selected: Bool
         Row(modifier = Modifier.padding(PacklySpacing.sm), horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base), verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = selected, enabled = !includedFromList, onCheckedChange = { onToggle() })
             Column(Modifier.weight(1f)) {
-                Text(item.displayName(), style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(itemName, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(if (includedFromList) stringResource(R.string.already_included_suffix) else category, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
