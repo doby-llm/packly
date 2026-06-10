@@ -12,8 +12,11 @@
     <string name="action_undo">Deshacer</string>
     <string name="options_title">Opciones</string>
     <string name="modify_trip_title">Modificar viaje</string>
+    <string name="options_body">Gestiona cómo funciona Packly para ti.</string>
+    <string name="options_section_preferences">Preferencias</string>
     <string name="options_language_title">Idioma</string>
     <string name="options_language_body">Elige el idioma que usa Packly. Predeterminado del sistema sigue el idioma del teléfono y usa inglés como respaldo.</string>
+    <string name="a11y_options_language_row">%1$s, %2$s, botón</string>
     <string name="language_system_default">Predeterminado del sistema</string>
     <string name="language_english">Inglés</string>
     <string name="language_spanish">Español</string>
