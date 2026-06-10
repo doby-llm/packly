@@ -1,0 +1,230 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Packly - When are you leaving?</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed-variant": "#004c6e",
+                        "surface-container-high": "#e7e8e9",
+                        "on-error": "#ffffff",
+                        "surface-container": "#edeeef",
+                        "secondary-container": "#9c7afe",
+                        "tertiary-container": "#94d2ff",
+                        "inverse-surface": "#2e3132",
+                        "secondary": "#6844c7",
+                        "on-background": "#191c1d",
+                        "surface-dim": "#d9dadb",
+                        "tertiary": "#006591",
+                        "on-surface-variant": "#3b4a44",
+                        "secondary-fixed-dim": "#cebdff",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#005b84",
+                        "on-surface": "#191c1d",
+                        "surface-variant": "#e1e3e4",
+                        "on-secondary-container": "#310082",
+                        "surface-tint": "#006b57",
+                        "error": "#ba1a1a",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#c9e6ff",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#00614f",
+                        "outline-variant": "#b9cac3",
+                        "on-primary-fixed": "#002019",
+                        "background": "#f8f9fa",
+                        "on-tertiary-fixed": "#001e2f",
+                        "on-secondary-fixed-variant": "#5028ae",
+                        "inverse-on-surface": "#f0f1f2",
+                        "surface-container-low": "#f3f4f5",
+                        "primary-container": "#00e5bc",
+                        "secondary-fixed": "#e8ddff",
+                        "primary-fixed": "#42fdd3",
+                        "primary-fixed-dim": "#00e0b8",
+                        "primary": "#006b57",
+                        "error-container": "#ffdad6",
+                        "outline": "#6b7b74",
+                        "on-primary-fixed-variant": "#005141",
+                        "on-secondary-fixed": "#21005e",
+                        "surface-bright": "#f8f9fa",
+                        "inverse-primary": "#00e0b8",
+                        "tertiary-fixed-dim": "#89ceff",
+                        "surface-container-highest": "#e1e3e4",
+                        "surface": "#f8f9fa",
+                        "on-primary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans", "sans-serif"],
+                        "display": ["Plus Jakarta Sans", "sans-serif"],
+                        "body": ["Plus Jakarta Sans", "sans-serif"],
+                        "label": ["Plus Jakarta Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        /* Custom hide scrollbar for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body antialiased min-h-screen flex flex-col justify-center items-center">
+<!-- Mobile Container (Max Width to act as app frame on desktop) -->
+<div class="w-full max-w-md min-h-screen bg-surface flex flex-col relative shadow-[0_0_40px_rgba(0,0,0,0.05)] overflow-hidden">
+<!-- Transactional Header -->
+<header class="flex items-center justify-between px-4 py-3 w-full shrink-0 z-10 bg-surface">
+<button aria-label="Go back" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex-1 px-4 flex flex-col items-center">
+<!-- Progress Bar -->
+<div class="flex gap-1 w-full max-w-[120px]"><div class="h-1.5 flex-1 bg-primary rounded-full"></div><div class="h-1.5 flex-1 bg-primary rounded-full"></div><div class="h-1.5 flex-1 bg-surface-container-high rounded-full"></div><div class="h-1.5 flex-1 bg-surface-container-high rounded-full"></div></div>
+<p class="text-[10px] font-label font-bold text-primary mt-2 tracking-[0.08em] uppercase">Step 2 of 4</p>
+</div>
+<button class="h-10 px-3 flex items-center justify-center rounded-lg text-sm font-label font-bold text-on-surface-variant hover:bg-surface-container transition-colors tracking-wider uppercase">
+                Skip
+            </button>
+</header>
+<!-- Main Scrollable Content -->
+<main class="flex-1 w-full px-5 pt-2 pb-32 overflow-y-auto no-scrollbar flex flex-col gap-6">
+<!-- Page Header Area -->
+<div class="flex flex-col gap-2 mt-2">
+<h1 class="text-3xl md:text-4xl font-headline font-bold text-on-surface leading-tight tracking-tight">
+                    When are you leaving?
+                </h1>
+<p class="text-base font-body text-on-surface-variant leading-relaxed">
+                    Set your departure date to help us organize your packing list and send timely reminders before your trip.
+                </p>
+</div>
+<!-- Interactive Calendar Card (Bento Style with Lavender Accents) -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-surface-container-low flex flex-col gap-4">
+<!-- Calendar Header -->
+<div class="flex justify-between items-center">
+<h2 class="text-lg font-headline font-bold text-on-surface">October 2023</h2>
+<div class="flex gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-lowest hover:bg-surface-container transition-colors text-on-surface-variant border border-surface-container">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-lowest hover:bg-surface-container transition-colors text-on-surface-variant border border-surface-container">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Days of Week -->
+<div class="grid grid-cols-7 gap-1 text-center">
+<span class="text-[11px] font-label font-bold text-outline uppercase tracking-wider">Su</span>
+<span class="text-[11px] font-label font-bold text-outline uppercase tracking-wider">Mo</span>
+<span class="text-[11px] font-label font-bold text-outline uppercase tracking-wider">Tu</span>
+<span class="text-[11px] font-label font-bold text-outline uppercase tracking-wider">We</span>
+<span class="text-[11px] font-label font-bold text-outline uppercase tracking-wider">Th</span>
+<span class="text-[11px] font-label font-bold text-outline uppercase tracking-wider">Fr</span>
+<span class="text-[11px] font-label font-bold text-outline uppercase tracking-wider">Sa</span>
+</div>
+<!-- Dates Grid -->
+<div class="grid grid-cols-7 gap-y-2 gap-x-1">
+<!-- Row 1 -->
+<div class="aspect-square flex items-center justify-center text-sm font-body text-outline-variant">1</div>
+<div class="aspect-square flex items-center justify-center text-sm font-body text-outline-variant">2</div>
+<div class="aspect-square flex items-center justify-center text-sm font-body text-outline-variant">3</div>
+<div class="aspect-square flex items-center justify-center text-sm font-body text-outline-variant">4</div>
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">5</button>
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">6</button>
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">7</button>
+<!-- Row 2 -->
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">8</button>
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">9</button>
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">10</button>
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">11</button>
+<!-- Pack By Deadline (Lavender Container) -->
+<button class="relative aspect-square flex items-center justify-center text-sm font-headline font-bold text-on-secondary-container bg-secondary-container/30 rounded-full border border-secondary-container hover:bg-secondary-container/50 transition-colors group">
+                        12
+                        <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-secondary rounded-full border-2 border-surface-container-lowest"></span>
+<!-- Tooltip hint -->
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface text-[10px] font-label px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Pack By</div>
+</button>
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">13</button>
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">14</button>
+<!-- Row 3 - Departure Date (Lavender Solid) -->
+<button class="relative aspect-square flex items-center justify-center text-sm font-headline font-bold text-on-secondary bg-secondary rounded-full shadow-[0_4px_12px_rgba(104,68,199,0.3)] hover:scale-105 active:scale-95 transition-all z-10 group">
+                        15
+                        <!-- Tooltip hint -->
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface text-[10px] font-label px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Departure</div>
+</button>
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">16</button>
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">17</button>
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">18</button>
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">19</button>
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">20</button>
+<button class="aspect-square flex items-center justify-center text-sm font-body text-on-surface hover:bg-surface-container rounded-full transition-colors">21</button>
+<!-- Remaining rows omitted for brevity, adding a visual fade out instead to save space and look cleaner -->
+<div class="col-span-7 h-8 bg-gradient-to-t from-surface-container-lowest to-transparent mt-2"></div>
+</div>
+</div>
+<!-- Settings Toggles Group -->
+<div class="flex flex-col gap-3"><div class="bg-surface-container-lowest rounded-xl p-4 flex items-center justify-between shadow-[0_2px_10px_rgb(0,0,0,0.02)] border border-surface-container-low cursor-pointer hover:border-surface-container transition-colors group"><div class="flex items-center gap-4"><div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center text-primary group-hover:bg-primary-container/30 transition-colors"><span class="material-symbols-outlined text-[22px] icon-fill">schedule</span></div><div><h3 class="text-sm font-headline font-bold text-on-surface">Departure Time</h3><p class="text-xs font-body text-on-surface-variant mt-0.5">10:30 AM</p></div></div><button aria-label="Edit time" class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></button></div>
+<!-- Pack By Deadline Item -->
+
+<!-- Notifications Toggle Item -->
+<div class="bg-surface-container-lowest rounded-xl p-4 flex items-center justify-between shadow-[0_2px_10px_rgb(0,0,0,0.02)] border border-surface-container-low">
+<div class="flex items-center gap-4 pr-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[22px]">notifications_active</span>
+</div>
+<div>
+<h3 class="text-sm font-headline font-bold text-on-surface">Packing Reminders</h3>
+<p class="text-xs font-body text-on-surface-variant mt-0.5">Get notified before your deadline</p>
+</div>
+</div>
+<!-- Tailwind Custom Toggle -->
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox" value="">
+<!-- Track -->
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:bg-primary transition-colors duration-300"></div>
+<!-- Thumb -->
+<div class="absolute left-[2px] top-[2px] bg-white border border-surface-container-high rounded-full h-5 w-5 transition-transform duration-300 peer-checked:translate-x-full peer-checked:border-primary shadow-sm"></div>
+</label>
+</div>
+</div>
+</main>
+<!-- Fixed Bottom Action Area -->
+<div class="absolute bottom-0 left-0 w-full px-5 py-4 bg-gradient-to-t from-surface via-surface/95 to-transparent pt-12 pb-8 z-20">
+<button class="w-full bg-primary text-on-primary h-14 rounded-xl font-headline font-bold text-base shadow-[0_8px_24px_rgba(0,107,87,0.25)] hover:bg-primary/90 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">
+                Continue
+                <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</div>
+
+
+</body></html>

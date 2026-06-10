@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Packly - Select Templates</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed-variant": "#004c6e",
+                    "surface-container-high": "#e7e8e9",
+                    "on-error": "#ffffff",
+                    "surface-container": "#edeeef",
+                    "secondary-container": "#9c7afe",
+                    "tertiary-container": "#94d2ff",
+                    "inverse-surface": "#2e3132",
+                    "secondary": "#6844c7",
+                    "on-background": "#191c1d",
+                    "surface-dim": "#d9dadb",
+                    "tertiary": "#006591",
+                    "on-surface-variant": "#3b4a44",
+                    "secondary-fixed-dim": "#cebdff",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-container": "#005b84",
+                    "on-surface": "#191c1d",
+                    "surface-variant": "#e1e3e4",
+                    "on-secondary-container": "#310082",
+                    "surface-tint": "#006b57",
+                    "error": "#ba1a1a",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed": "#c9e6ff",
+                    "on-secondary": "#ffffff",
+                    "on-primary-container": "#00614f",
+                    "outline-variant": "#b9cac3",
+                    "on-primary-fixed": "#002019",
+                    "background": "#f8f9fa",
+                    "on-tertiary-fixed": "#001e2f",
+                    "on-secondary-fixed-variant": "#5028ae",
+                    "inverse-on-surface": "#f0f1f2",
+                    "surface-container-low": "#f3f4f5",
+                    "primary-container": "#00e5bc",
+                    "secondary-fixed": "#e8ddff",
+                    "primary-fixed": "#42fdd3",
+                    "primary-fixed-dim": "#00e0b8",
+                    "primary": "#006b57",
+                    "error-container": "#ffdad6",
+                    "outline": "#6b7b74",
+                    "on-primary-fixed-variant": "#005141",
+                    "on-secondary-fixed": "#21005e",
+                    "surface-bright": "#f8f9fa",
+                    "inverse-primary": "#00e0b8",
+                    "tertiary-fixed-dim": "#89ceff",
+                    "surface-container-highest": "#e1e3e4",
+                    "surface": "#f8f9fa",
+                    "on-primary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.5rem",
+                    "sm": "0.25rem",
+                    "md": "0.75rem",
+                    "lg": "1rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "display": ["Plus Jakarta Sans"],
+                    "body": ["Plus Jakarta Sans"],
+                    "label": ["Plus Jakarta Sans"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .template-card[data-expanded="true"] .template-items { display: block; }
+        .template-card[data-expanded="true"] .expand-icon { transform: rotate(180deg); }
+        
+        /* Custom Checkbox Styling for Vibrant Minimalism */
+        .packly-checkbox {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border: 2px solid theme('colors.outline-variant');
+            border-radius: 6px;
+            background-color: theme('colors.surface-container-lowest');
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .packly-checkbox:checked {
+            background-color: theme('colors.primary');
+            border-color: theme('colors.primary');
+        }
+        
+        .packly-checkbox:checked::after {
+            content: "";
+            position: absolute;
+            left: 7px;
+            top: 3px;
+            width: 6px;
+            height: 12px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .packly-checkbox:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px theme('colors.primary-container');
+            border-color: theme('colors.primary');
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- TopAppBar Semantic Shell (Suppressed Nav Actions per JSON Intent Logic - This is a transactional flow) -->
+<header class="w-full top-0 sticky bg-surface flex justify-between items-center px-4 h-16 w-full z-40">
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant active:opacity-80 transition-opacity duration-150">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="font-headline-lg-mobile text-[28px] leading-[36px] font-bold text-primary">Packly</div>
+<div class="w-10"></div> <!-- Spacer for alignment -->
+</header>
+<main class="flex-1 max-w-2xl w-full mx-auto px-4 md:px-6 py-6 pb-24">
+<!-- Progress Indicator -->
+<div class="mb-8">
+<div class="flex justify-between items-end mb-2">
+<span class="text-sm font-semibold text-primary tracking-wide uppercase">Step 3 of 4</span>
+</div>
+<div class="flex gap-2 w-full h-2">
+<div class="flex-1 bg-primary rounded-full"></div>
+<div class="flex-1 bg-primary rounded-full"></div>
+<div class="flex-1 bg-primary rounded-full relative">
+<div class="absolute inset-0 bg-white/20 rounded-full animate-pulse"></div>
+</div>
+<div class="flex-1 bg-surface-container-highest rounded-full"></div>
+</div>
+</div>
+<!-- Header -->
+<div class="mb-8">
+<h1 class="font-display text-[48px] leading-[56px] font-extrabold tracking-[-0.02em] text-on-surface mb-2">Select Templates</h1>
+<p class="text-on-surface-variant text-body-lg">Kickstart your packing list with these pre-made collections.</p>
+</div>
+<!-- Templates List -->
+<div class="space-y-4 mb-8">
+<!-- Template 1: Essentials -->
+<div class="template-card bg-surface-container-lowest rounded-[16px] shadow-[0_4px_20px_rgba(0,107,87,0.05)] border border-surface-container overflow-hidden transition-all duration-300" data-expanded="false">
+<!-- Card Header -->
+<div class="p-4 flex items-center justify-between cursor-pointer hover:bg-surface-bright transition-colors" onclick="toggleTemplate(this)">
+<div class="flex items-center gap-4 flex-1">
+<input checked="" class="packly-checkbox" onclick="event.stopPropagation()" type="checkbox"/>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">backpack</span>
+</div>
+<div>
+<h3 class="font-bold text-title-md text-on-surface">Essentials</h3>
+<p class="text-sm text-on-surface-variant">8 items</p>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline transition-transform duration-300 expand-icon">expand_more</span>
+</div>
+<!-- Expanded Items -->
+<div class="template-items hidden border-t border-surface-container bg-surface-bright p-4">
+<ul class="space-y-3">
+<li class="flex items-center gap-3 pl-14">
+<input checked="" class="packly-checkbox w-5 h-5" type="checkbox"/>
+<span class="text-body-lg text-on-surface">Passport &amp; ID</span>
+</li>
+<li class="flex items-center gap-3 pl-14">
+<input checked="" class="packly-checkbox w-5 h-5" type="checkbox"/>
+<span class="text-body-lg text-on-surface">Phone Charger</span>
+</li>
+<li class="flex items-center gap-3 pl-14">
+<input checked="" class="packly-checkbox w-5 h-5" type="checkbox"/>
+<span class="text-body-lg text-on-surface">Travel Adapters</span>
+</li>
+<li class="flex items-center gap-3 pl-14">
+<input checked="" class="packly-checkbox w-5 h-5" type="checkbox"/>
+<span class="text-body-lg text-on-surface">Medications</span>
+</li>
+<li class="flex items-center gap-3 pl-14">
+<span class="text-sm text-primary font-semibold cursor-pointer hover:underline">+ 4 more items</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Template 2: Beach Day -->
+<div class="template-card bg-surface-container-lowest rounded-[16px] shadow-[0_4px_20px_rgba(104,68,199,0.05)] border border-surface-container overflow-hidden transition-all duration-300" data-expanded="false">
+<div class="p-4 flex items-center justify-between cursor-pointer hover:bg-surface-bright transition-colors" onclick="toggleTemplate(this)">
+<div class="flex items-center gap-4 flex-1">
+<input class="packly-checkbox" onclick="event.stopPropagation()" type="checkbox"/>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">beach_access</span>
+</div>
+<div>
+<h3 class="font-bold text-title-md text-on-surface">Beach Day</h3>
+<p class="text-sm text-on-surface-variant">12 items</p>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline transition-transform duration-300 expand-icon">expand_more</span>
+</div>
+<div class="template-items hidden border-t border-surface-container bg-surface-bright p-4">
+<ul class="space-y-3">
+<li class="flex items-center gap-3 pl-14">
+<input class="packly-checkbox w-5 h-5" type="checkbox"/>
+<span class="text-body-lg text-on-surface">Sunscreen</span>
+</li>
+<li class="flex items-center gap-3 pl-14">
+<input class="packly-checkbox w-5 h-5" type="checkbox"/>
+<span class="text-body-lg text-on-surface">Beach Towel</span>
+</li>
+<li class="flex items-center gap-3 pl-14">
+<input class="packly-checkbox w-5 h-5" type="checkbox"/>
+<span class="text-body-lg text-on-surface">Sunglasses</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Template 3: Hiking -->
+<div class="template-card bg-surface-container-lowest rounded-[16px] shadow-[0_4px_20px_rgba(0,101,145,0.05)] border border-surface-container overflow-hidden transition-all duration-300" data-expanded="false">
+<div class="p-4 flex items-center justify-between cursor-pointer hover:bg-surface-bright transition-colors" onclick="toggleTemplate(this)">
+<div class="flex items-center gap-4 flex-1">
+<input class="packly-checkbox" onclick="event.stopPropagation()" type="checkbox"/>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">hiking</span>
+</div>
+<div>
+<h3 class="font-bold text-title-md text-on-surface">Mountain Hike</h3>
+<p class="text-sm text-on-surface-variant">15 items</p>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline transition-transform duration-300 expand-icon">expand_more</span>
+</div>
+<div class="template-items hidden border-t border-surface-container bg-surface-bright p-4">
+<ul class="space-y-3">
+<li class="flex items-center gap-3 pl-14">
+<input class="packly-checkbox w-5 h-5" type="checkbox"/>
+<span class="text-body-lg text-on-surface">Hiking Boots</span>
+</li>
+<li class="flex items-center gap-3 pl-14">
+<input class="packly-checkbox w-5 h-5" type="checkbox"/>
+<span class="text-body-lg text-on-surface">Water Bottle</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Contextual Helper Text -->
+<div class="mt-6 flex items-start gap-3 p-4 bg-surface-container-low rounded-xl">
+<span class="material-symbols-outlined text-primary">info</span>
+<p class="text-body-sm text-on-surface-variant leading-relaxed">
+                    Don't worry, you can add individual items and fully customize these lists in the next step.
+                </p>
+</div>
+</div>
+</main>
+<!-- Bottom Action Bar (Transactional Floating Action Area) -->
+<div class="fixed bottom-0 left-0 w-full bg-surface-container-lowest border-t border-surface-container-high p-4 md:px-8 pb-8 z-50 flex justify-between items-center shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+<button class="px-6 py-3 rounded-lg font-semibold text-primary hover:bg-surface-container-high active:scale-95 transition-all duration-200">
+            Back
+        </button>
+<button class="px-8 py-3 rounded-lg font-semibold bg-primary text-on-primary hover:scale-[1.02] shadow-[0_4px_15px_rgba(0,107,87,0.3)] active:scale-95 transition-all duration-200 flex items-center gap-2">
+            Next
+            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<script>
+        function toggleTemplate(element) {
+            const card = element.closest('.template-card');
+            const isExpanded = card.getAttribute('data-expanded') === 'true';
+            
+            // Close all other cards (optional accordion behavior)
+            // document.querySelectorAll('.template-card').forEach(c => c.setAttribute('data-expanded', 'false'));
+            
+            card.setAttribute('data-expanded', !isExpanded);
+        }
+        
+        // Auto-check parent when child is checked logic
+        document.querySelectorAll('.template-items input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const parentCard = this.closest('.template-card');
+                const parentCheckbox = parentCard.querySelector('.p-4 input[type="checkbox"]');
+                const allChildren = parentCard.querySelectorAll('.template-items input[type="checkbox"]');
+                const anyChecked = Array.from(allChildren).some(cb => cb.checked);
+                
+                parentCheckbox.checked = anyChecked;
+            });
+        });
+
+        // Auto-check all children when parent is checked
+        document.querySelectorAll('.p-4 input[type="checkbox"]').forEach(parentCb => {
+            parentCb.addEventListener('change', function() {
+                const parentCard = this.closest('.template-card');
+                const allChildren = parentCard.querySelectorAll('.template-items input[type="checkbox"]');
+                
+                allChildren.forEach(child => {
+                    child.checked = this.checked;
+                });
+            });
+        });
+    </script>
+</body></html>
