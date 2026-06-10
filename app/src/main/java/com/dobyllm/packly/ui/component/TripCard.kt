@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,15 +24,14 @@ import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -98,18 +97,15 @@ fun TripCard(trip: PacklyTrip, onOpen: () -> Unit, onPack: () -> Unit, onDelete:
                     role = Role.Button
                 },
             ) { Text(stringResource(R.string.action_modify)) }
-            TextButton(
+            IconButton(
                 onClick = onDelete,
-                contentPadding = CompactTripButtonPadding,
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier.semantics {
-                    contentDescription = archiveDescription
-                    role = Role.Button
-                },
+                modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp),
             ) {
-                Icon(Icons.Rounded.Archive, contentDescription = null)
-                Spacer(Modifier.width(PacklySpacing.xs))
-                Text(stringResource(R.string.action_archive))
+                Icon(
+                    imageVector = Icons.Rounded.Archive,
+                    contentDescription = archiveDescription,
+                    tint = MaterialTheme.colorScheme.error,
+                )
             }
         }
     }
