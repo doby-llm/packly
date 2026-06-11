@@ -7,10 +7,11 @@ comments.
 
 ## Current release milestone
 
-The first milestone is a signed `.aab` artifact uploaded by GitHub Actions. Play
-Console upload is still manual. Automated Play upload can be added later after a
-limited-permission service account is created and stored as a separate GitHub
-secret.
+The first milestone is a signed `.aab` artifact uploaded by GitHub Actions for
+Play Console, plus a signed release `.apk` artifact from the same manual run for
+device testing. Play Console upload is still manual. Automated Play upload can be
+added later after a limited-permission service account is created and stored as a
+separate GitHub secret.
 
 ## Required GitHub Actions secrets
 
@@ -76,11 +77,14 @@ Create these repository secrets in GitHub under:
    `Actions -> Release AAB -> Run workflow -> main`
 
 8. After the workflow succeeds, download the `packly-release-aab` artifact and
-   upload the `.aab` to a Play Console internal testing track first.
+   upload the `.aab` to a Play Console internal testing track first. Download
+   `packly-release-apk` from the same run when you need an installable signed
+   release build for manual device testing.
 
    ```bash
    gh run list --workflow release-aab.yml --limit 10
    gh run download <RUN_ID> --name packly-release-aab --dir ./artifacts/release
+   gh run download <RUN_ID> --name packly-release-apk --dir ./artifacts/release
    ```
 
 ## Release workflow behavior
@@ -88,8 +92,16 @@ Create these repository secrets in GitHub under:
 `.github/workflows/release-aab.yml` runs only on `workflow_dispatch`. It performs
 Gradle wrapper validation, Android lint, JVM unit tests, decodes the upload
 keystore from GitHub Actions secrets into the runner's temporary directory, runs
-`:app:bundleRelease`, and uploads `app/build/outputs/bundle/release/*.aab` as the
-`packly-release-aab` artifact.
+`:app:bundleRelease` and `:app:assembleRelease` with the same signing
+environment, and uploads two signed release artifacts:
+
+- `packly-release-aab` from `app/build/outputs/bundle/release/*.aab` for Play
+  Console upload.
+- `packly-release-apk` from `app/build/outputs/apk/release/*.apk` for manual
+  installation and testing.
+
+The separate Android CI workflow still uploads `packly-debug-apk` for normal push
+validation runs; the release workflow APK is the signed release variant.
 
 The workflow intentionally does not upload to Play Console. For the first release,
 Manu should manually upload the artifact to internal testing, complete Data safety,
