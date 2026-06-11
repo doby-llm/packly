@@ -20,10 +20,10 @@ Create these repository secrets in GitHub under:
 
 | Secret name | Purpose |
 | --- | --- |
-| `PACKLY_UPLOAD_KEYSTORE_B64` | Base64-encoded Packly upload keystore file (`.jks`). |
-| `PACKLY_UPLOAD_KEYSTORE_PASSWORD` | Store password for the upload keystore. |
-| `PACKLY_UPLOAD_KEY_ALIAS` | Alias of the upload key inside the keystore. |
-| `PACKLY_UPLOAD_KEY_PASSWORD` | Password for the upload key alias. |
+| `ANDROID_KEYSTORE_BASE64` | Base64-encoded Packly upload keystore file (`.jks`). |
+| `ANDROID_KEYSTORE_PASSWORD` | Store password for the upload keystore. |
+| `ANDROID_KEY_ALIAS` | Alias of the upload key inside the keystore. |
+| `ANDROID_KEY_PASSWORD` | Password for the upload key alias. |
 
 ## Manu setup steps
 
@@ -55,7 +55,7 @@ Create these repository secrets in GitHub under:
    ```
 
 5. Base64-encode the keystore and copy the encoded text into the
-   `PACKLY_UPLOAD_KEYSTORE_B64` GitHub secret.
+   `ANDROID_KEYSTORE_BASE64` GitHub secret.
 
    Linux:
 
