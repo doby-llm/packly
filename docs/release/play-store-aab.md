@@ -27,7 +27,7 @@ Create these repository secrets in GitHub under:
 
 ## Manu setup steps
 
-1. Decide that `com.dobyllm.packly` is the final package name before first Play
+1. Decide that `com.gusanitolabs.packly` is the final package name before first Play
    publication. The package name is effectively permanent after Play release.
 2. In Play Console, create the Packly app and enroll in Play App Signing. The
    recommended first-release flow is a Google-generated app signing key plus a

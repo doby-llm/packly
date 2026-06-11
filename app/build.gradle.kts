@@ -22,7 +22,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.dobyllm.packly"
+        applicationId = "com.gusanitolabs.packly"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

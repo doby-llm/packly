@@ -46,7 +46,12 @@ Version facts were checked from Maven/Gradle metadata during this task. Prefer s
 
 ## Package layout
 
-Recommended package: com.dobyllm.packly
+Play Store applicationId: com.gusanitolabs.packly
+
+Source namespace/package: com.dobyllm.packly. The Android Gradle `namespace`
+controls generated code and source imports, while `applicationId` is the Play
+Store package identity installed on devices. Keep the source namespace stable
+unless the team intentionally schedules a broad Kotlin package rename.
 
 ```text
 app/src/main/java/com/dobyllm/packly/
