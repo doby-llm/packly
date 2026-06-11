@@ -61,6 +61,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -366,7 +367,7 @@ private fun PackingProgressCard(
                     fontWeight = FontWeight.Bold,
                 )
             }
-            Text(stringResource(R.string.items_packed_count, packedItems, totalItems), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(pluralStringResource(R.plurals.items_packed_count, totalItems, packedItems, totalItems), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             // Stacked full-width actions keep equal 48dp height on 360dp phones and prevent Reset copy wrapping.
             Button(
                 onClick = onPack,
@@ -408,7 +409,7 @@ private fun DeadlineSection(
         packBy?.let { displayValue ->
             Text(
                 if (deadlineWarning) {
-                    stringResource(R.string.deadline_reminder_warning, displayValue, unpackedItems)
+                    pluralStringResource(R.plurals.deadline_reminder_warning, unpackedItems, displayValue, unpackedItems)
                 } else {
                     stringResource(R.string.deadline_pack_by, displayValue)
                 },
@@ -462,7 +463,7 @@ private fun CurrentPlanSection(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(stringResource(R.string.current_plan_items_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
-            CountChip(stringResource(R.string.items_uppercase_count, entries.size))
+            CountChip(pluralStringResource(R.plurals.items_uppercase_count, entries.size, entries.size))
         }
 
         if (entries.isEmpty()) {
@@ -729,7 +730,7 @@ private fun BrowseListCard(
                 }
                 Spacer(Modifier.height(PacklySpacing.base))
                 Text(displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(stringResource(R.string.item_count_lower, list.entries.size), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
+                Text(pluralStringResource(R.plurals.item_count_lower, list.entries.size, list.entries.size), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
             }
             AddStateButton(
                 alreadyAdded = alreadyAdded,

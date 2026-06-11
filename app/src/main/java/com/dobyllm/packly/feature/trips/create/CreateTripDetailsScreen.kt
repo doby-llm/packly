@@ -61,6 +61,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.semantics.Role
@@ -206,7 +207,7 @@ fun CreateTripListsScreen(
         contentPadding = contentPadding,
         footer = {
             Text(
-                text = stringResource(R.string.selected_count_label, activeLists.count { list -> list.entries.any { it.id in selectedEntryIds } }),
+                text = activeLists.count { list -> list.entries.any { it.id in selectedEntryIds } }.let { count -> pluralStringResource(R.plurals.selected_count_label, count, count) },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -518,8 +519,9 @@ private fun ListSelectionCard(
         selectedCount == entries.size -> ToggleableState.On
         else -> ToggleableState.Indeterminate
     }
-    val selectionContentDescription = stringResource(
-        if (selected) R.string.a11y_deselect_list else R.string.a11y_select_list,
+    val selectionContentDescription = pluralStringResource(
+        if (selected) R.plurals.a11y_deselect_list else R.plurals.a11y_select_list,
+        entries.size,
         listName,
         entries.size,
     )
@@ -546,7 +548,7 @@ private fun ListSelectionCard(
                 )
                 Column(Modifier.weight(1f)) {
                     Text(listName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    val description = list.displayDescription().ifBlank { stringResource(R.string.item_count_lower, entries.size) }
+                    val description = list.displayDescription().ifBlank { pluralStringResource(R.plurals.item_count_lower, entries.size, entries.size) }
                     Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
                 IconButton(onClick = { expanded = !expanded }) {

@@ -21,7 +21,6 @@
     <string name="language_english">English</string>
     <string name="language_spanish">Spanish</string>
     <string name="language_german">German</string>
-    <string name="list_item_count">%1$d Items</string>
     <string name="action_rename">Rename</string>
     <string name="action_duplicate">Duplicate</string>
     <string name="action_archive">Archive</string>
@@ -54,16 +53,12 @@
     <string name="packing_progress_title">Packing progress</string>
     <string name="packing_progress_label">PACKING PROGRESS</string>
     <string name="percent_packed">%1$d%% Packed</string>
-    <string name="items_packed_count">%1$d of %2$d items packed</string>
-    <string name="packed_fraction">%1$d of %2$d packed</string>
     <string name="trip_settings_title">Trip settings</string>
-    <string name="deadline_reminder_warning">Reminder: pack by %1$s — %2$d item(s) still unpacked</string>
     <string name="deadline_pack_by">Pack by %1$s</string>
     <string name="deadline_pack_by_label">Pack by</string>
     <string name="deadline_notifications_off">Notifications are off. We can still show the deadline in Packly.</string>
     <string name="deadline_supporting_text">Choose a date and time to enable the reminder.</string>
     <string name="current_plan_items_title">Items in this trip</string>
-    <string name="items_uppercase_count">%1$d ITEMS</string>
     <string name="empty_trip_items_title">Nothing in this trip yet</string>
     <string name="empty_trip_items_body">Browse lists and items to build this trip.</string>
     <string name="source_from_list">FROM %1$s</string>
@@ -84,7 +79,6 @@
     <string name="a11y_remove_list_from_trip">Remove %1$s list from this trip</string>
     <string name="a11y_add_list_to_trip">Add %1$s list</string>
     <string name="a11y_remove_item_from_trip">Remove %1$s from this trip</string>
-    <string name="item_count_lower">%1$d items</string>
     <string name="packing_empty_title">Nothing to pack yet</string>
     <string name="packing_empty_body">Add items to this trip before entering packing mode.</string>
     <string name="snackbar_packed_named_item">Packed \"%1$s\"</string>
@@ -142,9 +136,6 @@
     <string name="categories_title">Categories</string>
     <string name="all_categories_count">All categories (%1$d)</string>
     <string name="category_count_label">%1$s (%2$d)</string>
-    <string name="items_count_label">%1$d %2$s</string>
-    <string name="item_singular">Item</string>
-    <string name="item_plural">Items</string>
     <string name="lists_empty_title">No packing lists yet</string>
     <string name="lists_empty_body">Start with a reusable list for trips you take often.</string>
     <string name="list_duplicated_snackbar">%1$s duplicated</string>
@@ -156,8 +147,6 @@
     <string name="field_list_name">List name</string>
     <string name="field_description">Description</string>
     <string name="create_list_title">Create list</string>
-    <string name="checklist_items_selected">Checklist items • %1$d selected</string>
-    <string name="search_items_count_label">Search %1$d items</string>
     <string name="filter_all_label">All</string>
     <string name="no_items_match_filter">No items match this filter.</string>
     <string name="uncategorized">Uncategorized</string>
@@ -171,10 +160,7 @@
     <string name="archive_trip_title">Archive %1$s?</string>
     <string name="archive_trip_body">The trip will be hidden from active trips. Its packed state can’t be changed after archiving.</string>
     <string name="trips_header_title">Trips</string>
-    <string name="trips_header_summary">Prepare %1$d active %2$s.%3$s</string>
     <string name="trips_header_completed_suffix"> Completed trips stay lower priority.</string>
-    <string name="trip_singular">trip</string>
-    <string name="trip_plural">trips</string>
     <string name="create_trip_title">Create trip</string>
     <string name="create_trip_step_label">Step %1$d of %2$d</string>
     <string name="create_trip_discard_title">Discard trip?</string>
@@ -197,18 +183,15 @@
     <string name="field_required">Required.</string>
     <string name="deadline_choose_time_supporting">Choose a time to continue.</string>
     <string name="section_start_from_lists">Start from lists</string>
-    <string name="selected_count_label">%1$d selected</string>
     <string name="start_from_lists_body">Choose one or more packing lists. Duplicate items are included once.</string>
     <string name="no_packing_lists_yet_body">No packing lists yet. Create reusable lists from the Lists tab, or add individual items below.</string>
     <string name="no_lists_selected_body">No lists selected — start blank or add individual items below.</string>
     <string name="selected_lists_title">Selected lists</string>
     <string name="selected_list_remove_label">%1$s ×</string>
     <string name="section_add_individual_items">Add individual items</string>
-    <string name="search_all_items_count_label">Search all %1$d items</string>
     <string name="already_included_suffix">Already included</string>
     <string name="item_already_included_label">%1$s · %2$s</string>
     <string name="no_items_match_search">No items match this search.</string>
-    <string name="duplicate_source_warning">%1$d duplicate item(s) across selected lists and individual items will be packed once.</string>
     <string name="section_review_quantities">Review quantities</string>
     <string name="unknown_category">Unknown</string>
     <string name="create_trip_disabled_missing_name">Create trip is disabled until you enter a trip name.</string>
@@ -220,23 +203,108 @@
     <string name="deadline_time_title">Pack by time</string>
     <string name="quantity_times">×%1$d</string>
 
+    <plurals name="list_item_count">
+        <item quantity="one">%1$d Item</item>
+        <item quantity="other">%1$d Items</item>
+    </plurals>
+    <plurals name="item_count_lower">
+        <item quantity="one">%1$d item</item>
+        <item quantity="other">%1$d items</item>
+    </plurals>
+    <plurals name="items_uppercase_count">
+        <item quantity="one">%1$d ITEM</item>
+        <item quantity="other">%1$d ITEMS</item>
+    </plurals>
+    <plurals name="items_packed_count">
+        <item quantity="one">%1$d of %2$d item packed</item>
+        <item quantity="other">%1$d of %2$d items packed</item>
+    </plurals>
+    <plurals name="packed_fraction">
+        <item quantity="one">%1$d of %2$d packed</item>
+        <item quantity="other">%1$d of %2$d packed</item>
+    </plurals>
+    <plurals name="deadline_reminder_warning">
+        <item quantity="one">Reminder: pack by %1$s — %2$d item still unpacked</item>
+        <item quantity="other">Reminder: pack by %1$s — %2$d items still unpacked</item>
+    </plurals>
+    <plurals name="items_count_label">
+        <item quantity="one">%1$d Item</item>
+        <item quantity="other">%1$d Items</item>
+    </plurals>
+    <plurals name="checklist_items_selected">
+        <item quantity="one">Checklist items • %1$d selected</item>
+        <item quantity="other">Checklist items • %1$d selected</item>
+    </plurals>
+    <plurals name="search_items_count_label">
+        <item quantity="one">Search %1$d item</item>
+        <item quantity="other">Search %1$d items</item>
+    </plurals>
+    <plurals name="selected_count_label">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <plurals name="search_all_items_count_label">
+        <item quantity="one">Search all %1$d item</item>
+        <item quantity="other">Search all %1$d items</item>
+    </plurals>
+    <plurals name="duplicate_source_warning">
+        <item quantity="one">%1$d duplicate item across selected lists and individual items will be packed once.</item>
+        <item quantity="other">%1$d duplicate items across selected lists and individual items will be packed once.</item>
+    </plurals>
+    <plurals name="packed_fraction_short">
+        <item quantity="one">%1$d/%2$d packed</item>
+        <item quantity="other">%1$d/%2$d packed</item>
+    </plurals>
+    <plurals name="selected_grouped_by_category">
+        <item quantity="one">%1$d selected • grouped by category</item>
+        <item quantity="other">%1$d selected • grouped by category</item>
+    </plurals>
+    <plurals name="notification_reminder_body">
+        <item quantity="one">%1$d item still needs packing for %2$s.</item>
+        <item quantity="other">%1$d items still need packing for %2$s.</item>
+    </plurals>
+    <plurals name="a11y_select_list">
+        <item quantity="one">Select %1$s list, %2$d item</item>
+        <item quantity="other">Select %1$s list, %2$d items</item>
+    </plurals>
+    <plurals name="a11y_deselect_list">
+        <item quantity="one">Deselect %1$s list, %2$d item</item>
+        <item quantity="other">Deselect %1$s list, %2$d items</item>
+    </plurals>
+    <plurals name="home_summary">
+        <item quantity="one">You have %1$d upcoming trip. Let’s get you prepared and ready to go.</item>
+        <item quantity="other">You have %1$d upcoming trips. Let’s get you prepared and ready to go.</item>
+    </plurals>
+    <plurals name="trips_header_summary">
+        <item quantity="one">Prepare %1$d active trip.%2$s</item>
+        <item quantity="other">Prepare %1$d active trips.%2$s</item>
+    </plurals>
+    <plurals name="google_sync_item_count">
+        <item quantity="one">%1$d item</item>
+        <item quantity="other">%1$d items</item>
+    </plurals>
+    <plurals name="google_sync_list_count">
+        <item quantity="one">%1$d list</item>
+        <item quantity="other">%1$d lists</item>
+    </plurals>
+    <plurals name="google_sync_trip_count">
+        <item quantity="one">%1$d trip</item>
+        <item quantity="other">%1$d trips</item>
+    </plurals>
+
     <string name="home_active_trips_title">Active Trips</string>
     <string name="home_empty_trips_title">No trips yet</string>
     <string name="home_empty_trips_body">Create your first trip and Packly will keep you ready.</string>
-    <string name="packed_fraction_short">%1$d/%2$d packed</string>
     <string name="pack_by_value">Pack by %1$s</string>
     <string name="percent_packed_label">%1$d%% Packed</string>
-    <string name="home_summary">You have %1$d upcoming %2$s. Let’s get you prepared and ready to go.</string>
     <string name="greeting_morning">Good Morning.</string>
     <string name="greeting_afternoon">Good Afternoon.</string>
     <string name="greeting_evening">Good Evening.</string>
     <string name="greeting_night">Good Night.</string>
     <string name="select_items_title">Select items</string>
-    <string name="selected_grouped_by_category">%1$d selected • grouped by category</string>
     <string name="a11y_selectable_item_selected">%1$s, %2$s, selected</string>
     <string name="a11y_selectable_item_not_selected">%1$s, %2$s, not selected</string>
     <string name="notification_reminder_title">Packly reminder</string>
-    <string name="notification_reminder_body">%1$d items still need packing for %2$s.</string>
     <string name="notification_channel_name">Packing reminders</string>
     <string name="notification_channel_description">Reminds you when a trip still has unpacked items at its Pack by deadline.</string>
     <string name="trip_from_list_default_name">Trip from list</string>
@@ -253,8 +321,6 @@
     <string name="create_trip_step3_body">Choose one or more packing lists to start faster. Don’t worry, you can add individual items and fully customize these lists in the next step.</string>
     <string name="create_trip_lists_empty_title">No lists yet</string>
     <string name="create_trip_lists_empty_body">Create reusable lists from the Lists tab, or continue and add individual items next.</string>
-    <string name="a11y_select_list">Select %1$s list, %2$d items</string>
-    <string name="a11y_deselect_list">Deselect %1$s list, %2$d items</string>
     <string name="a11y_expand_list">Show items in %1$s</string>
     <string name="a11y_collapse_list">Hide items in %1$s</string>
     <string name="create_trip_step4_title">Add individual items</string>

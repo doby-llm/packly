@@ -41,7 +41,12 @@ class DeadlineReminderReceiver : BroadcastReceiver() {
             },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val body = context.getString(R.string.notification_reminder_body, remainingCount, tripName)
+        val body = context.resources.getQuantityString(
+            R.plurals.notification_reminder_body,
+            remainingCount,
+            remainingCount,
+            tripName,
+        )
         val notification = NotificationCompat.Builder(context, notificationChannelId())
             .setSmallIcon(R.drawable.packly_launcher_foreground)
             .setContentTitle(context.getString(R.string.notification_reminder_title))

@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.dobyllm.packly.R
 import androidx.compose.ui.text.font.FontWeight
@@ -71,13 +72,13 @@ fun HomeScreen(
                 val metadata = listOfNotNull(
                     trip.startDate?.let { start -> trip.endDate?.let { end -> "$start - $end" } ?: start },
                     trip.destination.takeIf { it.isNotBlank() },
-                    stringResource(R.string.packed_fraction_short, packed, trip.entries.size),
+                    pluralStringResource(R.plurals.packed_fraction_short, trip.entries.size, packed, trip.entries.size),
                     packBy?.let { stringResource(R.string.pack_by_value, it) },
                 ).joinToString(" • ")
                 val chips = listOfNotNull(
                     trip.destination.takeIf { it.isNotBlank() },
                     packBy?.let { stringResource(R.string.pack_by_value, it) },
-                    trip.entries.size.takeIf { it > 0 }?.let { stringResource(R.string.item_count_lower, it) },
+                    trip.entries.size.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.item_count_lower, it, it) },
                 )
 
                 TripSummaryCard(
@@ -107,10 +108,10 @@ private fun HomeHero(activeTripCount: Int) {
             fontWeight = FontWeight.ExtraBold,
         )
         Text(
-            text = stringResource(
-                R.string.home_summary,
+            text = pluralStringResource(
+                R.plurals.home_summary,
                 activeTripCount,
-                stringResource(if (activeTripCount == 1) R.string.trip_singular else R.string.trip_plural),
+                activeTripCount,
             ),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

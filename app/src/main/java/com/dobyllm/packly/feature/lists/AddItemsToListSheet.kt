@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.dobyllm.packly.R
 import androidx.compose.ui.text.font.FontWeight
@@ -88,7 +89,7 @@ fun AddItemsToListSheet(doc: PacklyAppDocument, selectedIds: Set<String>, onTogg
             }
             item {
                 Text(
-                    stringResource(R.string.selected_grouped_by_category, selectedIds.size),
+                    pluralStringResource(R.plurals.selected_grouped_by_category, selectedIds.size, selectedIds.size),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -97,7 +98,7 @@ fun AddItemsToListSheet(doc: PacklyAppDocument, selectedIds: Set<String>, onTogg
                 PacklySelectionSearchField(
                     value = query,
                     onValueChange = { query = it },
-                    label = stringResource(R.string.search_items_count_label, activeItems.size),
+                    label = pluralStringResource(R.plurals.search_items_count_label, activeItems.size, activeItems.size),
                 )
             }
             item {

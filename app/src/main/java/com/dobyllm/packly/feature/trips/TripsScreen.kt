@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.dobyllm.packly.R
 import androidx.compose.ui.text.font.FontWeight
@@ -138,10 +139,10 @@ private fun TripsHeader(activeCount: Int, completedCount: Int) {
         )
         val completedCopy = completedCount.takeIf { it > 0 }?.let { stringResource(R.string.trips_header_completed_suffix) } ?: ""
         Text(
-            text = stringResource(
-                R.string.trips_header_summary,
+            text = pluralStringResource(
+                R.plurals.trips_header_summary,
                 activeCount.coerceAtLeast(0),
-                stringResource(if (activeCount == 1) R.string.trip_singular else R.string.trip_plural),
+                activeCount.coerceAtLeast(0),
                 completedCopy,
             ),
             style = MaterialTheme.typography.bodyMedium,

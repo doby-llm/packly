@@ -59,6 +59,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.dobyllm.packly.R
 import androidx.compose.ui.text.font.FontWeight
@@ -191,7 +192,7 @@ fun CreateTripSheet(
                     ) {
                         Text(stringResource(R.string.section_start_from_lists), style = MaterialTheme.typography.labelLarge)
                         Text(
-                            stringResource(R.string.selected_count_label, selectedSourceListIds.size),
+                            pluralStringResource(R.plurals.selected_count_label, selectedSourceListIds.size, selectedSourceListIds.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -250,7 +251,7 @@ fun CreateTripSheet(
                 PacklyTripTextField(
                     value = itemQuery,
                     onValueChange = { itemQuery = it },
-                    label = stringResource(R.string.search_all_items_count_label, activeItems.size),
+                    label = pluralStringResource(R.plurals.search_all_items_count_label, activeItems.size, activeItems.size),
                 )
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
@@ -272,7 +273,7 @@ fun CreateTripSheet(
                 if (matchingItems.isEmpty()) Text(stringResource(R.string.no_items_match_search), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (duplicateSourceCount > 0) {
                     Text(
-                        stringResource(R.string.duplicate_source_warning, duplicateSourceCount),
+                        pluralStringResource(R.plurals.duplicate_source_warning, duplicateSourceCount, duplicateSourceCount),
                         color = MaterialTheme.colorScheme.tertiary,
                         style = MaterialTheme.typography.bodySmall,
                     )

@@ -14,30 +14,76 @@ class I18nCoverageTest {
         .normalize()
 
     @Test
-    fun englishSpanishAndGermanStringKeysMatch() {
-        val defaultKeys = stringKeys("app/src/main/res/values/strings.xml")
-        val spanishKeys = stringKeys("app/src/main/res/values-es/strings.xml")
-        val germanKeys = stringKeys("app/src/main/res/values-de/strings.xml")
+    fun englishSpanishAndGermanStringAndPluralKeysMatch() {
+        val defaultResources = resources("app/src/main/res/values/strings.xml")
+        val spanishResources = resources("app/src/main/res/values-es/strings.xml")
+        val germanResources = resources("app/src/main/res/values-de/strings.xml")
 
-        assertEquals(defaultKeys, spanishKeys)
-        assertEquals(defaultKeys, germanKeys)
+        assertEquals(defaultResources.stringKeys, spanishResources.stringKeys)
+        assertEquals(defaultResources.stringKeys, germanResources.stringKeys)
+        assertEquals(defaultResources.pluralQuantities, spanishResources.pluralQuantities)
+        assertEquals(defaultResources.pluralQuantities, germanResources.pluralQuantities)
     }
 
     @Test
-    fun nonEnglishStringResourcesDoNotContainUntranslatedDeadlineCopy() {
-        val localizedStringResources = listOf(
+    fun stringAndPluralFormatPlaceholdersMatchAcrossLocales() {
+        val defaultResources = resources("app/src/main/res/values/strings.xml")
+        val localizedResources = listOf(
+            "values-es" to resources("app/src/main/res/values-es/strings.xml"),
+            "values-de" to resources("app/src/main/res/values-de/strings.xml"),
+        )
+
+        val violations = localizedResources.flatMap { (locale, localized) ->
+            buildList {
+                defaultResources.strings.forEach { (key, defaultValue) ->
+                    val localizedValue = localized.strings[key].orEmpty()
+                    if (defaultValue.placeholders() != localizedValue.placeholders()) {
+                        add("$locale:string/$key ${localizedValue.placeholders()} != ${defaultValue.placeholders()}")
+                    }
+                }
+                defaultResources.plurals.forEach { (key, defaultQuantities) ->
+                    defaultQuantities.forEach { (quantity, defaultValue) ->
+                        val localizedValue = localized.plurals[key]?.get(quantity).orEmpty()
+                        if (defaultValue.placeholders() != localizedValue.placeholders()) {
+                            add("$locale:plurals/$key[$quantity] ${localizedValue.placeholders()} != ${defaultValue.placeholders()}")
+                        }
+                    }
+                }
+            }
+        }
+
+        assertTrue(
+            "Localized resources must preserve format placeholders. Violations:\n" + violations.joinToString("\n"),
+            violations.isEmpty(),
+        )
+    }
+
+    @Test
+    fun localizedResourcesDoNotContainKnownEnglishUiCopy() {
+        val localizedResources = listOf(
             "app/src/main/res/values-es/strings.xml",
             "app/src/main/res/values-de/strings.xml",
         )
         val forbiddenEnglishPhrases = listOf(
-            Regex("\\bPack[ -]by\\b", RegexOption.IGNORE_CASE),
+            Regex("\\bitem\\(s\\)|\\bitems?\\b", RegexOption.IGNORE_CASE),
+            Regex("\\btrips?\\b", RegexOption.IGNORE_CASE),
+            Regex("\\blists?\\b", RegexOption.IGNORE_CASE),
+            Regex("\\bPack\\s*by\\b", RegexOption.IGNORE_CASE),
+            Regex("\\bCreate\\b", RegexOption.IGNORE_CASE),
+            Regex("\\bSearch\\b", RegexOption.IGNORE_CASE),
+            Regex("\\bSelect\\b", RegexOption.IGNORE_CASE),
+            Regex("\\bRename\\b", RegexOption.IGNORE_CASE),
+            Regex("\\bDuplicate\\b", RegexOption.IGNORE_CASE),
+            Regex("\\bArchive\\b", RegexOption.IGNORE_CASE),
+            Regex("\\bUnpacked\\b|\\bPacked\\b", RegexOption.IGNORE_CASE),
+            Regex("\\bBackup\\b|\\bRestore\\b", RegexOption.IGNORE_CASE),
         )
-        val allowedProductTerms = listOf("Packly")
+        val allowedTerms = listOf("Packly", "Google", "Google Drive", "Android", "URL", "Cloud")
 
-        val violations = localizedStringResources.flatMap { relativePath ->
+        val violations = localizedResources.flatMap { relativePath ->
             projectFile(relativePath).readUtf8Text().lineSequence().mapIndexedNotNull { index, line ->
                 val trimmed = line.trim()
-                val textWithoutAllowedTerms = allowedProductTerms.fold(trimmed) { text, allowedTerm ->
+                val textWithoutAllowedTerms = allowedTerms.fold(trimmed) { text, allowedTerm ->
                     text.replace(allowedTerm, "")
                 }
                 val containsForbiddenPhrase = forbiddenEnglishPhrases.any { it.containsMatchIn(textWithoutAllowedTerms) }
@@ -46,8 +92,40 @@ class I18nCoverageTest {
         }
 
         assertTrue(
-            "Localized string resources must translate deadline copy; only intentional product terms are allowed. Violations:\n" +
+            "Localized string resources must translate UI copy; intentional product terms are allowlisted. Violations:\n" +
                 violations.joinToString("\n"),
+            violations.isEmpty(),
+        )
+    }
+
+    @Test
+    fun defaultCountResourcesUsePluralsUnlessAllowlisted() {
+        val resources = resources("app/src/main/res/values/strings.xml")
+        val allowedCountStrings = setOf(
+            "all_categories_count",
+            "category_count_label",
+            "filter_unpacked_count",
+            "filter_packed_count",
+            "percent_packed",
+            "percent_packed_label",
+            "a11y_packing_progress",
+        )
+        val countKeyPattern = Regex("count", RegexOption.IGNORE_CASE)
+        val countValuePattern = Regex("%(?:\\d+\\$)?d.*\\b(items?|trips?|lists?)\\b|\\b(items?|trips?|lists?)\\b.*%(?:\\d+\\$)?d", RegexOption.IGNORE_CASE)
+        val parentheticalPluralPattern = Regex("\\((s|es)\\)", RegexOption.IGNORE_CASE)
+
+        val violations = resources.strings.mapNotNull { (key, value) ->
+            when {
+                parentheticalPluralPattern.containsMatchIn(value) -> "string/$key uses parenthetical plural copy: $value"
+                key !in allowedCountStrings && key !in resources.pluralQuantities.keys &&
+                    ((countKeyPattern.containsMatchIn(key) && "%" in value) || countValuePattern.containsMatchIn(value)) ->
+                    "string/$key looks count-bearing; use plurals or add a deliberate allowlist entry"
+                else -> null
+            }
+        }
+
+        assertTrue(
+            "Count-bearing UI copy must use plurals. Violations:\n" + violations.joinToString("\n"),
             violations.isEmpty(),
         )
     }
@@ -62,9 +140,9 @@ class I18nCoverageTest {
             .toList()
         val uiLiteralPatterns = listOf(
             Regex("\\bText\\s*\\(\\s*\"[^\"]*[A-Za-z][^\"]*\""),
-            Regex("\\bcontentDescription\\s*=\\s*\"[^\"]*[A-Za-z][^\"]*\""),
-            Regex("\\bstateDescription\\s*=\\s*\"[^\"]*[A-Za-z][^\"]*\""),
+            Regex("\\b(contentDescription|stateDescription)\\s*=\\s*\"[^\"]*[A-Za-z][^\"]*\""),
             Regex("\\b(title|body|actionLabel|label|placeholder|supportingText|percentLabel|metadata)\\s*=\\s*\"[^\"]*[A-Za-z][^\"]*\""),
+            Regex("\\bshowSnackbar\\s*\\(\\s*\"[^\"]*[A-Za-z][^\"]*\""),
         )
         val allowedNonUiLiterals = listOf(
             "DateTimeFormatter.ofPattern",
@@ -183,17 +261,36 @@ class I18nCoverageTest {
         )
     }
 
-    private fun stringKeys(relativePath: String): Set<String> {
+    private fun resources(relativePath: String): I18nResources {
         val document = DocumentBuilderFactory.newInstance()
             .newDocumentBuilder()
             .parse(projectFile(relativePath).toFile())
         val strings = document.getElementsByTagName("string")
-        return buildSet {
+        val plurals = document.getElementsByTagName("plurals")
+        val stringValues = buildMap {
             for (index in 0 until strings.length) {
                 val item = strings.item(index)
-                add(item.attributes.getNamedItem("name").nodeValue)
+                put(item.attributes.getNamedItem("name").nodeValue, item.textContent.orEmpty())
             }
         }
+        val pluralValues = buildMap {
+            for (index in 0 until plurals.length) {
+                val plural = plurals.item(index)
+                val pluralName = plural.attributes.getNamedItem("name").nodeValue
+                val items = plural.childNodes
+                put(
+                    pluralName,
+                    buildMap {
+                        for (itemIndex in 0 until items.length) {
+                            val item = items.item(itemIndex)
+                            val quantity = item.attributes?.getNamedItem("quantity")?.nodeValue ?: continue
+                            put(quantity, item.textContent.orEmpty())
+                        }
+                    },
+                )
+            }
+        }
+        return I18nResources(strings = stringValues, plurals = pluralValues)
     }
 
     private fun projectFile(relativePath: String): Path = projectPath(relativePath).also { path ->
@@ -214,4 +311,20 @@ class I18nCoverageTest {
     }
 
     private fun Path.readUtf8Text(): String = toFile().readText(Charsets.UTF_8)
+
+    private fun String.placeholders(): List<String> = placeholderPattern.findAll(this)
+        .map { match -> "${match.groupValues[1]}$${match.groupValues[2]}" }
+        .toList()
+
+    private data class I18nResources(
+        val strings: Map<String, String>,
+        val plurals: Map<String, Map<String, String>>,
+    ) {
+        val stringKeys: Set<String> = strings.keys
+        val pluralQuantities: Map<String, Set<String>> = plurals.mapValues { (_, quantities) -> quantities.keys }
+    }
+
+    private companion object {
+        val placeholderPattern = Regex("%(?:(\\d+)\\$)?([dsf])")
+    }
 }

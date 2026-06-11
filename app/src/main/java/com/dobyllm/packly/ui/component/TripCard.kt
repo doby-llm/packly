@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -58,8 +59,8 @@ import kotlin.math.roundToInt
 fun TripCard(trip: PacklyTrip, onOpen: () -> Unit, onPack: () -> Unit, onDelete: () -> Unit) {
     val summary = computeTripSummary(trip)
     val packByLabel = summary.packBy?.let { stringResource(R.string.deadline_pack_by, it) }
-    val fallbackPackedLabel = stringResource(R.string.packed_fraction, summary.packedItems, summary.totalItems)
-    val itemCountLabel = stringResource(R.string.item_count_lower, summary.totalItems)
+    val fallbackPackedLabel = pluralStringResource(R.plurals.packed_fraction, summary.totalItems, summary.packedItems, summary.totalItems)
+    val itemCountLabel = pluralStringResource(R.plurals.item_count_lower, summary.totalItems, summary.totalItems)
     val deadlineWarning = summary.unpackedItems > 0 && PacklyDeadlineFormatter.isCloseOrOverdue(trip.packBy)
     val archiveDescription = stringResource(R.string.a11y_archive_trip, trip.name)
     val modifyDescription = stringResource(R.string.a11y_modify_trip, trip.name)

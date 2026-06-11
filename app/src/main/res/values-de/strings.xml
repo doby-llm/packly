@@ -21,7 +21,6 @@
     <string name="language_english">Englisch</string>
     <string name="language_spanish">Spanisch</string>
     <string name="language_german">Deutsch</string>
-    <string name="list_item_count">%1$d Gegenstände</string>
     <string name="action_rename">Umbenennen</string>
     <string name="action_duplicate">Duplizieren</string>
     <string name="action_archive">Archivieren</string>
@@ -54,16 +53,12 @@
     <string name="packing_progress_title">Packfortschritt</string>
     <string name="packing_progress_label">PACKFORTSCHRITT</string>
     <string name="percent_packed">%1$d%% gepackt</string>
-    <string name="items_packed_count">%1$d von %2$d Gegenständen gepackt</string>
-    <string name="packed_fraction">%1$d von %2$d gepackt</string>
     <string name="trip_settings_title">Reiseeinstellungen</string>
-    <string name="deadline_reminder_warning">Erinnerung: packen bis %1$s — %2$d Gegenstand/Gegenstände noch nicht gepackt</string>
     <string name="deadline_pack_by">Packen bis %1$s</string>
     <string name="deadline_pack_by_label">Packen bis</string>
     <string name="deadline_notifications_off">Benachrichtigungen sind aus. Wir können den Termin trotzdem in Packly anzeigen.</string>
     <string name="deadline_supporting_text">Wähle Datum und Uhrzeit, um die Erinnerung zu aktivieren.</string>
     <string name="current_plan_items_title">Gegenstände in dieser Reise</string>
-    <string name="items_uppercase_count">%1$d GEGENSTÄNDE</string>
     <string name="empty_trip_items_title">Noch nichts in dieser Reise</string>
     <string name="empty_trip_items_body">Durchsuche Listen und Gegenstände, um diese Reise zusammenzustellen.</string>
     <string name="source_from_list">AUS %1$s</string>
@@ -84,7 +79,6 @@
     <string name="a11y_remove_list_from_trip">Liste %1$s aus dieser Reise entfernen</string>
     <string name="a11y_add_list_to_trip">Liste %1$s hinzufügen</string>
     <string name="a11y_remove_item_from_trip">%1$s aus dieser Reise entfernen</string>
-    <string name="item_count_lower">%1$d Gegenstände</string>
     <string name="packing_empty_title">Noch nichts zu packen</string>
     <string name="packing_empty_body">Füge dieser Reise Gegenstände hinzu, bevor du den Packmodus startest.</string>
     <string name="snackbar_packed_named_item">\"%1$s\" gepackt</string>
@@ -142,9 +136,6 @@
     <string name="categories_title">Kategorien</string>
     <string name="all_categories_count">Alle Kategorien (%1$d)</string>
     <string name="category_count_label">%1$s (%2$d)</string>
-    <string name="items_count_label">%1$d %2$s</string>
-    <string name="item_singular">Artikel</string>
-    <string name="item_plural">Artikel</string>
     <string name="lists_empty_title">Noch keine Packlisten</string>
     <string name="lists_empty_body">Starte mit einer wiederverwendbaren Liste für häufige Reisen.</string>
     <string name="list_duplicated_snackbar">%1$s dupliziert</string>
@@ -156,8 +147,6 @@
     <string name="field_list_name">Listenname</string>
     <string name="field_description">Beschreibung</string>
     <string name="create_list_title">Liste erstellen</string>
-    <string name="checklist_items_selected">Checklistenartikel • %1$d ausgewählt</string>
-    <string name="search_items_count_label">%1$d Artikel suchen</string>
     <string name="filter_all_label">Alle</string>
     <string name="no_items_match_filter">Keine Artikel passen zu diesem Filter.</string>
     <string name="uncategorized">Nicht kategorisiert</string>
@@ -171,10 +160,7 @@
     <string name="archive_trip_title">%1$s archivieren?</string>
     <string name="archive_trip_body">Die Reise wird aus aktiven Reisen ausgeblendet. Ihr Packstatus kann nach dem Archivieren nicht mehr geändert werden.</string>
     <string name="trips_header_title">Reisen</string>
-    <string name="trips_header_summary">Bereite %1$d aktive %2$s vor.%3$s</string>
     <string name="trips_header_completed_suffix"> Abgeschlossene Reisen bleiben niedriger priorisiert.</string>
-    <string name="trip_singular">Reise</string>
-    <string name="trip_plural">Reisen</string>
     <string name="create_trip_title">Reise erstellen</string>
     <string name="create_trip_step_label">Schritt %1$d von %2$d</string>
     <string name="create_trip_discard_title">Reise verwerfen?</string>
@@ -197,18 +183,15 @@
     <string name="field_required">Erforderlich.</string>
     <string name="deadline_choose_time_supporting">Wähle eine Uhrzeit, um fortzufahren.</string>
     <string name="section_start_from_lists">Mit Listen starten</string>
-    <string name="selected_count_label">%1$d ausgewählt</string>
     <string name="start_from_lists_body">Wähle eine oder mehrere Packlisten. Doppelte Artikel werden einmal aufgenommen.</string>
     <string name="no_packing_lists_yet_body">Noch keine Packlisten. Erstelle wiederverwendbare Listen im Tab Listen oder füge unten einzelne Artikel hinzu.</string>
     <string name="no_lists_selected_body">Keine Listen ausgewählt — starte leer oder füge unten einzelne Artikel hinzu.</string>
     <string name="selected_lists_title">Ausgewählte Listen</string>
     <string name="selected_list_remove_label">%1$s ×</string>
     <string name="section_add_individual_items">Einzelne Artikel hinzufügen</string>
-    <string name="search_all_items_count_label">Alle %1$d Artikel durchsuchen</string>
     <string name="already_included_suffix">Bereits enthalten</string>
     <string name="item_already_included_label">%1$s · %2$s</string>
     <string name="no_items_match_search">Keine Artikel passen zu dieser Suche.</string>
-    <string name="duplicate_source_warning">%1$d doppelte(r) Artikel aus ausgewählten Listen und einzelnen Artikeln wird/werden einmal gepackt.</string>
     <string name="section_review_quantities">Mengen prüfen</string>
     <string name="unknown_category">Unbekannt</string>
     <string name="create_trip_disabled_missing_name">Reise erstellen ist deaktiviert, bis du einen Namen eingibst.</string>
@@ -220,23 +203,108 @@
     <string name="deadline_time_title">Uhrzeit für den Packtermin</string>
     <string name="quantity_times">×%1$d</string>
 
+    <plurals name="list_item_count">
+        <item quantity="one">%1$d Gegenstand</item>
+        <item quantity="other">%1$d Gegenstände</item>
+    </plurals>
+    <plurals name="item_count_lower">
+        <item quantity="one">%1$d Gegenstand</item>
+        <item quantity="other">%1$d Gegenstände</item>
+    </plurals>
+    <plurals name="items_uppercase_count">
+        <item quantity="one">%1$d GEGENSTAND</item>
+        <item quantity="other">%1$d GEGENSTÄNDE</item>
+    </plurals>
+    <plurals name="items_packed_count">
+        <item quantity="one">%1$d von %2$d Gegenstand gepackt</item>
+        <item quantity="other">%1$d von %2$d Gegenständen gepackt</item>
+    </plurals>
+    <plurals name="packed_fraction">
+        <item quantity="one">%1$d von %2$d gepackt</item>
+        <item quantity="other">%1$d von %2$d gepackt</item>
+    </plurals>
+    <plurals name="deadline_reminder_warning">
+        <item quantity="one">Erinnerung: packen bis %1$s — %2$d Gegenstand noch nicht gepackt</item>
+        <item quantity="other">Erinnerung: packen bis %1$s — %2$d Gegenstände noch nicht gepackt</item>
+    </plurals>
+    <plurals name="items_count_label">
+        <item quantity="one">%1$d Gegenstand</item>
+        <item quantity="other">%1$d Gegenstände</item>
+    </plurals>
+    <plurals name="checklist_items_selected">
+        <item quantity="one">Checklistenartikel • %1$d ausgewählt</item>
+        <item quantity="other">Checklistenartikel • %1$d ausgewählt</item>
+    </plurals>
+    <plurals name="search_items_count_label">
+        <item quantity="one">%1$d Gegenstand suchen</item>
+        <item quantity="other">%1$d Gegenstände suchen</item>
+    </plurals>
+    <plurals name="selected_count_label">
+        <item quantity="one">%1$d ausgewählt</item>
+        <item quantity="other">%1$d ausgewählt</item>
+    </plurals>
+    <plurals name="search_all_items_count_label">
+        <item quantity="one">Alle %1$d Gegenstand durchsuchen</item>
+        <item quantity="other">Alle %1$d Gegenstände durchsuchen</item>
+    </plurals>
+    <plurals name="duplicate_source_warning">
+        <item quantity="one">%1$d doppelter Gegenstand aus ausgewählten Listen und einzelnen Gegenständen wird einmal gepackt.</item>
+        <item quantity="other">%1$d doppelte Gegenstände aus ausgewählten Listen und einzelnen Gegenständen werden einmal gepackt.</item>
+    </plurals>
+    <plurals name="packed_fraction_short">
+        <item quantity="one">%1$d/%2$d gepackt</item>
+        <item quantity="other">%1$d/%2$d gepackt</item>
+    </plurals>
+    <plurals name="selected_grouped_by_category">
+        <item quantity="one">%1$d ausgewählt • nach Kategorie gruppiert</item>
+        <item quantity="other">%1$d ausgewählt • nach Kategorie gruppiert</item>
+    </plurals>
+    <plurals name="notification_reminder_body">
+        <item quantity="one">%1$d Gegenstand muss für %2$s noch gepackt werden.</item>
+        <item quantity="other">%1$d Gegenstände müssen für %2$s noch gepackt werden.</item>
+    </plurals>
+    <plurals name="a11y_select_list">
+        <item quantity="one">Liste %1$s auswählen, %2$d Gegenstand</item>
+        <item quantity="other">Liste %1$s auswählen, %2$d Gegenstände</item>
+    </plurals>
+    <plurals name="a11y_deselect_list">
+        <item quantity="one">Liste %1$s abwählen, %2$d Gegenstand</item>
+        <item quantity="other">Liste %1$s abwählen, %2$d Gegenstände</item>
+    </plurals>
+    <plurals name="home_summary">
+        <item quantity="one">Du hast %1$d anstehende Reise. Lass uns dich vorbereiten.</item>
+        <item quantity="other">Du hast %1$d anstehende Reisen. Lass uns dich vorbereiten.</item>
+    </plurals>
+    <plurals name="trips_header_summary">
+        <item quantity="one">Bereite %1$d aktive Reise vor.%2$s</item>
+        <item quantity="other">Bereite %1$d aktive Reisen vor.%2$s</item>
+    </plurals>
+    <plurals name="google_sync_item_count">
+        <item quantity="one">%1$d Gegenstand</item>
+        <item quantity="other">%1$d Gegenstände</item>
+    </plurals>
+    <plurals name="google_sync_list_count">
+        <item quantity="one">%1$d Liste</item>
+        <item quantity="other">%1$d Listen</item>
+    </plurals>
+    <plurals name="google_sync_trip_count">
+        <item quantity="one">%1$d Reise</item>
+        <item quantity="other">%1$d Reisen</item>
+    </plurals>
+
     <string name="home_active_trips_title">Aktive Reisen</string>
     <string name="home_empty_trips_title">Noch keine Reisen</string>
     <string name="home_empty_trips_body">Erstelle deine erste Reise und Packly hält dich bereit.</string>
-    <string name="packed_fraction_short">%1$d/%2$d gepackt</string>
     <string name="pack_by_value">Packen bis %1$s</string>
     <string name="percent_packed_label">%1$d%% gepackt</string>
-    <string name="home_summary">Du hast %1$d anstehende %2$s. Lass uns dich vorbereiten.</string>
     <string name="greeting_morning">Guten Morgen.</string>
     <string name="greeting_afternoon">Guten Tag.</string>
     <string name="greeting_evening">Guten Abend.</string>
     <string name="greeting_night">Gute Nacht.</string>
     <string name="select_items_title">Artikel auswählen</string>
-    <string name="selected_grouped_by_category">%1$d ausgewählt • nach Kategorie gruppiert</string>
     <string name="a11y_selectable_item_selected">%1$s, %2$s, ausgewählt</string>
     <string name="a11y_selectable_item_not_selected">%1$s, %2$s, nicht ausgewählt</string>
     <string name="notification_reminder_title">Packly-Erinnerung</string>
-    <string name="notification_reminder_body">%1$d Artikel müssen für %2$s noch gepackt werden.</string>
     <string name="notification_channel_name">Pack-Erinnerungen</string>
     <string name="notification_channel_description">Erinnert dich, wenn eine Reise zum Packtermin noch ungepackte Artikel hat.</string>
     <string name="trip_from_list_default_name">Reise aus Liste</string>
@@ -253,8 +321,6 @@
     <string name="create_trip_step3_body">Wähle eine oder mehrere Packlisten, um schneller zu starten. Keine Sorge, im nächsten Schritt kannst du einzelne Gegenstände hinzufügen und diese Listen vollständig anpassen.</string>
     <string name="create_trip_lists_empty_title">Noch keine Listen</string>
     <string name="create_trip_lists_empty_body">Erstelle wiederverwendbare Listen im Tab Listen, oder fahre fort und füge als Nächstes einzelne Gegenstände hinzu.</string>
-    <string name="a11y_select_list">Liste %1$s auswählen, %2$d Gegenstände</string>
-    <string name="a11y_deselect_list">Liste %1$s abwählen, %2$d Gegenstände</string>
     <string name="a11y_expand_list">Gegenstände in %1$s anzeigen</string>
     <string name="a11y_collapse_list">Gegenstände in %1$s ausblenden</string>
     <string name="create_trip_step4_title">Einzelne Gegenstände hinzufügen</string>

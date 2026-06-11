@@ -21,7 +21,6 @@
     <string name="language_english">Inglés</string>
     <string name="language_spanish">Español</string>
     <string name="language_german">Alemán</string>
-    <string name="list_item_count">%1$d objetos</string>
     <string name="action_rename">Renombrar</string>
     <string name="action_duplicate">Duplicar</string>
     <string name="action_archive">Archivar</string>
@@ -54,16 +53,12 @@
     <string name="packing_progress_title">Progreso de preparación</string>
     <string name="packing_progress_label">PROGRESO DE PREPARACIÓN</string>
     <string name="percent_packed">%1$d%% preparado</string>
-    <string name="items_packed_count">%1$d de %2$d objetos preparados</string>
-    <string name="packed_fraction">%1$d de %2$d preparados</string>
     <string name="trip_settings_title">Ajustes del viaje</string>
-    <string name="deadline_reminder_warning">Recordatorio: preparar antes de %1$s — %2$d objeto(s) aún sin preparar</string>
     <string name="deadline_pack_by">Preparar antes de %1$s</string>
     <string name="deadline_pack_by_label">Preparar antes de</string>
     <string name="deadline_notifications_off">Las notificaciones están desactivadas. Aun así podemos mostrar la fecha límite en Packly.</string>
     <string name="deadline_supporting_text">Elige una fecha y hora para activar el recordatorio.</string>
     <string name="current_plan_items_title">Objetos en este viaje</string>
-    <string name="items_uppercase_count">%1$d OBJETOS</string>
     <string name="empty_trip_items_title">Aún no hay nada en este viaje</string>
     <string name="empty_trip_items_body">Explora listas y objetos para crear este viaje.</string>
     <string name="source_from_list">DE %1$s</string>
@@ -84,7 +79,6 @@
     <string name="a11y_remove_list_from_trip">Quitar la lista %1$s de este viaje</string>
     <string name="a11y_add_list_to_trip">Añadir la lista %1$s</string>
     <string name="a11y_remove_item_from_trip">Quitar %1$s de este viaje</string>
-    <string name="item_count_lower">%1$d objetos</string>
     <string name="packing_empty_title">Aún no hay nada que preparar</string>
     <string name="packing_empty_body">Añade objetos a este viaje antes de entrar en modo preparación.</string>
     <string name="snackbar_packed_named_item">Preparado \"%1$s\"</string>
@@ -142,9 +136,6 @@
     <string name="categories_title">Categorías</string>
     <string name="all_categories_count">Todas las categorías (%1$d)</string>
     <string name="category_count_label">%1$s (%2$d)</string>
-    <string name="items_count_label">%1$d %2$s</string>
-    <string name="item_singular">artículo</string>
-    <string name="item_plural">artículos</string>
     <string name="lists_empty_title">Aún no hay listas de equipaje</string>
     <string name="lists_empty_body">Empieza con una lista reutilizable para viajes frecuentes.</string>
     <string name="list_duplicated_snackbar">%1$s duplicada</string>
@@ -156,8 +147,6 @@
     <string name="field_list_name">Nombre de la lista</string>
     <string name="field_description">Descripción</string>
     <string name="create_list_title">Crear lista</string>
-    <string name="checklist_items_selected">Artículos de la lista • %1$d seleccionados</string>
-    <string name="search_items_count_label">Buscar %1$d artículos</string>
     <string name="filter_all_label">Todos</string>
     <string name="no_items_match_filter">Ningún artículo coincide con este filtro.</string>
     <string name="uncategorized">Sin categoría</string>
@@ -171,10 +160,7 @@
     <string name="archive_trip_title">¿Archivar %1$s?</string>
     <string name="archive_trip_body">El viaje se ocultará de los viajes activos. Su estado de equipaje no podrá cambiarse tras archivarlo.</string>
     <string name="trips_header_title">Viajes</string>
-    <string name="trips_header_summary">Prepara %1$d %2$s activos.%3$s</string>
     <string name="trips_header_completed_suffix"> Los viajes completados quedan con menor prioridad.</string>
-    <string name="trip_singular">viaje</string>
-    <string name="trip_plural">viajes</string>
     <string name="create_trip_title">Crear viaje</string>
     <string name="create_trip_step_label">Paso %1$d de %2$d</string>
     <string name="create_trip_discard_title">¿Descartar viaje?</string>
@@ -197,18 +183,15 @@
     <string name="field_required">Obligatorio.</string>
     <string name="deadline_choose_time_supporting">Elige una hora para continuar.</string>
     <string name="section_start_from_lists">Empezar desde listas</string>
-    <string name="selected_count_label">%1$d seleccionados</string>
     <string name="start_from_lists_body">Elige una o más listas de equipaje. Los artículos duplicados se incluyen una vez.</string>
     <string name="no_packing_lists_yet_body">Aún no hay listas de equipaje. Crea listas reutilizables en Listas o añade artículos individuales abajo.</string>
     <string name="no_lists_selected_body">No hay listas seleccionadas — empieza en blanco o añade artículos individuales abajo.</string>
     <string name="selected_lists_title">Listas seleccionadas</string>
     <string name="selected_list_remove_label">%1$s ×</string>
     <string name="section_add_individual_items">Añadir artículos individuales</string>
-    <string name="search_all_items_count_label">Buscar en %1$d artículos</string>
     <string name="already_included_suffix">Ya incluido</string>
     <string name="item_already_included_label">%1$s · %2$s</string>
     <string name="no_items_match_search">Ningún artículo coincide con esta búsqueda.</string>
-    <string name="duplicate_source_warning">%1$d artículo(s) duplicado(s) entre listas seleccionadas y artículos individuales se empaquetarán una sola vez.</string>
     <string name="section_review_quantities">Revisar cantidades</string>
     <string name="unknown_category">Desconocida</string>
     <string name="create_trip_disabled_missing_name">Crear viaje está desactivado hasta que introduzcas un nombre.</string>
@@ -220,23 +203,108 @@
     <string name="deadline_time_title">Hora para preparar antes de</string>
     <string name="quantity_times">×%1$d</string>
 
+    <plurals name="list_item_count">
+        <item quantity="one">%1$d objeto</item>
+        <item quantity="other">%1$d objetos</item>
+    </plurals>
+    <plurals name="item_count_lower">
+        <item quantity="one">%1$d objeto</item>
+        <item quantity="other">%1$d objetos</item>
+    </plurals>
+    <plurals name="items_uppercase_count">
+        <item quantity="one">%1$d OBJETO</item>
+        <item quantity="other">%1$d OBJETOS</item>
+    </plurals>
+    <plurals name="items_packed_count">
+        <item quantity="one">%1$d de %2$d objeto preparado</item>
+        <item quantity="other">%1$d de %2$d objetos preparados</item>
+    </plurals>
+    <plurals name="packed_fraction">
+        <item quantity="one">%1$d de %2$d preparado</item>
+        <item quantity="other">%1$d de %2$d preparados</item>
+    </plurals>
+    <plurals name="deadline_reminder_warning">
+        <item quantity="one">Recordatorio: preparar antes de %1$s — %2$d objeto aún sin preparar</item>
+        <item quantity="other">Recordatorio: preparar antes de %1$s — %2$d objetos aún sin preparar</item>
+    </plurals>
+    <plurals name="items_count_label">
+        <item quantity="one">%1$d objeto</item>
+        <item quantity="other">%1$d objetos</item>
+    </plurals>
+    <plurals name="checklist_items_selected">
+        <item quantity="one">Objetos de la lista • %1$d seleccionado</item>
+        <item quantity="other">Objetos de la lista • %1$d seleccionados</item>
+    </plurals>
+    <plurals name="search_items_count_label">
+        <item quantity="one">Buscar %1$d objeto</item>
+        <item quantity="other">Buscar %1$d objetos</item>
+    </plurals>
+    <plurals name="selected_count_label">
+        <item quantity="one">%1$d seleccionado</item>
+        <item quantity="other">%1$d seleccionados</item>
+    </plurals>
+    <plurals name="search_all_items_count_label">
+        <item quantity="one">Buscar en %1$d objeto</item>
+        <item quantity="other">Buscar en %1$d objetos</item>
+    </plurals>
+    <plurals name="duplicate_source_warning">
+        <item quantity="one">%1$d objeto duplicado entre listas seleccionadas y objetos individuales se preparará una sola vez.</item>
+        <item quantity="other">%1$d objetos duplicados entre listas seleccionadas y objetos individuales se prepararán una sola vez.</item>
+    </plurals>
+    <plurals name="packed_fraction_short">
+        <item quantity="one">%1$d/%2$d preparado</item>
+        <item quantity="other">%1$d/%2$d preparados</item>
+    </plurals>
+    <plurals name="selected_grouped_by_category">
+        <item quantity="one">%1$d seleccionado • agrupado por categoría</item>
+        <item quantity="other">%1$d seleccionados • agrupados por categoría</item>
+    </plurals>
+    <plurals name="notification_reminder_body">
+        <item quantity="one">%1$d objeto aún necesita prepararse para %2$s.</item>
+        <item quantity="other">%1$d objetos aún necesitan prepararse para %2$s.</item>
+    </plurals>
+    <plurals name="a11y_select_list">
+        <item quantity="one">Seleccionar lista %1$s, %2$d objeto</item>
+        <item quantity="other">Seleccionar lista %1$s, %2$d objetos</item>
+    </plurals>
+    <plurals name="a11y_deselect_list">
+        <item quantity="one">Deseleccionar lista %1$s, %2$d objeto</item>
+        <item quantity="other">Deseleccionar lista %1$s, %2$d objetos</item>
+    </plurals>
+    <plurals name="home_summary">
+        <item quantity="one">Tienes %1$d viaje próximo. Vamos a prepararte para salir.</item>
+        <item quantity="other">Tienes %1$d viajes próximos. Vamos a prepararte para salir.</item>
+    </plurals>
+    <plurals name="trips_header_summary">
+        <item quantity="one">Prepara %1$d viaje activo.%2$s</item>
+        <item quantity="other">Prepara %1$d viajes activos.%2$s</item>
+    </plurals>
+    <plurals name="google_sync_item_count">
+        <item quantity="one">%1$d objeto</item>
+        <item quantity="other">%1$d objetos</item>
+    </plurals>
+    <plurals name="google_sync_list_count">
+        <item quantity="one">%1$d lista</item>
+        <item quantity="other">%1$d listas</item>
+    </plurals>
+    <plurals name="google_sync_trip_count">
+        <item quantity="one">%1$d viaje</item>
+        <item quantity="other">%1$d viajes</item>
+    </plurals>
+
     <string name="home_active_trips_title">Viajes activos</string>
     <string name="home_empty_trips_title">Aún no hay viajes</string>
     <string name="home_empty_trips_body">Crea tu primer viaje y Packly te mantendrá preparado.</string>
-    <string name="packed_fraction_short">%1$d/%2$d empacados</string>
     <string name="pack_by_value">Preparar antes de %1$s</string>
     <string name="percent_packed_label">%1$d%% empacado</string>
-    <string name="home_summary">Tienes %1$d %2$s próximos. Vamos a prepararte para salir.</string>
     <string name="greeting_morning">Buenos días.</string>
     <string name="greeting_afternoon">Buenas tardes.</string>
     <string name="greeting_evening">Buenas tardes.</string>
     <string name="greeting_night">Buenas noches.</string>
     <string name="select_items_title">Seleccionar artículos</string>
-    <string name="selected_grouped_by_category">%1$d seleccionados • agrupados por categoría</string>
     <string name="a11y_selectable_item_selected">%1$s, %2$s, seleccionado</string>
     <string name="a11y_selectable_item_not_selected">%1$s, %2$s, no seleccionado</string>
     <string name="notification_reminder_title">Recordatorio de Packly</string>
-    <string name="notification_reminder_body">%1$d artículos aún necesitan empacarse para %2$s.</string>
     <string name="notification_channel_name">Recordatorios de equipaje</string>
     <string name="notification_channel_description">Te recuerda cuando un viaje aún tiene artículos sin empacar en su fecha límite para preparar.</string>
     <string name="trip_from_list_default_name">Viaje desde lista</string>
@@ -253,8 +321,6 @@
     <string name="create_trip_step3_body">Elige una o más listas de equipaje para empezar más rápido. No te preocupes, podrás añadir artículos individuales y personalizar estas listas en el siguiente paso.</string>
     <string name="create_trip_lists_empty_title">Aún no hay listas</string>
     <string name="create_trip_lists_empty_body">Crea listas reutilizables desde la pestaña Listas, o continúa y añade artículos individuales después.</string>
-    <string name="a11y_select_list">Seleccionar lista %1$s, %2$d artículos</string>
-    <string name="a11y_deselect_list">Deseleccionar lista %1$s, %2$d artículos</string>
     <string name="a11y_expand_list">Mostrar artículos de %1$s</string>
     <string name="a11y_collapse_list">Ocultar artículos de %1$s</string>
     <string name="create_trip_step4_title">Añade artículos individuales</string>

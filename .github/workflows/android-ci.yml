@@ -37,6 +37,9 @@ jobs:
       - name: Validate Gradle Wrapper
         uses: gradle/actions/wrapper-validation@v4
 
+      - name: Check i18n resources and source usage
+        run: python3 tools/check_string_parity.py
+
       - name: Run Android lint
         run: ./gradlew --no-daemon lintDebug
 

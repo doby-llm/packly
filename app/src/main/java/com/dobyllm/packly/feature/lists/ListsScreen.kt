@@ -46,6 +46,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.dobyllm.packly.R
 import androidx.compose.ui.text.font.FontWeight
@@ -286,14 +287,14 @@ private fun CreateListSheet(doc: PacklyAppDocument, onDismiss: () -> Unit, onCre
                     label = stringResource(R.string.field_description),
                 )
                 Text(
-                    text = stringResource(R.string.checklist_items_selected, selected.size),
+                    text = pluralStringResource(R.plurals.checklist_items_selected, selected.size, selected.size),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 PacklyTextField(
                     value = itemQuery,
                     onValueChange = { itemQuery = it },
-                    label = stringResource(R.string.search_items_count_label, activeItems.size),
+                    label = pluralStringResource(R.plurals.search_items_count_label, activeItems.size, activeItems.size),
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base), verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
                     PacklyCategoryFilterChip(

@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.dobyllm.packly.R
 import androidx.compose.ui.unit.dp
@@ -318,9 +319,5 @@ private fun List<PacklyItem>.countFor(categoryId: CategoryId? = null): Int =
 @Composable
 private fun List<PacklyItem>.itemCountLabel(): String {
     val count = size
-    return stringResource(
-        R.string.items_count_label,
-        count,
-        stringResource(if (count == 1) R.string.item_singular else R.string.item_plural),
-    )
+    return pluralStringResource(R.plurals.items_count_label, count, count)
 }
