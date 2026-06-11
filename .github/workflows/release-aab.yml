@@ -1,0 +1,92 @@
+name: Release AAB
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-aab-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  signed-aab:
+    name: Build signed release AAB
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Run Android lint
+        run: ./gradlew --no-daemon lintDebug
+
+      - name: Run JVM unit tests
+        run: ./gradlew --no-daemon testDebugUnitTest
+
+      - name: Verify release signing secrets
+        env:
+          PACKLY_UPLOAD_KEYSTORE_B64: ${{ secrets.PACKLY_UPLOAD_KEYSTORE_B64 }}
+          PACKLY_UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.PACKLY_UPLOAD_KEYSTORE_PASSWORD }}
+          PACKLY_UPLOAD_KEY_ALIAS: ${{ secrets.PACKLY_UPLOAD_KEY_ALIAS }}
+          PACKLY_UPLOAD_KEY_PASSWORD: ${{ secrets.PACKLY_UPLOAD_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          for name in \
+            PACKLY_UPLOAD_KEYSTORE_B64 \
+            PACKLY_UPLOAD_KEYSTORE_PASSWORD \
+            PACKLY_UPLOAD_KEY_ALIAS \
+            PACKLY_UPLOAD_KEY_PASSWORD
+          do
+            if [[ -z "${!name:-}" ]]; then
+              missing+=("$name")
+            fi
+          done
+
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing required GitHub Actions secrets: %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
+
+      - name: Decode upload keystore
+        env:
+          PACKLY_UPLOAD_KEYSTORE_B64: ${{ secrets.PACKLY_UPLOAD_KEYSTORE_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          keystore_file="$RUNNER_TEMP/packly-upload.jks"
+          printf '%s' "$PACKLY_UPLOAD_KEYSTORE_B64" | base64 --decode > "$keystore_file"
+          chmod 600 "$keystore_file"
+          echo "PACKLY_UPLOAD_KEYSTORE_FILE=$keystore_file" >> "$GITHUB_ENV"
+
+      - name: Build signed release bundle
+        env:
+          PACKLY_UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.PACKLY_UPLOAD_KEYSTORE_PASSWORD }}
+          PACKLY_UPLOAD_KEY_ALIAS: ${{ secrets.PACKLY_UPLOAD_KEY_ALIAS }}
+          PACKLY_UPLOAD_KEY_PASSWORD: ${{ secrets.PACKLY_UPLOAD_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon :app:bundleRelease
+
+      - name: Upload signed release AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: packly-release-aab
+          path: app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+          retention-days: 14

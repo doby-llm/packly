@@ -4,6 +4,19 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+fun env(name: String): String? = providers.environmentVariable(name).orNull?.takeIf { it.isNotBlank() }
+
+val releaseKeystoreFile = env("PACKLY_UPLOAD_KEYSTORE_FILE")
+val releaseKeystorePassword = env("PACKLY_UPLOAD_KEYSTORE_PASSWORD")
+val releaseKeyAlias = env("PACKLY_UPLOAD_KEY_ALIAS")
+val releaseKeyPassword = env("PACKLY_UPLOAD_KEY_PASSWORD")
+val hasReleaseSigningConfig = listOf(
+    releaseKeystoreFile,
+    releaseKeystorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+).all { it != null }
+
 android {
     namespace = "com.dobyllm.packly"
     compileSdk = 36
@@ -17,9 +30,23 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (hasReleaseSigningConfig) {
+            create("release") {
+                storeFile = file(requireNotNull(releaseKeystoreFile))
+                storePassword = releaseKeystorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (hasReleaseSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

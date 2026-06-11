@@ -19,3 +19,12 @@ __pycache__/
 
 # OS
 .DS_Store
+
+# Android signing material
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.jks.base64
+*.keystore.base64

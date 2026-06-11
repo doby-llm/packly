@@ -29,7 +29,7 @@ Local contributors may inspect files, review diffs, run Git-only checks such as 
 
 ## CI / APK validation
 
-The active workflow is `.github/workflows/android-ci.yml`.
+The active debug-validation workflow is `.github/workflows/android-ci.yml`.
 
 It runs on GitHub-hosted runners and performs:
 
@@ -45,6 +45,16 @@ After a successful workflow run with an uploaded APK:
 gh run list --workflow android-ci.yml --limit 10
 gh run download <RUN_ID> --name packly-debug-apk --dir ./artifacts/apk
 ```
+
+## Release AAB generation
+
+The manual release workflow is `.github/workflows/release-aab.yml`. It builds a
+signed Google Play `.aab` only on GitHub-hosted runners using upload-key signing
+values stored as GitHub Actions secrets.
+
+See `docs/release/play-store-aab.md` for the required secret names, upload key
+setup checklist, and artifact download commands. Do not commit or share private
+signing credentials.
 
 ## Architecture docs
 
