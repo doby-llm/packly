@@ -61,8 +61,8 @@ class I18nCoverageTest {
     @Test
     fun localizedResourcesDoNotContainKnownEnglishUiCopy() {
         val localizedResources = listOf(
-            "app/src/main/res/values-es/strings.xml",
-            "app/src/main/res/values-de/strings.xml",
+            "values-es" to resources("app/src/main/res/values-es/strings.xml"),
+            "values-de" to resources("app/src/main/res/values-de/strings.xml"),
         )
         val forbiddenEnglishPhrases = listOf(
             Regex("\\bitem\\(s\\)|\\bitems?\\b", RegexOption.IGNORE_CASE),
@@ -80,15 +80,20 @@ class I18nCoverageTest {
         )
         val allowedTerms = listOf("Packly", "Google", "Google Drive", "Android", "URL", "Cloud")
 
-        val violations = localizedResources.flatMap { relativePath ->
-            projectFile(relativePath).readUtf8Text().lineSequence().mapIndexedNotNull { index, line ->
-                val trimmed = line.trim()
-                val textWithoutAllowedTerms = allowedTerms.fold(trimmed) { text, allowedTerm ->
+        val violations = localizedResources.flatMap { (locale, resources) ->
+            val localizedValues = resources.strings.map { (key, value) ->
+                "string/$key" to value
+            } + resources.plurals.flatMap { (key, quantities) ->
+                quantities.map { (quantity, value) -> "plurals/$key[$quantity]" to value }
+            }
+
+            localizedValues.mapNotNull { (label, value) ->
+                val textWithoutAllowedTerms = allowedTerms.fold(value) { text, allowedTerm ->
                     text.replace(allowedTerm, "")
                 }
                 val containsForbiddenPhrase = forbiddenEnglishPhrases.any { it.containsMatchIn(textWithoutAllowedTerms) }
-                if (containsForbiddenPhrase) "$relativePath:${index + 1}: $trimmed" else null
-            }.toList()
+                if (containsForbiddenPhrase) "$locale:$label: $value" else null
+            }
         }
 
         assertTrue(
