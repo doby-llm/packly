@@ -139,6 +139,8 @@
     <string name="lists_empty_title">Noch keine Packlisten</string>
     <string name="lists_empty_body">Starte mit einer wiederverwendbaren Liste für häufige Reisen.</string>
     <string name="list_duplicated_snackbar">%1$s dupliziert</string>
+    <string name="list_duplicate_copy_name">%1$s Kopie</string>
+    <string name="list_duplicate_copy_name_numbered">%1$s Kopie %2$d</string>
     <string name="archive_list_title">%1$s archivieren?</string>
     <string name="archive_list_body">Die Liste wird ausgeblendet, aber Reisen, die daraus erstellt wurden, behalten ihre Snapshots.</string>
     <string name="lists_header_title">Meine Listen</string>

@@ -298,6 +298,34 @@ def validate_source_i18n(repo_root: Path) -> list[str]:
     return errors
 
 
+def validate_duplicate_copy_name_localized(repo_root: Path) -> list[str]:
+    errors: list[str] = []
+    view_model_path = repo_root / "app/src/main/java/com/dobyllm/packly/PacklyAppViewModel.kt"
+    nav_host_path = repo_root / "app/src/main/java/com/dobyllm/packly/navigation/PacklyNavHost.kt"
+    view_model_source = view_model_path.read_text()
+    nav_host_source = nav_host_path.read_text()
+
+    forbidden_view_model_snippets = (
+        '"$baseName copy"',
+        '"$copyName $suffix"',
+        '" copy"',
+    )
+    for snippet in forbidden_view_model_snippets:
+        if snippet in view_model_source:
+            errors.append(f"{view_model_path.relative_to(repo_root)} hard-codes duplicate-list copy name snippet `{snippet}`")
+
+    required_flow_snippets = (
+        "copyNameTemplates = copyNameTemplates",
+        "R.string.list_duplicate_copy_name",
+        "R.string.list_duplicate_copy_name_numbered",
+    )
+    combined_source = view_model_source + "\n" + nav_host_source
+    for snippet in required_flow_snippets:
+        if snippet not in combined_source:
+            errors.append(f"duplicate-list copy naming must flow through localized resources; missing `{snippet}`")
+    return errors
+
+
 def validate_aab_language_split_disabled(repo_root: Path) -> list[str]:
     build_gradle_path = repo_root / APP_BUILD_GRADLE_FILE
     source = strip_kotlin_comments(build_gradle_path.read_text())
@@ -339,6 +367,7 @@ def main() -> int:
     errors.extend(validate_default_count_resources(resources_by_locale["values"]))
     errors.extend(validate_localized_english(resources_by_locale))
     errors.extend(validate_source_i18n(repo_root))
+    errors.extend(validate_duplicate_copy_name_localized(repo_root))
     errors.extend(validate_aab_language_split_disabled(repo_root))
 
     if errors:

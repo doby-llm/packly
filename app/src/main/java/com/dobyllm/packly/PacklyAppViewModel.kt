@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class PacklyAppViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = DataStorePacklyRepository.get(application)
@@ -115,7 +116,7 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun duplicateList(listId: ListId) = viewModelScope.launch {
+    fun duplicateList(listId: ListId, copyNameTemplates: ListCopyNameTemplates) = viewModelScope.launch {
         val now = PacklyClock.now()
         repository.updateLists { lists ->
             val source = lists.firstOrNull { it.id == listId && !it.isArchived } ?: return@updateLists lists
@@ -123,6 +124,7 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 newListId = PacklyIds.list(),
                 now = now,
                 existingNames = lists.filterNot { it.isArchived }.map { it.name }.toSet(),
+                copyNameTemplates = copyNameTemplates,
             )
         }
     }
@@ -583,10 +585,11 @@ internal fun PacklyList.duplicatedForListAction(
     newListId: ListId,
     now: InstantString,
     existingNames: Set<String>,
+    copyNameTemplates: ListCopyNameTemplates,
     newEntryId: () -> ListEntryId = PacklyIds::listEntry,
 ): PacklyList = copy(
     id = newListId,
-    name = nextListCopyName(name, existingNames),
+    name = nextListCopyName(name, existingNames, copyNameTemplates),
     entries = entries.map { it.copy(id = newEntryId()) },
     isSeed = false,
     isArchived = false,
@@ -594,14 +597,29 @@ internal fun PacklyList.duplicatedForListAction(
     updatedAt = now,
 )
 
-private fun nextListCopyName(baseName: String, existingNames: Set<String>): String {
+internal data class ListCopyNameTemplates(
+    private val unnumberedTemplate: String,
+    private val numberedTemplate: String,
+) {
+    fun unnumbered(baseName: String): String = unnumberedTemplate.formatLocalized(baseName)
+
+    fun numbered(baseName: String, suffix: Int): String = numberedTemplate.formatLocalized(baseName, suffix)
+}
+
+private fun String.formatLocalized(vararg args: Any): String = String.format(Locale.ROOT, this, *args)
+
+private fun nextListCopyName(
+    baseName: String,
+    existingNames: Set<String>,
+    copyNameTemplates: ListCopyNameTemplates,
+): String {
     val normalizedNames = existingNames.map { it.lowercase() }.toSet()
-    val copyName = "$baseName copy"
+    val copyName = copyNameTemplates.unnumbered(baseName)
     if (copyName.lowercase() !in normalizedNames) return copyName
 
     var suffix = 2
-    while ("$copyName $suffix".lowercase() in normalizedNames) suffix += 1
-    return "$copyName $suffix"
+    while (copyNameTemplates.numbered(baseName, suffix).lowercase() in normalizedNames) suffix += 1
+    return copyNameTemplates.numbered(baseName, suffix)
 }
 
 private fun Iterable<PacklyItem>.hasActiveItemName(name: String, exceptId: ItemId? = null): Boolean =

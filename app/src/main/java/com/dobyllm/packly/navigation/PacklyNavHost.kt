@@ -29,6 +29,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.dobyllm.packly.ListCopyNameTemplates
 import com.dobyllm.packly.PacklyAppViewModel
 import com.dobyllm.packly.R
 import com.dobyllm.packly.feature.home.HomeScreen
@@ -65,6 +66,10 @@ fun PacklyNavHost(
     val isTripDetailRoute = currentRoute == PacklyRoute.TripDetail
     val createTripDraftState = rememberCreateTripDraftState()
     val tripFromListDefaultName = stringResource(R.string.trip_from_list_default_name)
+    val listCopyNameTemplates = ListCopyNameTemplates(
+        unnumberedTemplate = stringResource(R.string.list_duplicate_copy_name),
+        numberedTemplate = stringResource(R.string.list_duplicate_copy_name_numbered),
+    )
 
     fun exitCreateTrip() {
         createTripDraftState.discard()
@@ -177,7 +182,7 @@ fun PacklyNavHost(
                     onCreate = vm::createList,
                     onOpen = { navigateSafely(PacklyRoute.listDetail(it)) },
                     onRename = vm::renameList,
-                    onDuplicate = vm::duplicateList,
+                    onDuplicate = { listId -> vm.duplicateList(listId, listCopyNameTemplates) },
                     onDelete = vm::deleteList,
                 )
             }

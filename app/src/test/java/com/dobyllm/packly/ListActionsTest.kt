@@ -27,6 +27,7 @@ class ListActionsTest {
             newListId = "list_copy",
             now = "2026-06-03T09:30:00Z",
             existingNames = setOf("Weekend", "Weekend copy"),
+            copyNameTemplates = englishCopyNameTemplates,
         )
 
         assertEquals("list_copy", duplicate.id)
@@ -37,6 +38,23 @@ class ListActionsTest {
         assertFalse(duplicate.isSeed)
         assertEquals("2026-06-03T09:30:00Z", duplicate.createdAt)
         assertEquals("2026-06-03T09:30:00Z", duplicate.updatedAt)
+    }
+
+    @Test
+    fun duplicateListForActionUsesLocalizedCopyNameTemplatesAndPreservesBaseName() {
+        val original = activeList(name = "  Fin de semana  ")
+
+        val duplicate = original.duplicatedForListAction(
+            newListId = "list_copy_es",
+            now = "2026-06-03T09:30:00Z",
+            existingNames = setOf("  Fin de semana  ", "  Fin de semana   copia"),
+            copyNameTemplates = ListCopyNameTemplates(
+                unnumberedTemplate = "%1$s copia",
+                numberedTemplate = "%1$s copia %2$d",
+            ),
+        )
+
+        assertEquals("  Fin de semana   copia 2", duplicate.name)
     }
 
     private fun activeList(
@@ -52,4 +70,11 @@ class ListActionsTest {
         createdAt = "2026-06-01T09:00:00Z",
         updatedAt = "2026-06-01T09:00:00Z",
     )
+
+    private companion object {
+        val englishCopyNameTemplates = ListCopyNameTemplates(
+            unnumberedTemplate = "%1$s copy",
+            numberedTemplate = "%1$s copy %2$d",
+        )
+    }
 }

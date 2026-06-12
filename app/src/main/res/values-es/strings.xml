@@ -139,6 +139,8 @@
     <string name="lists_empty_title">Aún no hay listas de equipaje</string>
     <string name="lists_empty_body">Empieza con una lista reutilizable para viajes frecuentes.</string>
     <string name="list_duplicated_snackbar">%1$s duplicada</string>
+    <string name="list_duplicate_copy_name">%1$s copia</string>
+    <string name="list_duplicate_copy_name_numbered">%1$s copia %2$d</string>
     <string name="archive_list_title">¿Archivar %1$s?</string>
     <string name="archive_list_body">La lista se ocultará, pero los viajes ya creados desde ella conservarán sus copias.</string>
     <string name="lists_header_title">Mis listas</string>

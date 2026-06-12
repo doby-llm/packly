@@ -139,6 +139,8 @@
     <string name="lists_empty_title">No packing lists yet</string>
     <string name="lists_empty_body">Start with a reusable list for trips you take often.</string>
     <string name="list_duplicated_snackbar">%1$s duplicated</string>
+    <string name="list_duplicate_copy_name">%1$s copy</string>
+    <string name="list_duplicate_copy_name_numbered">%1$s copy %2$d</string>
     <string name="archive_list_title">Archive %1$s?</string>
     <string name="archive_list_body">The list will be hidden, but trips already created from it keep their snapshots.</string>
     <string name="lists_header_title">My Lists</string>
