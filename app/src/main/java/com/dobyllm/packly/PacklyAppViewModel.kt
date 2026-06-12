@@ -597,7 +597,7 @@ internal fun PacklyList.duplicatedForListAction(
     updatedAt = now,
 )
 
-internal data class ListCopyNameTemplates(
+data class ListCopyNameTemplates(
     private val unnumberedTemplate: String,
     private val numberedTemplate: String,
 ) {
