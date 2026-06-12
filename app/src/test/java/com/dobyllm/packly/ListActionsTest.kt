@@ -49,8 +49,8 @@ class ListActionsTest {
             now = "2026-06-03T09:30:00Z",
             existingNames = setOf("  Fin de semana  ", "  Fin de semana   copia"),
             copyNameTemplates = ListCopyNameTemplates(
-                unnumberedTemplate = "%1$s copia",
-                numberedTemplate = "%1$s copia %2$d",
+                unnumberedTemplate = "%1${'$'}s copia",
+                numberedTemplate = "%1${'$'}s copia %2${'$'}d",
             ),
         )
 
@@ -73,8 +73,8 @@ class ListActionsTest {
 
     private companion object {
         val englishCopyNameTemplates = ListCopyNameTemplates(
-            unnumberedTemplate = "%1$s copy",
-            numberedTemplate = "%1$s copy %2$d",
+            unnumberedTemplate = "%1${'$'}s copy",
+            numberedTemplate = "%1${'$'}s copy %2${'$'}d",
         )
     }
 }
