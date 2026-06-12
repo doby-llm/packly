@@ -11,6 +11,7 @@ from pathlib import Path
 
 RESOURCE_DIRS = ("values", "values-es", "values-de")
 STRINGS_FILE = "strings.xml"
+APP_BUILD_GRADLE_FILE = Path("app/build.gradle.kts")
 PLACEHOLDER_RE = re.compile(r"%(?:(\d+)\$)?([dsf])")
 COUNT_STRING_KEY_RE = re.compile(r"count", re.IGNORECASE)
 COUNT_VALUE_RE = re.compile(r"%(?:\d+\$)?d.*\b(items?|trips?|lists?)\b|\b(items?|trips?|lists?)\b.*%(?:\d+\$)?d", re.IGNORECASE)
@@ -70,6 +71,79 @@ ALLOWED_NON_UI_LITERAL_MARKERS = (
     'Text("$',
     "packing-progress",
 )
+
+
+def strip_kotlin_comments(source: str) -> str:
+    """Remove Kotlin comments while preserving quoted strings for static Gradle checks."""
+    result: list[str] = []
+    i = 0
+    in_string = False
+    in_triple_string = False
+    while i < len(source):
+        if in_triple_string:
+            if source.startswith('\"\"\"', i):
+                result.append('\"\"\"')
+                i += 3
+                in_triple_string = False
+            else:
+                result.append(source[i])
+                i += 1
+            continue
+
+        if in_string:
+            result.append(source[i])
+            if source[i] == "\\" and i + 1 < len(source):
+                result.append(source[i + 1])
+                i += 2
+                continue
+            if source[i] == '\"':
+                in_string = False
+            i += 1
+            continue
+
+        if source.startswith('\"\"\"', i):
+            result.append('\"\"\"')
+            i += 3
+            in_triple_string = True
+        elif source[i] == '\"':
+            result.append(source[i])
+            i += 1
+            in_string = True
+        elif source.startswith("//", i):
+            newline = source.find("\n", i)
+            if newline == -1:
+                break
+            result.append("\n")
+            i = newline + 1
+        elif source.startswith("/*", i):
+            end = source.find("*/", i + 2)
+            comment = source[i : len(source) if end == -1 else end + 2]
+            result.append("\n" * comment.count("\n"))
+            i = len(source) if end == -1 else end + 2
+        else:
+            result.append(source[i])
+            i += 1
+    return "".join(result)
+
+
+def find_named_block(source: str, name: str, start: int = 0) -> tuple[int, int] | None:
+    pattern = re.compile(rf"(?<![A-Za-z0-9_]){re.escape(name)}\s*\{{")
+    match = pattern.search(source, start)
+    if not match:
+        return None
+
+    open_brace = source.find("{", match.start())
+    depth = 0
+    for index in range(open_brace, len(source)):
+        if source[index] == "{":
+            depth += 1
+        elif source[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return open_brace + 1, index
+    return None
+
+
 FORBIDDEN_SEED_SNIPPETS_BY_FILE = {
     "app/src/main/java/com/dobyllm/packly/feature/trips/TripDetailScreen.kt": (
         "Text(entry.nameSnapshot", "itemName = entry.nameSnapshot", "a11y_remove_named, entry.nameSnapshot",
@@ -224,6 +298,33 @@ def validate_source_i18n(repo_root: Path) -> list[str]:
     return errors
 
 
+def validate_aab_language_split_disabled(repo_root: Path) -> list[str]:
+    build_gradle_path = repo_root / APP_BUILD_GRADLE_FILE
+    source = strip_kotlin_comments(build_gradle_path.read_text())
+
+    android_block = find_named_block(source, "android")
+    if not android_block:
+        return [f"{APP_BUILD_GRADLE_FILE} must declare an android block"]
+
+    android_source = source[android_block[0] : android_block[1]]
+    bundle_block = find_named_block(android_source, "bundle")
+    if not bundle_block:
+        return [
+            f"{APP_BUILD_GRADLE_FILE} must disable AAB language splits with "
+            "android { bundle { language { enableSplit = false } } }"
+        ]
+
+    bundle_source = android_source[bundle_block[0] : bundle_block[1]]
+    language_block = find_named_block(bundle_source, "language")
+    if not language_block:
+        return [f"{APP_BUILD_GRADLE_FILE} must declare android.bundle.language for Play language delivery"]
+
+    language_source = bundle_source[language_block[0] : language_block[1]]
+    if not re.search(r"(?<![A-Za-z0-9_])enableSplit\s*=\s*false(?![A-Za-z0-9_])", language_source):
+        return [f"{APP_BUILD_GRADLE_FILE} must set android.bundle.language.enableSplit = false"]
+    return []
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
     res_root = repo_root / "app" / "src" / "main" / "res"
@@ -238,6 +339,7 @@ def main() -> int:
     errors.extend(validate_default_count_resources(resources_by_locale["values"]))
     errors.extend(validate_localized_english(resources_by_locale))
     errors.extend(validate_source_i18n(repo_root))
+    errors.extend(validate_aab_language_split_disabled(repo_root))
 
     if errors:
         print("i18n resource validation failed:", file=sys.stderr)
