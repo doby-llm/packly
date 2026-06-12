@@ -313,10 +313,15 @@
 
     <string name="action_skip">Omitir</string>
     <string name="action_continue">Continuar</string>
-    <string name="create_trip_step2_title">Configura un recordatorio de preparar antes de</string>
-    <string name="create_trip_step2_body">Elige una fecha y hora si quieres que Packly te recuerde preparar antes del viaje. Puedes omitirlo y añadirlo más tarde.</string>
-    <string name="create_trip_pack_by_time_title">Hora para preparar antes de</string>
-    <string name="create_trip_pack_by_incomplete">Elige una hora para activar el recordatorio, u omite este paso.</string>
+    <string name="create_trip_step2_title">¿Cuándo sales?</string>
+    <string name="create_trip_step2_body">Elige la fecha y hora de salida para recordatorios precisos. Puedes omitirlo y añadirlo más tarde.</string>
+    <string name="create_trip_pack_by_time_title">Hora de salida</string>
+    <string name="create_trip_departure_date_title">Fecha de salida</string>
+    <string name="create_trip_departure_date_placeholder">Selecciona la fecha de salida</string>
+    <string name="create_trip_departure_time_title">Hora de salida</string>
+    <string name="create_trip_departure_time_placeholder">Selecciona la hora de salida</string>
+    <string name="create_trip_pack_by_incomplete">Elige una hora de salida para activar el recordatorio, u omite este paso.</string>
+    <string name="create_trip_precise_reminder_helper">Añade fecha y hora para activar recordatorios precisos.</string>
     <string name="create_trip_reminders_body_enabled">Recibe una notificación antes de la hora de preparación</string>
     <string name="create_trip_reminders_body_disabled">Elige fecha y hora para activar las notificaciones</string>
     <string name="create_trip_step3_title">Empieza desde listas</string>

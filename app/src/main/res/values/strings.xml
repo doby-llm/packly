@@ -313,10 +313,15 @@
 
     <string name="action_skip">Skip</string>
     <string name="action_continue">Continue</string>
-    <string name="create_trip_step2_title">Set a pack-by reminder</string>
-    <string name="create_trip_step2_body">Choose a date and time if you want Packly to remind you before your trip. You can skip this and add it later.</string>
-    <string name="create_trip_pack_by_time_title">Pack by time</string>
-    <string name="create_trip_pack_by_incomplete">Choose a time to enable the reminder, or skip this step.</string>
+    <string name="create_trip_step2_title">When are you leaving?</string>
+    <string name="create_trip_step2_body">Choose your departure date and time for precise reminders. You can skip this and add it later.</string>
+    <string name="create_trip_pack_by_time_title">Departure time</string>
+    <string name="create_trip_departure_date_title">Departure date</string>
+    <string name="create_trip_departure_date_placeholder">Select departure date</string>
+    <string name="create_trip_departure_time_title">Departure time</string>
+    <string name="create_trip_departure_time_placeholder">Select departure time</string>
+    <string name="create_trip_pack_by_incomplete">Choose a departure time to enable the reminder, or skip this step.</string>
+    <string name="create_trip_precise_reminder_helper">Add a date and time to enable precise reminders.</string>
     <string name="create_trip_reminders_body_enabled">Get notified before your pack-by time</string>
     <string name="create_trip_reminders_body_disabled">Choose a date and time to enable notifications</string>
     <string name="create_trip_step3_title">Start from lists</string>

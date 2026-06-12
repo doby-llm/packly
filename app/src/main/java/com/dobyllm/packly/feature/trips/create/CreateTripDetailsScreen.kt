@@ -27,10 +27,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.FlightTakeoff
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -61,6 +64,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
@@ -70,6 +74,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.R
 import com.dobyllm.packly.core.model.CategoryId
@@ -92,6 +97,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 private const val CREATE_TRIP_TOTAL_STEPS = 4
 
@@ -147,6 +154,7 @@ fun CreateTripDetailsScreen(
                 onValueChange = draftState::updateDestination,
                 label = stringResource(R.string.create_trip_destination_label_optional),
                 placeholder = stringResource(R.string.create_trip_destination_placeholder),
+                leadingIcon = Icons.Rounded.FlightTakeoff,
                 singleLine = true,
             )
         }
@@ -205,6 +213,7 @@ fun CreateTripListsScreen(
         title = stringResource(R.string.create_trip_step3_title),
         body = stringResource(R.string.create_trip_step3_body),
         contentPadding = contentPadding,
+        contentVerticalSpacing = PacklySpacing.sm,
         footer = {
             Text(
                 text = activeLists.count { list -> list.entries.any { it.id in selectedEntryIds } }.let { count -> pluralStringResource(R.plurals.selected_count_label, count, count) },
@@ -339,6 +348,7 @@ private fun CreateTripStepScaffold(
     title: String,
     body: String,
     contentPadding: PaddingValues,
+    contentVerticalSpacing: Dp = PacklySpacing.md,
     footer: @Composable ColumnScope.() -> Unit,
     content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit,
 ) {
@@ -355,7 +365,7 @@ private fun CreateTripStepScaffold(
                     end = PacklySpacing.marginMobile,
                     bottom = PacklySpacing.xl,
                 ),
-                verticalArrangement = Arrangement.spacedBy(PacklySpacing.md),
+                verticalArrangement = Arrangement.spacedBy(contentVerticalSpacing),
             ) {
                 item { CreateTripProgressHeader(step = step, title = title, body = body) }
                 content()
@@ -422,50 +432,45 @@ private fun PackByPickerCard(
     val selectedDate = PacklyDeadlineFormatter.localDate(deadline)
     val selectedTime = PacklyDeadlineFormatter.localTime(deadline) ?: LocalTime.now().withSecond(0).withNano(0)
     val notificationsAvailable = canPostPacklyNotifications(androidx.compose.ui.platform.LocalContext.current)
-    val selectedDisplay = when {
-        hasIncompleteDraft -> stringResource(R.string.create_trip_pack_by_incomplete)
-        deadline == null -> stringResource(R.string.deadline_no_reminder_set)
-        else -> PacklyDeadlineFormatter.formatDisplay(deadline) ?: stringResource(R.string.deadline_no_reminder_set)
-    }
+    val selectedDateDisplay = pendingDate?.formatCreateTripDate()
+        ?: PacklyDeadlineFormatter.formatDate(deadline)
+        ?: stringResource(R.string.create_trip_departure_date_placeholder)
+    val selectedTimeDisplay = PacklyDeadlineFormatter.formatTime(deadline)
+        ?: stringResource(R.string.create_trip_departure_time_placeholder)
     LaunchedEffect(hasIncompleteDraft) { onIncompleteChange(hasIncompleteDraft) }
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(PacklyRadius.lg),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHigh),
-        shadowElevation = 2.dp,
-    ) {
-        Column(modifier = Modifier.padding(PacklySpacing.marginMobile), verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm)) {
-            Text(stringResource(R.string.create_trip_pack_by_time_title), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(selectedDisplay, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Text(
-                text = when {
-                    hasIncompleteDraft -> stringResource(R.string.create_trip_pack_by_incomplete)
-                    deadline != null && notificationsAvailable -> stringResource(R.string.create_trip_reminders_body_enabled)
-                    deadline != null -> stringResource(R.string.deadline_notifications_off)
-                    else -> stringResource(R.string.create_trip_reminders_body_disabled)
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = if (hasIncompleteDraft) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base), modifier = Modifier.fillMaxWidth()) {
-                Button(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp), shape = RoundedCornerShape(PacklyRadius.default)) {
-                    Text(if (deadline == null && !hasIncompleteDraft) stringResource(R.string.action_choose_date) else stringResource(R.string.action_change))
-                }
-                OutlinedButton(enabled = deadline != null || hasIncompleteDraft, onClick = { showTimePicker = true }, modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp), shape = RoundedCornerShape(PacklyRadius.default)) {
-                    Text(if (hasIncompleteDraft) stringResource(R.string.action_choose_time) else stringResource(R.string.action_change_time))
-                }
-            }
-            TextButton(
-                enabled = deadline != null || hasIncompleteDraft,
-                onClick = {
-                    pendingDate = null
-                    onClear()
-                },
-                modifier = Modifier.align(Alignment.End).defaultMinSize(minHeight = 48.dp),
-            ) { Text(stringResource(R.string.action_clear)) }
-        }
+    Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm)) {
+        ReminderSelectionCard(
+            icon = Icons.Rounded.CalendarMonth,
+            title = stringResource(R.string.create_trip_departure_date_title),
+            value = selectedDateDisplay,
+            supportingText = stringResource(R.string.create_trip_reminders_body_disabled),
+            actionLabel = if (deadline == null && !hasIncompleteDraft) stringResource(R.string.action_choose_date) else stringResource(R.string.action_change),
+            onAction = { showDatePicker = true },
+        )
+        ReminderSelectionCard(
+            icon = Icons.Rounded.Schedule,
+            title = stringResource(R.string.create_trip_departure_time_title),
+            value = selectedTimeDisplay,
+            supportingText = when {
+                hasIncompleteDraft -> stringResource(R.string.create_trip_pack_by_incomplete)
+                deadline != null && notificationsAvailable -> stringResource(R.string.create_trip_reminders_body_enabled)
+                deadline != null -> stringResource(R.string.deadline_notifications_off)
+                else -> stringResource(R.string.create_trip_precise_reminder_helper)
+            },
+            isError = hasIncompleteDraft,
+            actionLabel = if (hasIncompleteDraft) stringResource(R.string.action_choose_time) else stringResource(R.string.action_change_time),
+            actionEnabled = deadline != null || hasIncompleteDraft,
+            onAction = { showTimePicker = true },
+        )
+        TextButton(
+            enabled = deadline != null || hasIncompleteDraft,
+            onClick = {
+                pendingDate = null
+                onClear()
+            },
+            modifier = Modifier.align(Alignment.End).defaultMinSize(minHeight = 48.dp),
+        ) { Text(stringResource(R.string.action_clear)) }
     }
 
     if (showDatePicker) {
@@ -487,7 +492,7 @@ private fun PackByPickerCard(
         val timePickerState = rememberTimePickerState(initialHour = selectedTime.hour, initialMinute = selectedTime.minute, is24Hour = true)
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
-            title = { Text(stringResource(R.string.create_trip_pack_by_time_title)) },
+            title = { Text(stringResource(R.string.create_trip_departure_time_title)) },
             text = { TimePicker(state = timePickerState) },
             confirmButton = {
                 TextButton(onClick = {
@@ -499,6 +504,62 @@ private fun PackByPickerCard(
             },
             dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
+    }
+}
+
+@Composable
+private fun ReminderSelectionCard(
+    icon: ImageVector,
+    title: String,
+    value: String,
+    supportingText: String,
+    actionLabel: String,
+    onAction: () -> Unit,
+    modifier: Modifier = Modifier,
+    isError: Boolean = false,
+    actionEnabled: Boolean = true,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(PacklyRadius.lg),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHigh),
+        shadowElevation = 2.dp,
+    ) {
+        Row(
+            modifier = Modifier.padding(PacklySpacing.marginMobile),
+            horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(PacklyRadius.full)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
+                Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = supportingText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            OutlinedButton(
+                enabled = actionEnabled,
+                onClick = onAction,
+                modifier = Modifier.defaultMinSize(minHeight = 48.dp),
+                shape = RoundedCornerShape(PacklyRadius.default),
+            ) { Text(actionLabel) }
+        }
     }
 }
 
@@ -562,7 +623,7 @@ private fun ListSelectionCard(
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
                 entries.forEach { entry ->
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp).padding(vertical = PacklySpacing.xs),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
                     ) {
@@ -682,13 +743,14 @@ private fun PacklyFilterChip(selected: Boolean, onClick: () -> Unit, label: Stri
 }
 
 @Composable
-private fun CreateTripTextField(value: String, onValueChange: (String) -> Unit, label: String, modifier: Modifier = Modifier, placeholder: String? = null, supportingText: String? = null, isError: Boolean = false, singleLine: Boolean = false) {
+private fun CreateTripTextField(value: String, onValueChange: (String) -> Unit, label: String, modifier: Modifier = Modifier, placeholder: String? = null, supportingText: String? = null, isError: Boolean = false, singleLine: Boolean = false, leadingIcon: ImageVector? = null) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
         placeholder = placeholder?.let { { Text(it) } },
         supportingText = supportingText?.let { { Text(it) } },
+        leadingIcon = leadingIcon?.let { icon -> { Icon(icon, contentDescription = null) } },
         isError = isError,
         singleLine = singleLine,
         modifier = modifier.fillMaxWidth(),
@@ -719,6 +781,7 @@ private fun CreateTripDiscardDialog(draftState: CreateTripDraftState, onCloseCon
 
 private fun deadlineDateMillis(date: LocalDate?): Long? = date?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli()
 private fun Long.toLocalDateUtc(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
+private fun LocalDate.formatCreateTripDate(): String = format(DateTimeFormatter.ofPattern("EEE, MMM d", Locale.getDefault()))
 
 private data class TripReviewItem(val itemId: ItemId, val name: String, val categoryId: CategoryId, val sortOrder: Int)
 

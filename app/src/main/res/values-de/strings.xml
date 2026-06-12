@@ -313,10 +313,15 @@
 
     <string name="action_skip">Überspringen</string>
     <string name="action_continue">Weiter</string>
-    <string name="create_trip_step2_title">Packen-bis-Erinnerung festlegen</string>
-    <string name="create_trip_step2_body">Wähle Datum und Uhrzeit, wenn Packly dich vor deiner Reise ans Packen erinnern soll. Du kannst diesen Schritt überspringen und später ergänzen.</string>
-    <string name="create_trip_pack_by_time_title">Packen-bis-Uhrzeit</string>
-    <string name="create_trip_pack_by_incomplete">Wähle eine Uhrzeit, um die Erinnerung zu aktivieren, oder überspringe diesen Schritt.</string>
+    <string name="create_trip_step2_title">Wann reist du ab?</string>
+    <string name="create_trip_step2_body">Wähle Abreisedatum und Abreisezeit für präzise Erinnerungen. Du kannst diesen Schritt überspringen und später ergänzen.</string>
+    <string name="create_trip_pack_by_time_title">Abreisezeit</string>
+    <string name="create_trip_departure_date_title">Abreisedatum</string>
+    <string name="create_trip_departure_date_placeholder">Abreisedatum auswählen</string>
+    <string name="create_trip_departure_time_title">Abreisezeit</string>
+    <string name="create_trip_departure_time_placeholder">Abreisezeit auswählen</string>
+    <string name="create_trip_pack_by_incomplete">Wähle eine Abreisezeit, um die Erinnerung zu aktivieren, oder überspringe diesen Schritt.</string>
+    <string name="create_trip_precise_reminder_helper">Füge Datum und Uhrzeit hinzu, um präzise Erinnerungen zu aktivieren.</string>
     <string name="create_trip_reminders_body_enabled">Benachrichtigung vor deiner Packen-bis-Uhrzeit erhalten</string>
     <string name="create_trip_reminders_body_disabled">Wähle Datum und Uhrzeit, um Benachrichtigungen zu aktivieren</string>
     <string name="create_trip_step3_title">Mit Listen starten</string>
