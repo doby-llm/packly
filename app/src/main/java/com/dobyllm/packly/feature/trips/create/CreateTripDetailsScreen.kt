@@ -697,28 +697,45 @@ private fun ItemSelectionRow(
             Text(itemName, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(if (includedFromList) stringResource(R.string.already_included_suffix) else category, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        InlineQuantityStepper(
-            itemName = itemName,
-            quantity = quantity,
-            enabled = selected,
-            onQuantityChange = onQuantityChange,
-        )
+        if (selected) {
+            InlineQuantityStepper(
+                itemName = itemName,
+                quantity = quantity,
+                onQuantityChange = onQuantityChange,
+            )
+        }
     }
 }
 
 @Composable
-private fun InlineQuantityStepper(itemName: String, quantity: Int, enabled: Boolean, onQuantityChange: (Int) -> Unit) {
+private fun InlineQuantityStepper(itemName: String, quantity: Int, onQuantityChange: (Int) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
-        IconButton(onClick = { onQuantityChange(quantity - 1) }, enabled = enabled && quantity > 1) {
-            Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.a11y_decrease_quantity, itemName))
+        IconButton(
+            onClick = { onQuantityChange(quantity - 1) },
+            enabled = quantity > 1,
+            modifier = Modifier.size(48.dp),
+        ) {
+            Icon(
+                Icons.Rounded.Remove,
+                contentDescription = stringResource(R.string.a11y_decrease_quantity, itemName),
+                modifier = Modifier.size(18.dp),
+            )
         }
         Text(
             text = stringResource(R.string.quantity_times, quantity),
-            style = MaterialTheme.typography.titleMedium,
-            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
         )
-        IconButton(onClick = { onQuantityChange(quantity + 1) }, enabled = enabled) {
-            Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.a11y_increase_quantity, itemName))
+        IconButton(
+            onClick = { onQuantityChange(quantity + 1) },
+            modifier = Modifier.size(48.dp),
+        ) {
+            Icon(
+                Icons.Rounded.Add,
+                contentDescription = stringResource(R.string.a11y_increase_quantity, itemName),
+                modifier = Modifier.size(18.dp),
+            )
         }
     }
 }

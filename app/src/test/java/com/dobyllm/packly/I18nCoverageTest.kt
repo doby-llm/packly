@@ -98,6 +98,27 @@ class I18nCoverageTest {
     }
 
     @Test
+    fun createTripItemQuantitiesAreOnlyVisibleAfterSelection() {
+        val createTripItemsSource = projectFile("app/src/main/java/com/dobyllm/packly/feature/trips/create/CreateTripDetailsScreen.kt").readUtf8Text()
+
+        listOf(
+            "if (selected) {\n            InlineQuantityStepper(",
+            "private fun InlineQuantityStepper(itemName: String, quantity: Int, onQuantityChange: (Int) -> Unit)",
+            "style = MaterialTheme.typography.labelMedium",
+            "fontWeight = FontWeight.SemiBold",
+            "modifier = Modifier.size(48.dp)",
+            "modifier = Modifier.size(18.dp)",
+        ).forEach { snippet ->
+            assertTrue("Create-trip quantity UI must keep selected-only compact stepper snippet: $snippet", createTripItemsSource.contains(snippet))
+        }
+
+        assertTrue(
+            "Unselected create-trip rows must not render a disabled quantity stepper",
+            !createTripItemsSource.contains("enabled = selected"),
+        )
+    }
+
+    @Test
     fun stringAndPluralFormatPlaceholdersMatchAcrossLocales() {
         val defaultResources = resources("app/src/main/res/values/strings.xml")
         val localizedResources = listOf(
