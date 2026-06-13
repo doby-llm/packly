@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
+import struct
 import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
@@ -300,6 +302,100 @@ def validate_incoming_trip_summary_plural(resources_by_locale: dict[str, Resourc
     return errors
 
 
+def read_ttf_table_directory(font_path: Path) -> dict[str, tuple[int, int]]:
+    """Return SFNT table offsets/lengths without depending on fontTools in CI."""
+    data = font_path.read_bytes()
+    if len(data) < 12:
+        raise ValueError("file is too small to be a TTF")
+    num_tables = struct.unpack_from(">H", data, 4)[0]
+    tables: dict[str, tuple[int, int]] = {}
+    for index in range(num_tables):
+        record_offset = 12 + index * 16
+        if record_offset + 16 > len(data):
+            raise ValueError("table directory is truncated")
+        tag = data[record_offset : record_offset + 4].decode("ascii", errors="replace")
+        offset, length = struct.unpack_from(">II", data, record_offset + 8)
+        if offset + length > len(data):
+            raise ValueError(f"table {tag} points outside the file")
+        tables[tag] = (offset, length)
+    return tables
+
+
+def read_ttf_weight_class(font_path: Path, tables: dict[str, tuple[int, int]]) -> int:
+    os2 = tables.get("OS/2")
+    if os2 is None:
+        raise ValueError("missing OS/2 table")
+    offset, length = os2
+    if length < 6:
+        raise ValueError("OS/2 table is too short")
+    return struct.unpack_from(">H", font_path.read_bytes(), offset + 4)[0]
+
+
+def read_ttf_name(font_path: Path, tables: dict[str, tuple[int, int]], name_id: int) -> str | None:
+    name_table = tables.get("name")
+    if name_table is None:
+        raise ValueError("missing name table")
+    data = font_path.read_bytes()
+    table_offset, length = name_table
+    if length < 6:
+        raise ValueError("name table is too short")
+    _format, count, strings_offset = struct.unpack_from(">HHH", data, table_offset)
+    records_offset = table_offset + 6
+    string_storage_offset = table_offset + strings_offset
+    for index in range(count):
+        record_offset = records_offset + index * 12
+        if record_offset + 12 > table_offset + length:
+            raise ValueError("name record is truncated")
+        platform_id, _encoding_id, _language_id, record_name_id, value_length, value_offset = struct.unpack_from(
+            ">HHHHHH",
+            data,
+            record_offset,
+        )
+        if record_name_id != name_id:
+            continue
+        value_start = string_storage_offset + value_offset
+        value = data[value_start : value_start + value_length]
+        return value.decode("utf-16-be" if platform_id == 3 else "mac_roman", errors="replace")
+    return None
+
+
+def validate_plus_jakarta_font_files(font_dir: Path) -> list[str]:
+    errors: list[str] = []
+    hashes: dict[int, str] = {}
+    expected_subfamilies = {
+        400: "Regular",
+        500: "Medium",
+        600: "SemiBold",
+        700: "Bold",
+        800: "ExtraBold",
+    }
+    for weight, subfamily in expected_subfamilies.items():
+        font_path = font_dir / f"plus_jakarta_sans_{weight}.ttf"
+        if not font_path.exists():
+            errors.append(f"app/src/main/res/font/plus_jakarta_sans_{weight}.ttf is required")
+            continue
+        try:
+            tables = read_ttf_table_directory(font_path)
+            actual_weight = read_ttf_weight_class(font_path, tables)
+            actual_subfamily = read_ttf_name(font_path, tables, 2)
+        except ValueError as exc:
+            errors.append(f"{font_path.relative_to(font_dir.parent.parent.parent.parent)} is not a readable static TTF: {exc}")
+            continue
+        hashes[weight] = hashlib.sha256(font_path.read_bytes()).hexdigest()
+        if actual_weight != weight:
+            errors.append(f"{font_path.name} OS/2 usWeightClass {actual_weight} must match suffix {weight}")
+        if actual_subfamily != subfamily:
+            errors.append(f"{font_path.name} name subfamily {actual_subfamily!r} must be {subfamily!r}")
+        variable_tables = sorted({"fvar", "gvar"} & set(tables))
+        if variable_tables:
+            errors.append(f"{font_path.name} must be a static TTF; found variable tables {variable_tables}")
+    duplicate_hashes = {digest for digest in hashes.values() if list(hashes.values()).count(digest) > 1}
+    for digest in sorted(duplicate_hashes):
+        duplicate_weights = [weight for weight, font_hash in hashes.items() if font_hash == digest]
+        errors.append(f"Plus Jakarta Sans static weights must not be byte-identical: {duplicate_weights} share {digest}")
+    return errors
+
+
 def validate_plus_jakarta_typography(repo_root: Path) -> list[str]:
     """Guard the deterministic bundled-font rollout from ad-hoc font overrides."""
     errors: list[str] = []
@@ -315,6 +411,7 @@ def validate_plus_jakarta_typography(repo_root: Path) -> list[str]:
         "fontFamily = PlusJakartaSans",
         "bodyLarge = packlyTextStyle(16, 24, FontWeight.Normal)",
         "bodyMedium = packlyTextStyle(16, 24, FontWeight.Normal)",
+        "labelLarge = packlyTextStyle(12, 16, FontWeight.SemiBold, 0.6f)",
         "labelMedium = packlyTextStyle(12, 16, FontWeight.SemiBold, 0.6f)",
     )
     for snippet in required_snippets:
@@ -326,9 +423,7 @@ def validate_plus_jakarta_typography(repo_root: Path) -> list[str]:
         errors.append(f"{theme.relative_to(repo_root)} must install PacklyTypography in MaterialTheme")
 
     font_dir = repo_root / "app/src/main/res/font"
-    for weight in (400, 500, 600, 700, 800):
-        if not (font_dir / f"plus_jakarta_sans_{weight}.ttf").exists():
-            errors.append(f"app/src/main/res/font/plus_jakarta_sans_{weight}.ttf is required")
+    errors.extend(validate_plus_jakarta_font_files(font_dir))
 
     source_root = repo_root / "app/src/main/java/com/dobyllm/packly"
     allowed_font_family_file = "ui/theme/Type.kt"

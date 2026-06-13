@@ -42,7 +42,7 @@ val PacklyTypography = Typography(
     bodyLarge = packlyTextStyle(16, 24, FontWeight.Normal),
     bodyMedium = packlyTextStyle(16, 24, FontWeight.Normal),
     bodySmall = packlyTextStyle(14, 20, FontWeight.Normal),
-    labelLarge = packlyTextStyle(14, 20, FontWeight.SemiBold, 0.7f),
+    labelLarge = packlyTextStyle(12, 16, FontWeight.SemiBold, 0.6f),
     labelMedium = packlyTextStyle(12, 16, FontWeight.SemiBold, 0.6f),
     labelSmall = packlyTextStyle(12, 16, FontWeight.SemiBold, 0.6f),
 )

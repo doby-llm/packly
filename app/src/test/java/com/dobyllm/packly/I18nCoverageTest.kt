@@ -1,8 +1,11 @@
 package com.dobyllm.packly
 
 import java.io.FileNotFoundException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.file.Files
 import java.nio.file.Path
+import java.security.MessageDigest
 import javax.xml.parsers.DocumentBuilderFactory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -63,7 +66,7 @@ class I18nCoverageTest {
             "headlineLarge = packlyTextStyle(28, 36, FontWeight.Bold)",
             "bodyLarge = packlyTextStyle(16, 24, FontWeight.Normal)",
             "bodyMedium = packlyTextStyle(16, 24, FontWeight.Normal)",
-            "labelLarge = packlyTextStyle(14, 20, FontWeight.SemiBold, 0.7f)",
+            "labelLarge = packlyTextStyle(12, 16, FontWeight.SemiBold, 0.6f)",
             "labelMedium = packlyTextStyle(12, 16, FontWeight.SemiBold, 0.6f)",
         ).forEach { snippet ->
             assertTrue("Type.kt must keep bundled Plus Jakarta typography snippet: $snippet", typeSource.contains(snippet))
@@ -131,12 +134,25 @@ class I18nCoverageTest {
         val themeSource = projectFile("app/src/main/java/com/dobyllm/packly/ui/theme/Theme.kt").readUtf8Text()
         assertTrue(themeSource.contains("typography = PacklyTypography"))
 
-        listOf(400, 500, 600, 700, 800).forEach { weight ->
-            assertTrue(
-                "Bundled Plus Jakarta Sans $weight resource must exist",
-                Files.exists(projectPath("app/src/main/res/font/plus_jakarta_sans_$weight.ttf")),
-            )
+        val fontProof = listOf(
+            FontExpectation(400, "Regular"),
+            FontExpectation(500, "Medium"),
+            FontExpectation(600, "SemiBold"),
+            FontExpectation(700, "Bold"),
+            FontExpectation(800, "ExtraBold"),
+        ).map { expectation ->
+            val fontFile = projectFile("app/src/main/res/font/plus_jakarta_sans_${expectation.weight}.ttf")
+            val metadata = readTtfMetadata(fontFile)
+            assertEquals("${fontFile.fileName} must expose the requested Android weight", expectation.weight, metadata.weightClass)
+            assertEquals("${fontFile.fileName} must expose a static name subfamily", expectation.subfamily, metadata.subfamily)
+            assertTrue("${fontFile.fileName} must not keep fvar/gvar variable-font tables", metadata.variableTables.isEmpty())
+            expectation.weight to metadata.sha256
         }
+        assertEquals(
+            "Bundled Plus Jakarta Sans static weights must not be byte-identical",
+            fontProof.size,
+            fontProof.map { it.second }.toSet().size,
+        )
 
         val sourceRoot = projectPath("app/src/main/java/com/dobyllm/packly")
         val fontBypasses = Files.walk(sourceRoot).use { paths ->
@@ -443,6 +459,60 @@ class I18nCoverageTest {
         )
     }
 
+    private fun readTtfMetadata(path: Path): TtfMetadata {
+        val bytes = Files.readAllBytes(path)
+        val tables = readTtfTables(bytes)
+        val os2Offset = tables["OS/2"]?.first ?: error("${path.fileName} missing OS/2 table")
+        val weightClass = bytes.uShortAt(os2Offset + 4)
+        val subfamily = readTtfName(bytes, tables, nameId = 2)
+            ?: error("${path.fileName} missing nameID 2 subfamily")
+        val variableTables = listOf("fvar", "gvar").filter(tables::containsKey)
+        val sha256 = MessageDigest.getInstance("SHA-256")
+            .digest(bytes)
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        return TtfMetadata(weightClass, subfamily, variableTables, sha256)
+    }
+
+    private fun readTtfTables(bytes: ByteArray): Map<String, Pair<Int, Int>> {
+        val tableCount = bytes.uShortAt(4)
+        return buildMap {
+            repeat(tableCount) { index ->
+                val offset = 12 + index * 16
+                val tag = String(bytes, offset, 4, Charsets.US_ASCII)
+                val tableOffset = bytes.uIntAt(offset + 8)
+                val tableLength = bytes.uIntAt(offset + 12)
+                put(tag, tableOffset to tableLength)
+            }
+        }
+    }
+
+    private fun readTtfName(bytes: ByteArray, tables: Map<String, Pair<Int, Int>>, nameId: Int): String? {
+        val nameOffset = tables["name"]?.first ?: error("missing name table")
+        val count = bytes.uShortAt(nameOffset + 2)
+        val stringStorageOffset = nameOffset + bytes.uShortAt(nameOffset + 4)
+        repeat(count) { index ->
+            val recordOffset = nameOffset + 6 + index * 12
+            val platformId = bytes.uShortAt(recordOffset)
+            val recordNameId = bytes.uShortAt(recordOffset + 6)
+            if (recordNameId == nameId) {
+                val length = bytes.uShortAt(recordOffset + 8)
+                val valueOffset = bytes.uShortAt(recordOffset + 10)
+                val charset = if (platformId == 3) Charsets.UTF_16BE else Charsets.UTF_8
+                return String(bytes, stringStorageOffset + valueOffset, length, charset)
+            }
+        }
+        return null
+    }
+
+    private fun ByteArray.uShortAt(offset: Int): Int = ByteBuffer.wrap(this, offset, 2)
+        .order(ByteOrder.BIG_ENDIAN)
+        .short
+        .toInt() and 0xffff
+
+    private fun ByteArray.uIntAt(offset: Int): Int = ByteBuffer.wrap(this, offset, 4)
+        .order(ByteOrder.BIG_ENDIAN)
+        .int
+
     private fun resources(relativePath: String): I18nResources {
         val document = DocumentBuilderFactory.newInstance()
             .newDocumentBuilder()
@@ -497,6 +567,18 @@ class I18nCoverageTest {
     private fun String.placeholders(): List<String> = placeholderPattern.findAll(this)
         .map { match -> "${match.groupValues[1]}$${match.groupValues[2]}" }
         .toList()
+
+    private data class FontExpectation(
+        val weight: Int,
+        val subfamily: String,
+    )
+
+    private data class TtfMetadata(
+        val weightClass: Int,
+        val subfamily: String,
+        val variableTables: List<String>,
+        val sha256: String,
+    )
 
     private data class I18nResources(
         val strings: Map<String, String>,
