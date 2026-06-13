@@ -39,8 +39,8 @@ class I18nCoverageTest {
         localizedResources.forEach { (locale, resources) ->
             val homeSummary = resources.plurals["home_summary"].orEmpty()
             assertEquals("$locale home_summary must support exactly-one copy", setOf("one", "other"), homeSummary.keys)
-            assertTrue("$locale home_summary[one] must include the trip count", homeSummary["one"].orEmpty().contains("%1$d"))
-            assertTrue("$locale home_summary[other] must include the trip count", homeSummary["other"].orEmpty().contains("%1$d"))
+            assertTrue("$locale home_summary[one] must include the trip count", homeSummary["one"].orEmpty().contains("%1${'$'}d"))
+            assertTrue("$locale home_summary[other] must include the trip count", homeSummary["other"].orEmpty().contains("%1${'$'}d"))
         }
 
         val homeScreen = projectFile("app/src/main/java/com/dobyllm/packly/feature/home/HomeScreen.kt").readUtf8Text()
@@ -77,12 +77,13 @@ class I18nCoverageTest {
         }
 
         val sourceRoot = projectPath("app/src/main/java/com/dobyllm/packly")
-        val fontBypasses = Files.walk(sourceRoot)
-            .filter { Files.isRegularFile(it) }
-            .filter { it.toString().endsWith(".kt") }
-            .filterNot { sourceRoot.relativize(it).toString() == "ui/theme/Type.kt" }
-            .toList()
-            .flatMap { file ->
+        val fontBypasses = Files.walk(sourceRoot).use { paths ->
+            paths.iterator().asSequence()
+                .filter { Files.isRegularFile(it) }
+                .filter { it.toString().endsWith(".kt") }
+                .filterNot { sourceRoot.relativize(it).toString() == "ui/theme/Type.kt" }
+                .toList()
+        }.flatMap { file ->
                 val relativePath = sourceRoot.relativize(file).toString()
                 file.readUtf8Text().lineSequence().mapIndexedNotNull { index, line ->
                     if (line.contains("fontFamily") || line.contains("FontFamily")) "$relativePath:${index + 1}: ${line.trim()}" else null
