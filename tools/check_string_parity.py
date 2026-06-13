@@ -276,6 +276,72 @@ def validate_localized_english(resources_by_locale: dict[str, Resources]) -> lis
     return errors
 
 
+def validate_incoming_trip_summary_plural(resources_by_locale: dict[str, Resources]) -> list[str]:
+    """Keep the home hero on Android plurals so exactly-one trips read singular."""
+    errors: list[str] = []
+    repo_root = Path(__file__).resolve().parents[1]
+    for locale, resources in resources_by_locale.items():
+        home_summary = resources.plurals.get("home_summary")
+        if not home_summary:
+            errors.append(f"{locale}:plurals/home_summary is required for upcoming-trip copy")
+            continue
+        missing = {"one", "other"} - set(home_summary)
+        if missing:
+            errors.append(f"{locale}:plurals/home_summary missing quantities: {sorted(missing)}")
+        for quantity in ("one", "other"):
+            value = home_summary.get(quantity, "")
+            if "%1$d" not in value:
+                errors.append(f"{locale}:plurals/home_summary[{quantity}] must include %1$d")
+
+    home_screen = repo_root / "app/src/main/java/com/dobyllm/packly/feature/home/HomeScreen.kt"
+    source = home_screen.read_text()
+    if "pluralStringResource(" not in source or "R.plurals.home_summary" not in source:
+        errors.append("HomeScreen.kt must render upcoming-trip summary with pluralStringResource(R.plurals.home_summary)")
+    return errors
+
+
+def validate_plus_jakarta_typography(repo_root: Path) -> list[str]:
+    """Guard the deterministic bundled-font rollout from ad-hoc font overrides."""
+    errors: list[str] = []
+    theme_type = repo_root / "app/src/main/java/com/dobyllm/packly/ui/theme/Type.kt"
+    theme_source = theme_type.read_text()
+    required_snippets = (
+        "val PlusJakartaSans = FontFamily(",
+        "R.font.plus_jakarta_sans_400",
+        "R.font.plus_jakarta_sans_500",
+        "R.font.plus_jakarta_sans_600",
+        "R.font.plus_jakarta_sans_700",
+        "R.font.plus_jakarta_sans_800",
+        "fontFamily = PlusJakartaSans",
+        "bodyLarge = packlyTextStyle(16, 24, FontWeight.Normal)",
+        "bodyMedium = packlyTextStyle(16, 24, FontWeight.Normal)",
+        "labelMedium = packlyTextStyle(12, 16, FontWeight.SemiBold, 0.6f)",
+    )
+    for snippet in required_snippets:
+        if snippet not in theme_source:
+            errors.append(f"{theme_type.relative_to(repo_root)} missing Plus Jakarta typography snippet `{snippet}`")
+
+    theme = repo_root / "app/src/main/java/com/dobyllm/packly/ui/theme/Theme.kt"
+    if "typography = PacklyTypography" not in theme.read_text():
+        errors.append(f"{theme.relative_to(repo_root)} must install PacklyTypography in MaterialTheme")
+
+    font_dir = repo_root / "app/src/main/res/font"
+    for weight in (400, 500, 600, 700, 800):
+        if not (font_dir / f"plus_jakarta_sans_{weight}.ttf").exists():
+            errors.append(f"app/src/main/res/font/plus_jakarta_sans_{weight}.ttf is required")
+
+    source_root = repo_root / "app/src/main/java/com/dobyllm/packly"
+    allowed_font_family_file = "ui/theme/Type.kt"
+    for path in source_root.rglob("*.kt"):
+        relative = path.relative_to(source_root).as_posix()
+        if relative == allowed_font_family_file:
+            continue
+        source = path.read_text()
+        if "fontFamily" in source or "FontFamily" in source:
+            errors.append(f"{relative} must not bypass PacklyTypography with direct fontFamily/FontFamily usage")
+    return errors
+
+
 def validate_source_i18n(repo_root: Path) -> list[str]:
     errors: list[str] = []
     source_root = repo_root / "app" / "src" / "main" / "java" / "com" / "dobyllm" / "packly"
@@ -366,6 +432,8 @@ def main() -> int:
     errors.extend(validate_placeholders(resources_by_locale))
     errors.extend(validate_default_count_resources(resources_by_locale["values"]))
     errors.extend(validate_localized_english(resources_by_locale))
+    errors.extend(validate_incoming_trip_summary_plural(resources_by_locale))
+    errors.extend(validate_plus_jakarta_typography(repo_root))
     errors.extend(validate_source_i18n(repo_root))
     errors.extend(validate_duplicate_copy_name_localized(repo_root))
     errors.extend(validate_aab_language_split_disabled(repo_root))

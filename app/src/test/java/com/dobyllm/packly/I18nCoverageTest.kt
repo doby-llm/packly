@@ -26,6 +26,77 @@ class I18nCoverageTest {
     }
 
     @Test
+    fun homeSummaryUsesSingularAndPluralResourcesInEveryLocale() {
+        val defaultResources = resources("app/src/main/res/values/strings.xml")
+        val spanishResources = resources("app/src/main/res/values-es/strings.xml")
+        val germanResources = resources("app/src/main/res/values-de/strings.xml")
+        val localizedResources = mapOf(
+            "values" to defaultResources,
+            "values-es" to spanishResources,
+            "values-de" to germanResources,
+        )
+
+        localizedResources.forEach { (locale, resources) ->
+            val homeSummary = resources.plurals["home_summary"].orEmpty()
+            assertEquals("$locale home_summary must support exactly-one copy", setOf("one", "other"), homeSummary.keys)
+            assertTrue("$locale home_summary[one] must include the trip count", homeSummary["one"].orEmpty().contains("%1$d"))
+            assertTrue("$locale home_summary[other] must include the trip count", homeSummary["other"].orEmpty().contains("%1$d"))
+        }
+
+        val homeScreen = projectFile("app/src/main/java/com/dobyllm/packly/feature/home/HomeScreen.kt").readUtf8Text()
+        assertTrue(homeScreen.contains("pluralStringResource("))
+        assertTrue(homeScreen.contains("R.plurals.home_summary"))
+    }
+
+    @Test
+    fun plusJakartaSansIsTheOnlyComposeFontFamily() {
+        val typeSource = projectFile("app/src/main/java/com/dobyllm/packly/ui/theme/Type.kt").readUtf8Text()
+        listOf(
+            "val PlusJakartaSans = FontFamily(",
+            "R.font.plus_jakarta_sans_400",
+            "R.font.plus_jakarta_sans_500",
+            "R.font.plus_jakarta_sans_600",
+            "R.font.plus_jakarta_sans_700",
+            "R.font.plus_jakarta_sans_800",
+            "fontFamily = PlusJakartaSans",
+            "bodyLarge = packlyTextStyle(16, 24, FontWeight.Normal)",
+            "bodyMedium = packlyTextStyle(16, 24, FontWeight.Normal)",
+            "labelMedium = packlyTextStyle(12, 16, FontWeight.SemiBold, 0.6f)",
+        ).forEach { snippet ->
+            assertTrue("Type.kt must keep bundled Plus Jakarta typography snippet: $snippet", typeSource.contains(snippet))
+        }
+
+        val themeSource = projectFile("app/src/main/java/com/dobyllm/packly/ui/theme/Theme.kt").readUtf8Text()
+        assertTrue(themeSource.contains("typography = PacklyTypography"))
+
+        listOf(400, 500, 600, 700, 800).forEach { weight ->
+            assertTrue(
+                "Bundled Plus Jakarta Sans $weight resource must exist",
+                Files.exists(projectPath("app/src/main/res/font/plus_jakarta_sans_$weight.ttf")),
+            )
+        }
+
+        val sourceRoot = projectPath("app/src/main/java/com/dobyllm/packly")
+        val fontBypasses = Files.walk(sourceRoot)
+            .filter { Files.isRegularFile(it) }
+            .filter { it.toString().endsWith(".kt") }
+            .filterNot { sourceRoot.relativize(it).toString() == "ui/theme/Type.kt" }
+            .toList()
+            .flatMap { file ->
+                val relativePath = sourceRoot.relativize(file).toString()
+                file.readUtf8Text().lineSequence().mapIndexedNotNull { index, line ->
+                    if (line.contains("fontFamily") || line.contains("FontFamily")) "$relativePath:${index + 1}: ${line.trim()}" else null
+                }.toList()
+            }
+
+        assertTrue(
+            "All Compose text should inherit Plus Jakarta Sans from PacklyTypography; direct font overrides bypass it:\n" +
+                fontBypasses.joinToString("\n"),
+            fontBypasses.isEmpty(),
+        )
+    }
+
+    @Test
     fun stringAndPluralFormatPlaceholdersMatchAcrossLocales() {
         val defaultResources = resources("app/src/main/res/values/strings.xml")
         val localizedResources = listOf(
