@@ -11,8 +11,9 @@ import com.dobyllm.packly.core.model.InstantString
 import com.dobyllm.packly.core.model.ItemId
 import com.dobyllm.packly.core.model.ListEntryId
 import com.dobyllm.packly.core.model.ListId
-import com.dobyllm.packly.core.model.PacklyListEntry
 import com.dobyllm.packly.core.model.PacklyAppDocument
+import com.dobyllm.packly.core.model.PacklyList
+import com.dobyllm.packly.core.model.PacklyListEntry
 import com.dobyllm.packly.core.model.TripStatus
 
 @Stable
@@ -100,11 +101,16 @@ class CreateTripDraftState(
         }
     }
 
-    fun removeSourceItems(itemId: ItemId, sourceEntries: List<PacklyListEntry>) {
+    fun removeSourceItems(itemId: ItemId, sourceLists: List<PacklyList>) {
+        val sourceEntries = sourceLists.flatMap { it.entries }
         val matchingEntryIds = sourceEntries.mapNotNull { entry -> entry.id.takeIf { entry.itemId == itemId } }.toSet()
         selectedListEntryIds = selectedListEntryIds - matchingEntryIds
         selectedSourceListIds = selectedSourceListIds.filter { listId ->
-            sourceEntries.any { entry -> entry.id in selectedListEntryIds } || listId !in selectedSourceListIds
+            sourceLists
+                .firstOrNull { it.id == listId }
+                ?.entries
+                .orEmpty()
+                .any { entry -> entry.id in selectedListEntryIds }
         }
         selectedItemIds = selectedItemIds - itemId
         syncQuantitiesFor(selectedItemIds + sourceEntries.mapNotNull { entry -> entry.itemId.takeIf { entry.id in selectedListEntryIds } })
@@ -112,7 +118,6 @@ class CreateTripDraftState(
 
     fun toggleItem(itemId: ItemId) {
         selectedItemIds = if (itemId in selectedItemIds) selectedItemIds - itemId else selectedItemIds + itemId
-        syncQuantitiesFor(selectedItemIds)
     }
 
     fun setQuantity(itemId: ItemId, quantity: Int) {

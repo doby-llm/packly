@@ -28,7 +28,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.FlightTakeoff
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
@@ -79,7 +78,6 @@ import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.R
 import com.dobyllm.packly.core.model.CategoryId
 import com.dobyllm.packly.core.model.InstantString
-import com.dobyllm.packly.core.model.ItemId
 import com.dobyllm.packly.core.model.ListId
 import com.dobyllm.packly.core.model.PacklyAppDocument
 import com.dobyllm.packly.core.model.PacklyItem
@@ -87,6 +85,9 @@ import com.dobyllm.packly.core.model.PacklyList
 import com.dobyllm.packly.core.model.PacklyListEntry
 import com.dobyllm.packly.core.time.PacklyDeadlineFormatter
 import com.dobyllm.packly.notification.canPostPacklyNotifications
+import com.dobyllm.packly.ui.component.CategoryRowsContainer
+import com.dobyllm.packly.ui.component.CategorySectionCard
+import com.dobyllm.packly.ui.component.ItemRowDivider
 import com.dobyllm.packly.ui.i18n.displayDescription
 import com.dobyllm.packly.ui.i18n.displayItemNameSnapshot
 import com.dobyllm.packly.ui.i18n.displayLabel
@@ -255,9 +256,11 @@ fun CreateTripItemsScreen(
 ) {
     var query by remember { mutableStateOf("") }
     var selectedCategoryId by remember { mutableStateOf<CategoryId?>(null) }
+    val categories = doc.categories.filterNot { it.isArchived }.sortedBy { it.sortOrder }
     val activeItems = doc.items.filterNot { it.isArchived }
     val selectedLists = draftState.selectedSourceListIds.mapNotNull { listId -> doc.lists.firstOrNull { it.id == listId && !it.isArchived } }
     val sourceEntries = selectedLists.flatMap { list -> list.entries.sortedBy(PacklyListEntry::sortOrder).filter { it.id in draftState.selectedListEntryIds } }
+    val sourceEntryByItemId = sourceEntries.mapNotNull { entry -> entry.itemId?.let { itemId -> itemId to entry } }.toMap()
     val sourceItemIds = sourceEntries.mapNotNull { it.itemId }.toSet()
     val selectedIdsForQuantity = sourceItemIds + draftState.selectedItemIds
     LaunchedEffect(selectedIdsForQuantity) { draftState.syncQuantitiesFor(selectedIdsForQuantity) }
@@ -265,7 +268,8 @@ fun CreateTripItemsScreen(
         (selectedCategoryId == null || item.categoryId == selectedCategoryId) &&
             (query.isBlank() || item.displayName().contains(query.trim(), ignoreCase = true))
     }
-    val reviewItems = buildTripReviewItems(selectedIdsForQuantity, activeItems, sourceEntries)
+    val filteredItemsByCategory = filteredItems.groupBy { it.categoryId }
+    val hasVisibleItems = categories.any { category -> filteredItemsByCategory[category.id].orEmpty().isNotEmpty() }
     val canFinish = draftState.name.trim().isNotEmpty() && !draftState.duplicateNameIn(doc) && !draftState.reminderDraftIncomplete
 
     BackHandler(onBack = onBack)
@@ -302,41 +306,46 @@ fun CreateTripItemsScreen(
         }
         item {
             CategoryFilterRow(
-                categories = doc.categories.filterNot { it.isArchived }.sortedBy { it.sortOrder },
+                categories = categories,
                 selectedCategoryId = selectedCategoryId,
                 onSelected = { selectedCategoryId = it },
             )
         }
         when {
             activeItems.isEmpty() -> item { EmptyStateCard(R.string.create_trip_items_empty_title, R.string.create_trip_items_empty_body) }
-            filteredItems.isEmpty() -> item { EmptyStateCard(R.string.no_matches_title, R.string.no_matches_body) }
-            else -> items(filteredItems, key = { it.id }) { item ->
-                val includedFromList = item.id in sourceItemIds
-                ItemSelectionCard(
-                    item = item,
-                    category = doc.categories.firstOrNull { it.id == item.categoryId }?.displayLabel() ?: stringResource(R.string.unknown_category),
-                    selected = item.id in draftState.selectedItemIds || includedFromList,
-                    includedFromList = includedFromList,
-                    onToggle = { if (includedFromList) draftState.removeSourceItems(item.id, sourceEntries) else draftState.toggleItem(item.id) },
-                )
-            }
-        }
-        if (reviewItems.isNotEmpty()) {
-            item {
-                Text(
-                    text = stringResource(R.string.section_review_quantities),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-            items(reviewItems, key = { it.itemId }) { reviewItem ->
-                QuantityReviewRow(
-                    name = reviewItem.name,
-                    category = doc.categories.firstOrNull { it.id == reviewItem.categoryId }?.displayLabel() ?: stringResource(R.string.unknown_category),
-                    quantity = draftState.itemQuantities[reviewItem.itemId] ?: 1,
-                    onQuantityChange = { draftState.setQuantity(reviewItem.itemId, it) },
-                    onRemove = { if (reviewItem.itemId in sourceItemIds) draftState.removeSourceItems(reviewItem.itemId, sourceEntries) else draftState.toggleItem(reviewItem.itemId) },
-                )
+            !hasVisibleItems -> item { EmptyStateCard(R.string.no_matches_title, R.string.no_matches_body) }
+            else -> categories.forEach { category ->
+                val sectionItems = filteredItemsByCategory[category.id].orEmpty()
+                if (sectionItems.isNotEmpty()) {
+                    item(key = "create_trip_category_${category.id}") {
+                        val selectedCount = sectionItems.count { item -> item.id in draftState.selectedItemIds || item.id in sourceItemIds }
+                        CategorySectionCard(
+                            category = category,
+                            countLabel = if (selectedCount > 0) {
+                                pluralStringResource(R.plurals.selected_count_label, selectedCount, selectedCount)
+                            } else {
+                                pluralStringResource(R.plurals.item_count_lower, sectionItems.size, sectionItems.size)
+                            },
+                        ) {
+                            CategoryRowsContainer {
+                                sectionItems.forEachIndexed { index, item ->
+                                    val includedFromList = item.id in sourceItemIds
+                                    val selected = item.id in draftState.selectedItemIds || includedFromList
+                                    ItemSelectionRow(
+                                        itemName = sourceEntryByItemId[item.id]?.displayItemNameSnapshot() ?: item.displayName(),
+                                        category = category.displayLabel(),
+                                        selected = selected,
+                                        includedFromList = includedFromList,
+                                        quantity = draftState.itemQuantities[item.id] ?: 1,
+                                        onToggle = { if (includedFromList) draftState.removeSourceItems(item.id, selectedLists) else draftState.toggleItem(item.id) },
+                                        onQuantityChange = { draftState.setQuantity(item.id, it) },
+                                    )
+                                    if (index < sectionItems.lastIndex) ItemRowDivider()
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -657,52 +666,59 @@ private fun CategoryFilterRow(categories: List<com.dobyllm.packly.core.model.Pac
 }
 
 @Composable
-private fun ItemSelectionCard(item: PacklyItem, category: String, selected: Boolean, includedFromList: Boolean, onToggle: () -> Unit) {
-    val itemName = item.displayName()
+private fun ItemSelectionRow(
+    itemName: String,
+    category: String,
+    selected: Boolean,
+    includedFromList: Boolean,
+    quantity: Int,
+    onToggle: () -> Unit,
+    onQuantityChange: (Int) -> Unit,
+) {
     val selectionContentDescription = stringResource(
         if (selected) R.string.a11y_selectable_item_selected else R.string.a11y_selectable_item_not_selected,
         itemName,
         category,
     )
-    Surface(
-        onClick = onToggle,
-        modifier = Modifier.fillMaxWidth().semantics {
-            role = Role.Checkbox
-            contentDescription = selectionContentDescription
-        },
-        shape = RoundedCornerShape(PacklyRadius.lg),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 56.dp)
+            .padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.base)
+            .semantics {
+                role = Role.Checkbox
+                contentDescription = selectionContentDescription
+            },
+        horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(modifier = Modifier.padding(PacklySpacing.sm), horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base), verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = selected, onCheckedChange = { onToggle() })
-            Column(Modifier.weight(1f)) {
-                Text(itemName, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(if (includedFromList) stringResource(R.string.already_included_suffix) else category, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+        Checkbox(checked = selected, onCheckedChange = { onToggle() })
+        Column(Modifier.weight(1f)) {
+            Text(itemName, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(if (includedFromList) stringResource(R.string.already_included_suffix) else category, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        InlineQuantityStepper(
+            itemName = itemName,
+            quantity = quantity,
+            enabled = selected,
+            onQuantityChange = onQuantityChange,
+        )
     }
 }
 
 @Composable
-private fun QuantityReviewRow(name: String, category: String, quantity: Int, onQuantityChange: (Int) -> Unit, onRemove: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(PacklyRadius.lg),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHigh),
-    ) {
-        Row(modifier = Modifier.padding(PacklySpacing.sm), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(name, style = MaterialTheme.typography.bodyLarge)
-                Text(category, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
-                IconButton(onClick = onRemove) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.a11y_remove_item_from_trip, name)) }
-                IconButton(onClick = { onQuantityChange(quantity - 1) }, enabled = quantity > 1) { Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.a11y_decrease_quantity, name)) }
-                Text(stringResource(R.string.quantity_times, quantity), style = MaterialTheme.typography.titleMedium)
-                IconButton(onClick = { onQuantityChange(quantity + 1) }) { Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.a11y_increase_quantity, name)) }
-            }
+private fun InlineQuantityStepper(itemName: String, quantity: Int, enabled: Boolean, onQuantityChange: (Int) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
+        IconButton(onClick = { onQuantityChange(quantity - 1) }, enabled = enabled && quantity > 1) {
+            Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.a11y_decrease_quantity, itemName))
+        }
+        Text(
+            text = stringResource(R.string.quantity_times, quantity),
+            style = MaterialTheme.typography.titleMedium,
+            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        IconButton(onClick = { onQuantityChange(quantity + 1) }, enabled = enabled) {
+            Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.a11y_increase_quantity, itemName))
         }
     }
 }
@@ -782,19 +798,3 @@ private fun CreateTripDiscardDialog(draftState: CreateTripDraftState, onCloseCon
 private fun deadlineDateMillis(date: LocalDate?): Long? = date?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli()
 private fun Long.toLocalDateUtc(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
 private fun LocalDate.formatCreateTripDate(): String = format(DateTimeFormatter.ofPattern("EEE, MMM d", Locale.getDefault()))
-
-private data class TripReviewItem(val itemId: ItemId, val name: String, val categoryId: CategoryId, val sortOrder: Int)
-
-@Composable
-private fun buildTripReviewItems(selectedItemIds: Set<ItemId>, items: List<PacklyItem>, sourceEntries: List<PacklyListEntry>): List<TripReviewItem> {
-    val sourceReviewItems = sourceEntries.mapNotNull { entry ->
-        val itemId = entry.itemId ?: return@mapNotNull null
-        if (itemId !in selectedItemIds) return@mapNotNull null
-        TripReviewItem(itemId, entry.displayItemNameSnapshot(), entry.categoryIdSnapshot, entry.sortOrder)
-    }
-    val sourceIds = sourceReviewItems.map { it.itemId }.toSet()
-    val isolatedReviewItems = items
-        .filter { item -> item.id in selectedItemIds && item.id !in sourceIds }
-        .mapIndexed { index, item -> TripReviewItem(item.id, item.displayName(), item.categoryId, sourceEntries.size + index) }
-    return (sourceReviewItems + isolatedReviewItems).distinctBy { it.itemId }.sortedBy { it.sortOrder }
-}
