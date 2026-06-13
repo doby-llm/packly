@@ -119,6 +119,26 @@ class I18nCoverageTest {
     }
 
     @Test
+    fun createTripDeadlineFlowRequestsNotificationPermissionWhenReminderIsSet() {
+        val createTripDetailsSource = projectFile("app/src/main/java/com/dobyllm/packly/feature/trips/create/CreateTripDetailsScreen.kt").readUtf8Text()
+        val notificationSource = projectFile("app/src/main/java/com/dobyllm/packly/notification/DeadlineReminderScheduler.kt").readUtf8Text()
+
+        listOf(
+            "rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission())",
+            "Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU",
+            "requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)",
+            "onReminderComplete = {",
+            "if (draftState.packBy != null) requestNotificationPermissionIfNeeded()",
+            "deadline != null && !notificationsAvailable && !notificationPermissionRequestPending",
+            "context.packlyNotificationSettingsIntent()",
+        ).forEach { snippet ->
+            assertTrue("Create-trip deadline step must keep notification permission flow snippet: $snippet", createTripDetailsSource.contains(snippet))
+        }
+
+        assertTrue(notificationSource.contains("NotificationManagerCompat.from(context).areNotificationsEnabled()"))
+    }
+
+    @Test
     fun stringAndPluralFormatPlaceholdersMatchAcrossLocales() {
         val defaultResources = resources("app/src/main/res/values/strings.xml")
         val localizedResources = listOf(

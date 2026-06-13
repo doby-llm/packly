@@ -36,6 +36,7 @@
     <string name="action_cancel">Cancel</string>
     <string name="action_reset">Reset</string>
     <string name="action_clear">Clear</string>
+    <string name="action_open_settings">Open settings</string>
     <string name="action_modify">Modify</string>
     <string name="action_start_packing">Start packing</string>
     <string name="action_continue_packing">Continue packing</string>

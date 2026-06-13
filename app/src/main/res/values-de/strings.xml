@@ -36,6 +36,7 @@
     <string name="action_cancel">Abbrechen</string>
     <string name="action_reset">Zurücksetzen</string>
     <string name="action_clear">Löschen</string>
+    <string name="action_open_settings">Einstellungen öffnen</string>
     <string name="action_modify">Bearbeiten</string>
     <string name="action_start_packing">Packen starten</string>
     <string name="action_continue_packing">Weiter packen</string>

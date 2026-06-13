@@ -2,7 +2,15 @@
 
 package com.dobyllm.packly.feature.trips.create
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -56,6 +64,7 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +73,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
@@ -75,6 +85,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.dobyllm.packly.R
 import com.dobyllm.packly.core.model.CategoryId
 import com.dobyllm.packly.core.model.InstantString
@@ -171,6 +184,39 @@ fun CreateTripDeadlineScreen(
     onBack: () -> Unit,
     onNext: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var notificationsAvailable by remember { mutableStateOf(canPostPacklyNotifications(context)) }
+    var notificationPermissionRequestPending by remember { mutableStateOf(false) }
+    var notificationPermissionRequested by remember { mutableStateOf(false) }
+    val requestNotificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        notificationPermissionRequestPending = false
+        notificationsAvailable = granted && canPostPacklyNotifications(context)
+    }
+
+    DisposableEffect(lifecycleOwner, context) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                notificationsAvailable = canPostPacklyNotifications(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    fun requestNotificationPermissionIfNeeded() {
+        notificationsAvailable = canPostPacklyNotifications(context)
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !notificationsAvailable &&
+            !notificationPermissionRequested
+        ) {
+            notificationPermissionRequested = true
+            notificationPermissionRequestPending = true
+            requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
     BackHandler(onBack = onBack)
     CreateTripStepScaffold(
         step = 2,
@@ -183,16 +229,29 @@ fun CreateTripDeadlineScreen(
                 onBack = onBack,
                 nextLabel = stringResource(R.string.action_continue),
                 nextEnabled = !draftState.reminderDraftIncomplete,
-                onNext = onNext,
+                onNext = {
+                    if (draftState.packBy != null) requestNotificationPermissionIfNeeded()
+                    onNext()
+                },
             )
         },
     ) {
         item {
             PackByPickerCard(
                 deadline = draftState.packBy,
+                notificationsAvailable = notificationsAvailable,
+                notificationPermissionRequestPending = notificationPermissionRequestPending,
                 onDeadlineChange = draftState::updatePackBy,
                 onIncompleteChange = draftState::updateReminderDraftIncomplete,
                 onClear = draftState::clearPackBy,
+                onReminderComplete = {
+                    notificationsAvailable = canPostPacklyNotifications(context)
+                    requestNotificationPermissionIfNeeded()
+                },
+                onOpenNotificationSettings = {
+                    context.startActivity(context.packlyNotificationSettingsIntent())
+                    notificationsAvailable = canPostPacklyNotifications(context)
+                },
             )
         }
     }
@@ -430,9 +489,13 @@ private fun CreateTripProgressHeader(step: Int, title: String, body: String) {
 @Composable
 private fun PackByPickerCard(
     deadline: InstantString?,
+    notificationsAvailable: Boolean,
+    notificationPermissionRequestPending: Boolean,
     onDeadlineChange: (InstantString?) -> Unit,
     onIncompleteChange: (Boolean) -> Unit,
     onClear: () -> Unit,
+    onReminderComplete: () -> Unit,
+    onOpenNotificationSettings: () -> Unit,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -440,7 +503,7 @@ private fun PackByPickerCard(
     val hasIncompleteDraft = pendingDate != null
     val selectedDate = PacklyDeadlineFormatter.localDate(deadline)
     val selectedTime = PacklyDeadlineFormatter.localTime(deadline) ?: LocalTime.now().withSecond(0).withNano(0)
-    val notificationsAvailable = canPostPacklyNotifications(androidx.compose.ui.platform.LocalContext.current)
+    val showNotificationsOffWarning = deadline != null && !notificationsAvailable && !notificationPermissionRequestPending
     val selectedDateDisplay = pendingDate?.formatCreateTripDate()
         ?: PacklyDeadlineFormatter.formatDate(deadline)
         ?: stringResource(R.string.create_trip_departure_date_placeholder)
@@ -464,7 +527,7 @@ private fun PackByPickerCard(
             supportingText = when {
                 hasIncompleteDraft -> stringResource(R.string.create_trip_pack_by_incomplete)
                 deadline != null && notificationsAvailable -> stringResource(R.string.create_trip_reminders_body_enabled)
-                deadline != null -> stringResource(R.string.deadline_notifications_off)
+                showNotificationsOffWarning -> stringResource(R.string.deadline_notifications_off)
                 else -> stringResource(R.string.create_trip_precise_reminder_helper)
             },
             isError = hasIncompleteDraft,
@@ -480,6 +543,12 @@ private fun PackByPickerCard(
             },
             modifier = Modifier.align(Alignment.End).defaultMinSize(minHeight = 48.dp),
         ) { Text(stringResource(R.string.action_clear)) }
+        if (showNotificationsOffWarning) {
+            TextButton(
+                onClick = onOpenNotificationSettings,
+                modifier = Modifier.align(Alignment.End).defaultMinSize(minHeight = 48.dp),
+            ) { Text(stringResource(R.string.action_open_settings)) }
+        }
     }
 
     if (showDatePicker) {
@@ -509,12 +578,24 @@ private fun PackByPickerCard(
                     onDeadlineChange(PacklyDeadlineFormatter.toInstantString(date, LocalTime.of(timePickerState.hour, timePickerState.minute)))
                     pendingDate = null
                     showTimePicker = false
+                    onReminderComplete()
                 }) { Text(stringResource(R.string.action_save_time)) }
             },
             dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }
+
+private fun Context.packlyNotificationSettingsIntent(): Intent =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+        }
+    } else {
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+        }
+    }
 
 @Composable
 private fun ReminderSelectionCard(
