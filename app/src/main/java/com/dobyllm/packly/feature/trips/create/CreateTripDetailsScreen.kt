@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -189,9 +190,15 @@ fun CreateTripDeadlineScreen(
     var notificationsAvailable by remember { mutableStateOf(canPostPacklyNotifications(context)) }
     var notificationPermissionRequestPending by remember { mutableStateOf(false) }
     var notificationPermissionRequested by remember { mutableStateOf(false) }
-    val requestNotificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        notificationPermissionRequestPending = false
-        notificationsAvailable = granted && canPostPacklyNotifications(context)
+    val activityResultRegistryOwner = LocalActivityResultRegistryOwner.current
+    // Some create-trip hosts/previews do not provide a registry; reminder editing must remain usable.
+    val requestNotificationPermission = if (activityResultRegistryOwner != null) {
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            notificationPermissionRequestPending = false
+            notificationsAvailable = granted && canPostPacklyNotifications(context)
+        }
+    } else {
+        null
     }
 
     DisposableEffect(lifecycleOwner, context) {
@@ -212,8 +219,10 @@ fun CreateTripDeadlineScreen(
             !notificationPermissionRequested
         ) {
             notificationPermissionRequested = true
-            notificationPermissionRequestPending = true
-            requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            if (requestNotificationPermission != null) {
+                notificationPermissionRequestPending = true
+                requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
         }
     }
 

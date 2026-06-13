@@ -186,6 +186,8 @@ class I18nCoverageTest {
         val notificationSource = projectFile("app/src/main/java/com/dobyllm/packly/notification/DeadlineReminderScheduler.kt").readUtf8Text()
 
         listOf(
+            "LocalActivityResultRegistryOwner.current",
+            "val requestNotificationPermission = if (activityResultRegistryOwner != null) {",
             "rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission())",
             "Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU",
             "requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)",
