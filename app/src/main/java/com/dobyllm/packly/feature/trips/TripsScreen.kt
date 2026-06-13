@@ -133,7 +133,7 @@ private fun TripsHeader(activeCount: Int, completedCount: Int) {
     ) {
         Text(
             text = stringResource(R.string.trips_header_title),
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
         )
@@ -156,7 +156,7 @@ private fun TripsSectionTitle(title: String) {
     Text(
         text = title,
         style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurface,
     )
 }

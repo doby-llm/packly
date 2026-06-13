@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.core.model.PacklyCategory
 import com.dobyllm.packly.ui.i18n.displayLabel
@@ -45,6 +46,7 @@ fun CategoryHeader(category: PacklyCategory, countLabel: String, modifier: Modif
         Text(
             text = category.displayLabel(),
             style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )

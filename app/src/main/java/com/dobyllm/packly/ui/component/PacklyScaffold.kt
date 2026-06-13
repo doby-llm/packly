@@ -162,7 +162,7 @@ fun PacklyTopBar(
         Text(
             text = title,
             modifier = Modifier.align(Alignment.Center),
-            style = if (canNavigateBack) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineMedium,
+            style = if (canNavigateBack) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineLarge,
             color = if (title == stringResource(R.string.app_name)) PacklyPrimary else if (canNavigateBack) MaterialTheme.colorScheme.onSurface else PacklyPrimary,
             fontWeight = FontWeight.Bold,
         )
@@ -266,8 +266,8 @@ private fun PacklyBottomNavItem(
             )
             Text(
                 text = destination.label,
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
             )
         }
     }

@@ -260,8 +260,8 @@ private fun ModifyTripHeader(
         ) {
             Text(
                 text = tripName,
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.ExtraBold,
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -462,7 +462,7 @@ private fun CurrentPlanSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(stringResource(R.string.current_plan_items_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(R.string.current_plan_items_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             CountChip(pluralStringResource(R.plurals.items_uppercase_count, entries.size, entries.size))
         }
 
@@ -670,7 +670,7 @@ private fun BrowseSectionHeader(title: String) {
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(title, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
+        Text(title, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 

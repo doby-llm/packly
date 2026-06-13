@@ -181,7 +181,7 @@ private fun ListsHeader() {
     ) {
         Text(
             text = stringResource(R.string.lists_header_title),
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
         )

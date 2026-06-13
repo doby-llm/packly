@@ -59,11 +59,73 @@ class I18nCoverageTest {
             "R.font.plus_jakarta_sans_700",
             "R.font.plus_jakarta_sans_800",
             "fontFamily = PlusJakartaSans",
+            "displayLarge = packlyTextStyle(48, 56, FontWeight.ExtraBold, -0.96f)",
+            "headlineLarge = packlyTextStyle(28, 36, FontWeight.Bold)",
             "bodyLarge = packlyTextStyle(16, 24, FontWeight.Normal)",
             "bodyMedium = packlyTextStyle(16, 24, FontWeight.Normal)",
+            "labelLarge = packlyTextStyle(14, 20, FontWeight.SemiBold, 0.7f)",
             "labelMedium = packlyTextStyle(12, 16, FontWeight.SemiBold, 0.6f)",
         ).forEach { snippet ->
             assertTrue("Type.kt must keep bundled Plus Jakarta typography snippet: $snippet", typeSource.contains(snippet))
+        }
+
+        val scaffoldSource = projectFile("app/src/main/java/com/dobyllm/packly/ui/component/PacklyScaffold.kt").readUtf8Text()
+        listOf(
+            "style = if (canNavigateBack) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineLarge",
+            "style = MaterialTheme.typography.labelMedium",
+            "fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold",
+        ).forEach { snippet ->
+            assertTrue("Packly scaffold must keep effective app-title/nav typography snippet: $snippet", scaffoldSource.contains(snippet))
+        }
+        assertTrue(
+            "Bottom navigation labels must not over-bold the baseline label style",
+            !scaffoldSource.contains("MaterialTheme.typography.labelMedium.copy"),
+        )
+
+        val effectiveTypographySurfaces = mapOf(
+            "app/src/main/java/com/dobyllm/packly/feature/home/HomeScreen.kt" to listOf(
+                "style = MaterialTheme.typography.headlineLarge",
+                "fontWeight = FontWeight.Bold",
+                "style = MaterialTheme.typography.bodyLarge",
+                "style = MaterialTheme.typography.titleLarge",
+            ),
+            "app/src/main/java/com/dobyllm/packly/feature/lists/ListsScreen.kt" to listOf(
+                "style = MaterialTheme.typography.headlineLarge",
+                "fontWeight = FontWeight.Bold",
+            ),
+            "app/src/main/java/com/dobyllm/packly/feature/trips/TripsScreen.kt" to listOf(
+                "style = MaterialTheme.typography.headlineLarge",
+                "style = MaterialTheme.typography.titleMedium",
+                "fontWeight = FontWeight.Bold",
+            ),
+            "app/src/main/java/com/dobyllm/packly/feature/trips/TripDetailScreen.kt" to listOf(
+                "style = MaterialTheme.typography.headlineLarge",
+                "style = MaterialTheme.typography.titleLarge",
+                "fontWeight = FontWeight.Bold",
+                "style = MaterialTheme.typography.bodyLarge",
+            ),
+            "app/src/main/java/com/dobyllm/packly/ui/component/ListCard.kt" to listOf(
+                "style = MaterialTheme.typography.titleMedium",
+                "fontWeight = FontWeight.Bold",
+                "style = MaterialTheme.typography.bodySmall",
+            ),
+            "app/src/main/java/com/dobyllm/packly/ui/component/TripCard.kt" to listOf(
+                "style = MaterialTheme.typography.titleMedium",
+                "fontWeight = FontWeight.Bold",
+                "style = MaterialTheme.typography.bodySmall",
+                "style = MaterialTheme.typography.labelMedium",
+            ),
+            "app/src/main/java/com/dobyllm/packly/ui/component/CategoryHeader.kt" to listOf(
+                "style = MaterialTheme.typography.titleMedium",
+                "fontWeight = FontWeight.SemiBold",
+                "style = MaterialTheme.typography.labelMedium",
+            ),
+        )
+        effectiveTypographySurfaces.forEach { (path, snippets) ->
+            val source = projectFile(path).readUtf8Text()
+            snippets.forEach { snippet ->
+                assertTrue("$path must keep effective typography snippet: $snippet", source.contains(snippet))
+            }
         }
 
         val themeSource = projectFile("app/src/main/java/com/dobyllm/packly/ui/theme/Theme.kt").readUtf8Text()

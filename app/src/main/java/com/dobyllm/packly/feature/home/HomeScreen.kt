@@ -103,9 +103,9 @@ private fun HomeHero(activeTripCount: Int) {
     Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm)) {
         Text(
             text = greeting,
-            style = MaterialTheme.typography.displayLarge,
+            style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.Bold,
         )
         Text(
             text = pluralStringResource(
