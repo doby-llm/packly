@@ -531,27 +531,20 @@ private fun PackByPickerCard(
     Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm)) {
         ReminderSelectionCard(
             icon = Icons.Rounded.CalendarMonth,
-            title = stringResource(R.string.create_trip_departure_date_title),
             value = selectedDateDisplay,
-            supportingText = stringResource(R.string.create_trip_reminders_body_disabled),
-            actionLabel = if (deadline == null && !hasIncompleteDraft) stringResource(R.string.action_choose_date) else stringResource(R.string.action_change),
             onAction = { showDatePicker = true },
         )
         ReminderSelectionCard(
             icon = Icons.Rounded.Schedule,
-            title = stringResource(R.string.create_trip_departure_time_title),
             value = selectedTimeDisplay,
-            supportingText = when {
-                hasIncompleteDraft -> stringResource(R.string.create_trip_pack_by_incomplete)
-                deadline != null && notificationsAvailable -> stringResource(R.string.create_trip_reminders_body_enabled)
-                showNotificationsOffWarning -> stringResource(R.string.deadline_notifications_off)
-                else -> stringResource(R.string.create_trip_precise_reminder_helper)
-            },
             isError = hasIncompleteDraft,
-            actionLabel = if (hasIncompleteDraft) stringResource(R.string.action_choose_time) else stringResource(R.string.action_change_time),
             actionEnabled = deadline != null || hasIncompleteDraft,
             onAction = { showTimePicker = true },
         )
+        when {
+            hasIncompleteDraft -> ReminderStatusText(R.string.create_trip_pack_by_incomplete, isError = true)
+            showNotificationsOffWarning -> ReminderStatusText(R.string.deadline_notifications_off)
+        }
         TextButton(
             enabled = deadline != null || hasIncompleteDraft,
             onClick = {
@@ -600,20 +593,19 @@ private fun PackByPickerCard(
 @Composable
 private fun ReminderSelectionCard(
     icon: ImageVector,
-    title: String,
     value: String,
-    supportingText: String,
-    actionLabel: String,
     onAction: () -> Unit,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     actionEnabled: Boolean = true,
 ) {
     Surface(
+        onClick = onAction,
+        enabled = actionEnabled,
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(PacklyRadius.lg),
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHigh),
+        border = BorderStroke(1.dp, if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.surfaceContainerHigh),
         shadowElevation = 2.dp,
     ) {
         Row(
@@ -634,23 +626,24 @@ private fun ReminderSelectionCard(
                     modifier = Modifier.size(22.dp),
                 )
             }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
-                Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(
-                    text = supportingText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            OutlinedButton(
-                enabled = actionEnabled,
-                onClick = onAction,
-                modifier = Modifier.defaultMinSize(minHeight = 48.dp),
-                shape = RoundedCornerShape(PacklyRadius.default),
-            ) { Text(actionLabel) }
+            Text(
+                text = value,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+            )
         }
     }
+}
+
+@Composable
+private fun ReminderStatusText(messageRes: Int, isError: Boolean = false) {
+    Text(
+        text = stringResource(messageRes),
+        style = MaterialTheme.typography.bodySmall,
+        color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Composable
@@ -796,33 +789,41 @@ private fun ItemSelectionRow(
 @Composable
 private fun InlineQuantityStepper(itemName: String, quantity: Int, onQuantityChange: (Int) -> Unit) {
     Surface(
-        shape = RoundedCornerShape(PacklyRadius.lg),
+        shape = RoundedCornerShape(PacklyRadius.default),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Row(
-            modifier = Modifier.defaultMinSize(minHeight = 48.dp),
+            modifier = Modifier.defaultMinSize(minHeight = 44.dp).padding(horizontal = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             IconButton(
                 onClick = { onQuantityChange(quantity - 1) },
                 enabled = quantity > 1,
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(40.dp),
             ) {
-                Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.a11y_decrease_quantity, itemName))
+                Icon(
+                    Icons.Rounded.Remove,
+                    contentDescription = stringResource(R.string.a11y_decrease_quantity, itemName),
+                    modifier = Modifier.size(18.dp),
+                )
             }
             Text(
                 text = "$quantity",
-                modifier = Modifier.widthIn(min = 24.dp),
-                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.widthIn(min = 20.dp),
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             IconButton(
                 onClick = { onQuantityChange(quantity + 1) },
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(40.dp),
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.a11y_increase_quantity, itemName))
+                Icon(
+                    Icons.Rounded.Add,
+                    contentDescription = stringResource(R.string.a11y_increase_quantity, itemName),
+                    modifier = Modifier.size(18.dp),
+                )
             }
         }
     }

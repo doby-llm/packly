@@ -204,9 +204,11 @@ class I18nCoverageTest {
             "private fun InlineQuantityStepper(itemName: String, quantity: Int, onQuantityChange: (Int) -> Unit)",
             "color = MaterialTheme.colorScheme.surfaceContainerLow",
             "text = \"${'$'}quantity\"",
-            "style = MaterialTheme.typography.titleMedium",
+            "style = MaterialTheme.typography.titleSmall",
             "fontWeight = FontWeight.SemiBold",
-            "modifier = Modifier.size(48.dp)",
+            "modifier = Modifier.defaultMinSize(minHeight = 44.dp).padding(horizontal = 2.dp)",
+            "modifier = Modifier.size(40.dp)",
+            "modifier = Modifier.size(18.dp)",
         ).forEach { snippet ->
             assertTrue("Create-trip quantity UI must keep selected-only compact stepper snippet: $snippet", createTripItemsSource.contains(snippet))
         }
@@ -214,6 +216,28 @@ class I18nCoverageTest {
         assertTrue(
             "Unselected create-trip rows must not render a disabled quantity stepper",
             !createTripItemsSource.contains("enabled = selected"),
+        )
+    }
+
+    @Test
+    fun createTripReminderBoxesKeepOnlyActionValueCopy() {
+        val createTripDetailsSource = projectFile("app/src/main/java/com/dobyllm/packly/feature/trips/create/CreateTripDetailsScreen.kt").readUtf8Text()
+
+        listOf(
+            "value = selectedDateDisplay",
+            "value = selectedTimeDisplay",
+            "create_trip_departure_date_placeholder",
+            "create_trip_departure_time_placeholder",
+        ).forEach { snippet ->
+            assertTrue("Create-trip reminder boxes must keep concise action/value copy: $snippet", createTripDetailsSource.contains(snippet))
+        }
+
+        assertTrue(
+            "Create-trip reminder cards should not render repeated per-card labels/supporting copy",
+            !createTripDetailsSource.contains("title = stringResource(R.string.create_trip_departure_date_title)") &&
+                !createTripDetailsSource.contains("title = stringResource(R.string.create_trip_departure_time_title)") &&
+                !createTripDetailsSource.contains("supportingText = stringResource(R.string.create_trip_reminders_body_disabled)") &&
+                !createTripDetailsSource.contains("actionLabel: String"),
         )
     }
 
