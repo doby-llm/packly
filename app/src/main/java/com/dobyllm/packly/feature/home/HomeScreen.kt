@@ -73,7 +73,6 @@ fun HomeScreen(
                     trip.startDate?.let { start -> trip.endDate?.let { end -> "$start - $end" } ?: start },
                     trip.destination.takeIf { it.isNotBlank() },
                     pluralStringResource(R.plurals.packed_fraction_short, trip.entries.size, packed, trip.entries.size),
-                    packBy?.let { stringResource(R.string.pack_by_value, it) },
                 ).joinToString(" • ")
                 val chips = listOfNotNull(
                     trip.destination.takeIf { it.isNotBlank() },

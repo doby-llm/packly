@@ -67,7 +67,7 @@ fun TripCard(trip: PacklyTrip, onOpen: () -> Unit, onPack: () -> Unit, onDelete:
 
     TripSummaryCard(
         title = trip.name,
-        metadata = summary.metadata(packByLabel, fallbackPackedLabel),
+        metadata = summary.metadata(fallbackPackedLabel),
         percentLabel = stringResource(R.string.percent_packed, summary.progressPercent),
         progress = summary.progress,
         chips = summary.chips(packByLabel, itemCountLabel),
@@ -295,10 +295,11 @@ private data class TripSummary(
     val packBy: String?,
     val destination: String,
 ) {
-    fun metadata(packByLabel: String?, fallbackPackedLabel: String): String = dateRange
-        ?: packByLabel
-        ?: destination.takeIf { it.isNotBlank() }
-        ?: fallbackPackedLabel
+    fun metadata(fallbackPackedLabel: String): String = listOfNotNull(
+        dateRange,
+        destination.takeIf { it.isNotBlank() },
+        fallbackPackedLabel,
+    ).joinToString(" • ")
 
     fun chips(packByLabel: String?, itemCountLabel: String): List<String> = listOfNotNull(
         destination.takeIf { it.isNotBlank() },

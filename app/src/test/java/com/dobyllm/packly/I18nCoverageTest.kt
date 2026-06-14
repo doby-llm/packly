@@ -52,6 +52,21 @@ class I18nCoverageTest {
     }
 
     @Test
+    fun tripCardsKeepPackByOnlyInBadgeAndPackedCopyInMetadata() {
+        val homeScreen = projectFile("app/src/main/java/com/dobyllm/packly/feature/home/HomeScreen.kt").readUtf8Text()
+        val homeMetadataBlock = homeScreen.substringAfter("val metadata = listOfNotNull(").substringBefore("val chips =")
+        assertTrue("Home metadata must keep the packed fraction copy", homeMetadataBlock.contains("R.plurals.packed_fraction_short"))
+        assertTrue("Home metadata must not duplicate pack-by copy already shown in the badge", !homeMetadataBlock.contains("packBy?.let"))
+
+        val tripCard = projectFile("app/src/main/java/com/dobyllm/packly/ui/component/TripCard.kt").readUtf8Text()
+        val tripMetadataBlock = tripCard.substringAfter("fun metadata(").substringBefore("fun chips(")
+        assertTrue("Trips metadata must keep the packed fraction copy", tripMetadataBlock.contains("fallbackPackedLabel"))
+        assertTrue("Trips metadata must not include pack-by because chips own the pack-by badge", !tripMetadataBlock.contains("packByLabel"))
+        assertTrue("Trip chips must keep showing the pack-by badge", tripCard.contains("fun chips(packByLabel: String?, itemCountLabel: String): List<String>"))
+        assertTrue("Trip chips must keep packByLabel in the badge list", tripCard.contains("packByLabel,"))
+    }
+
+    @Test
     fun plusJakartaSansIsTheOnlyComposeFontFamily() {
         val typeSource = projectFile("app/src/main/java/com/dobyllm/packly/ui/theme/Type.kt").readUtf8Text()
         listOf(
