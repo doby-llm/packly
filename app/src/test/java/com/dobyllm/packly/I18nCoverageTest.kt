@@ -228,8 +228,11 @@ class I18nCoverageTest {
             "rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission())",
             "Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU",
             "requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)",
-            "onReminderComplete = {",
+            "LaunchedEffect(draftState.packBy, requestNotificationPermission) {",
             "if (draftState.packBy != null) requestNotificationPermissionIfNeeded()",
+            "shouldRequestPostNotificationsPermission(context) &&",
+            "!notificationPermissionRequested &&",
+            "requestNotificationPermission != null",
             "deadline != null && !notificationsAvailable && !notificationPermissionRequestPending",
             "Permission is requested automatically after date+time selection when a registry is available.",
         ).forEach { snippet ->
