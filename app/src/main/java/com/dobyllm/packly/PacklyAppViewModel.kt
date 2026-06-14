@@ -48,6 +48,32 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun addItemForTripDraft(name: String, categoryId: CategoryId, notes: String = "", onCreated: (ItemId) -> Unit) = viewModelScope.launch {
+        val trimmedName = name.trim()
+        if (trimmedName.isEmpty()) return@launch
+        val now = PacklyClock.now()
+        val newItemId = PacklyIds.item()
+        var created = false
+        repository.updateDocument { doc ->
+            if (doc.items.hasActiveItemName(trimmedName)) {
+                doc
+            } else {
+                created = true
+                doc.copy(
+                    items = doc.items + PacklyItem(
+                        id = newItemId,
+                        name = trimmedName,
+                        categoryId = categoryId,
+                        notes = notes.trim(),
+                        createdAt = now,
+                        updatedAt = now,
+                    ),
+                )
+            }
+        }
+        if (created) onCreated(newItemId)
+    }
+
     fun updateItem(itemId: ItemId, name: String, categoryId: CategoryId, notes: String = "") = viewModelScope.launch {
         val trimmedName = name.trim()
         if (trimmedName.isEmpty()) return@launch

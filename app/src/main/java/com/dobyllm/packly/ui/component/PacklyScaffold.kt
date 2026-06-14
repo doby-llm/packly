@@ -92,6 +92,7 @@ fun PacklyScaffold(
     fabAction: PacklyFabAction?,
     topBarAction: PacklyTopBarAction? = null,
     useCloseNavigationIcon: Boolean = false,
+    useTopLevelTitleStyle: Boolean = false,
     onBack: () -> Unit,
     onDestinationClick: (PacklyTopLevelDestination) -> Unit,
     content: @Composable (PaddingValues) -> Unit,
@@ -109,6 +110,7 @@ fun PacklyScaffold(
                 onBack = onBack,
                 action = topBarAction,
                 useCloseNavigationIcon = useCloseNavigationIcon,
+                useTopLevelTitleStyle = useTopLevelTitleStyle,
             )
         },
         bottomBar = {
@@ -121,7 +123,7 @@ fun PacklyScaffold(
             }
         },
         floatingActionButton = {
-            if (showBottomBar && fabAction != null) {
+            if (fabAction != null) {
                 PacklyFab(action = fabAction)
             }
         },
@@ -137,6 +139,7 @@ fun PacklyTopBar(
     modifier: Modifier = Modifier,
     action: PacklyTopBarAction? = null,
     useCloseNavigationIcon: Boolean = false,
+    useTopLevelTitleStyle: Boolean = false,
 ) {
     Box(
         modifier = modifier
@@ -162,7 +165,7 @@ fun PacklyTopBar(
         Text(
             text = title,
             modifier = Modifier.align(Alignment.Center),
-            style = if (canNavigateBack) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineLarge,
+            style = if (canNavigateBack && !useTopLevelTitleStyle) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineLarge,
             color = if (title == stringResource(R.string.app_name)) PacklyPrimary else if (canNavigateBack) MaterialTheme.colorScheme.onSurface else PacklyPrimary,
             fontWeight = FontWeight.Bold,
         )

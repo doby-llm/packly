@@ -74,7 +74,7 @@ class I18nCoverageTest {
 
         val scaffoldSource = projectFile("app/src/main/java/com/dobyllm/packly/ui/component/PacklyScaffold.kt").readUtf8Text()
         listOf(
-            "style = if (canNavigateBack) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineLarge",
+            "style = if (canNavigateBack && !useTopLevelTitleStyle) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineLarge",
             "style = MaterialTheme.typography.labelMedium",
             "fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold",
         ).forEach { snippet ->
@@ -180,12 +180,13 @@ class I18nCoverageTest {
         val createTripItemsSource = projectFile("app/src/main/java/com/dobyllm/packly/feature/trips/create/CreateTripDetailsScreen.kt").readUtf8Text()
 
         listOf(
-            "if (selected) {\n            InlineQuantityStepper(",
+            "InlineQuantityStepper(",
             "private fun InlineQuantityStepper(itemName: String, quantity: Int, onQuantityChange: (Int) -> Unit)",
-            "style = MaterialTheme.typography.labelMedium",
+            "color = MaterialTheme.colorScheme.surfaceContainerLow",
+            "text = \"${'$'}quantity\"",
+            "style = MaterialTheme.typography.titleMedium",
             "fontWeight = FontWeight.SemiBold",
             "modifier = Modifier.size(48.dp)",
-            "modifier = Modifier.size(18.dp)",
         ).forEach { snippet ->
             assertTrue("Create-trip quantity UI must keep selected-only compact stepper snippet: $snippet", createTripItemsSource.contains(snippet))
         }
@@ -210,10 +211,16 @@ class I18nCoverageTest {
             "onReminderComplete = {",
             "if (draftState.packBy != null) requestNotificationPermissionIfNeeded()",
             "deadline != null && !notificationsAvailable && !notificationPermissionRequestPending",
-            "context.packlyNotificationSettingsIntent()",
+            "Permission is requested automatically after date+time selection when a registry is available.",
         ).forEach { snippet ->
             assertTrue("Create-trip deadline step must keep notification permission flow snippet: $snippet", createTripDetailsSource.contains(snippet))
         }
+
+        assertTrue(
+            "Create-trip deadline step must not keep the crash-prone settings button path",
+            !createTripDetailsSource.contains("ACTION_APP_NOTIFICATION_SETTINGS") &&
+                !createTripDetailsSource.contains("packlyNotificationSettingsIntent"),
+        )
 
         assertTrue(notificationSource.contains("NotificationManagerCompat.from(context).areNotificationsEnabled()"))
     }

@@ -120,6 +120,11 @@ class CreateTripDraftState(
         selectedItemIds = if (itemId in selectedItemIds) selectedItemIds - itemId else selectedItemIds + itemId
     }
 
+    fun selectItem(itemId: ItemId) {
+        selectedItemIds = selectedItemIds + itemId
+        itemQuantities = itemQuantities + (itemId to (itemQuantities[itemId] ?: 1))
+    }
+
     fun setQuantity(itemId: ItemId, quantity: Int) {
         if (itemId !in itemQuantities) return
         itemQuantities = itemQuantities + (itemId to quantity.coerceAtLeast(1))

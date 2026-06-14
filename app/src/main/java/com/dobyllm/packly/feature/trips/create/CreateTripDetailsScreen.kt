@@ -3,11 +3,7 @@
 package com.dobyllm.packly.feature.trips.create
 
 import android.Manifest
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.os.Build
-import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -98,10 +94,12 @@ import com.dobyllm.packly.core.model.PacklyItem
 import com.dobyllm.packly.core.model.PacklyList
 import com.dobyllm.packly.core.model.PacklyListEntry
 import com.dobyllm.packly.core.time.PacklyDeadlineFormatter
+import com.dobyllm.packly.feature.items.EditItemSheet
 import com.dobyllm.packly.notification.canPostPacklyNotifications
 import com.dobyllm.packly.ui.component.CategoryRowsContainer
 import com.dobyllm.packly.ui.component.CategorySectionCard
 import com.dobyllm.packly.ui.component.ItemRowDivider
+import com.dobyllm.packly.ui.component.PacklyFabAction
 import com.dobyllm.packly.ui.i18n.displayDescription
 import com.dobyllm.packly.ui.i18n.displayItemNameSnapshot
 import com.dobyllm.packly.ui.i18n.displayLabel
@@ -257,10 +255,6 @@ fun CreateTripDeadlineScreen(
                     notificationsAvailable = canPostPacklyNotifications(context)
                     requestNotificationPermissionIfNeeded()
                 },
-                onOpenNotificationSettings = {
-                    context.startActivity(context.packlyNotificationSettingsIntent())
-                    notificationsAvailable = canPostPacklyNotifications(context)
-                },
             )
         }
     }
@@ -319,11 +313,14 @@ fun CreateTripItemsScreen(
     doc: PacklyAppDocument,
     draftState: CreateTripDraftState,
     contentPadding: PaddingValues,
+    onFabActionChange: ((PacklyFabAction?) -> Unit)? = null,
+    onAddItem: (String, CategoryId, String) -> Unit,
     onBack: () -> Unit,
     onFinish: () -> Unit,
 ) {
     var query by remember { mutableStateOf("") }
     var selectedCategoryId by remember { mutableStateOf<CategoryId?>(null) }
+    var showAddItemSheet by remember { mutableStateOf(false) }
     val categories = doc.categories.filterNot { it.isArchived }.sortedBy { it.sortOrder }
     val activeItems = doc.items.filterNot { it.isArchived }
     val selectedLists = draftState.selectedSourceListIds.mapNotNull { listId -> doc.lists.firstOrNull { it.id == listId && !it.isArchived } }
@@ -339,6 +336,12 @@ fun CreateTripItemsScreen(
     val filteredItemsByCategory = filteredItems.groupBy { it.categoryId }
     val hasVisibleItems = categories.any { category -> filteredItemsByCategory[category.id].orEmpty().isNotEmpty() }
     val canFinish = draftState.name.trim().isNotEmpty() && !draftState.duplicateNameIn(doc) && !draftState.reminderDraftIncomplete
+    val addItemLabel = stringResource(R.string.action_add_item)
+
+    DisposableEffect(onFabActionChange, addItemLabel) {
+        onFabActionChange?.invoke(PacklyFabAction(contentDescription = addItemLabel, onClick = { showAddItemSheet = true }))
+        onDispose { onFabActionChange?.invoke(null) }
+    }
 
     BackHandler(onBack = onBack)
     CreateTripStepScaffold(
@@ -416,6 +419,15 @@ fun CreateTripItemsScreen(
                 }
             }
         }
+    }
+
+    if (showAddItemSheet) {
+        EditItemSheet(
+            categories = categories,
+            existingNames = activeItems.map { it.name },
+            onDismiss = { showAddItemSheet = false },
+            onSave = onAddItem,
+        )
     }
 }
 
@@ -504,7 +516,6 @@ private fun PackByPickerCard(
     onIncompleteChange: (Boolean) -> Unit,
     onClear: () -> Unit,
     onReminderComplete: () -> Unit,
-    onOpenNotificationSettings: () -> Unit,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -552,12 +563,7 @@ private fun PackByPickerCard(
             },
             modifier = Modifier.align(Alignment.End).defaultMinSize(minHeight = 48.dp),
         ) { Text(stringResource(R.string.action_clear)) }
-        if (showNotificationsOffWarning) {
-            TextButton(
-                onClick = onOpenNotificationSettings,
-                modifier = Modifier.align(Alignment.End).defaultMinSize(minHeight = 48.dp),
-            ) { Text(stringResource(R.string.action_open_settings)) }
-        }
+        // Permission is requested automatically after date+time selection when a registry is available.
     }
 
     if (showDatePicker) {
@@ -594,17 +600,6 @@ private fun PackByPickerCard(
         )
     }
 }
-
-private fun Context.packlyNotificationSettingsIntent(): Intent =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-        }
-    } else {
-        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = Uri.fromParts("package", packageName, null)
-        }
-    }
 
 @Composable
 private fun ReminderSelectionCard(
@@ -770,62 +765,69 @@ private fun ItemSelectionRow(
         itemName,
         category,
     )
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .defaultMinSize(minHeight = 56.dp)
-            .padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.base)
-            .semantics {
-                role = Role.Checkbox
-                contentDescription = selectionContentDescription
-            },
-        horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
-        verticalAlignment = Alignment.CenterVertically,
+    Surface(
+        onClick = onToggle,
+        modifier = Modifier.fillMaxWidth().semantics {
+            role = Role.Checkbox
+            contentDescription = selectionContentDescription
+        },
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
     ) {
-        Checkbox(checked = selected, onCheckedChange = { onToggle() })
-        Column(Modifier.weight(1f)) {
-            Text(itemName, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(if (includedFromList) stringResource(R.string.already_included_suffix) else category, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        if (selected) {
-            InlineQuantityStepper(
-                itemName = itemName,
-                quantity = quantity,
-                onQuantityChange = onQuantityChange,
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 56.dp)
+                .padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.base),
+            horizontalArrangement = Arrangement.spacedBy(PacklySpacing.base),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Checkbox(checked = selected, onCheckedChange = { onToggle() })
+            Column(Modifier.weight(1f)) {
+                Text(itemName, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(if (includedFromList) stringResource(R.string.already_included_suffix) else category, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (selected) {
+                InlineQuantityStepper(
+                    itemName = itemName,
+                    quantity = quantity,
+                    onQuantityChange = onQuantityChange,
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun InlineQuantityStepper(itemName: String, quantity: Int, onQuantityChange: (Int) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs)) {
-        IconButton(
-            onClick = { onQuantityChange(quantity - 1) },
-            enabled = quantity > 1,
-            modifier = Modifier.size(48.dp),
+    Surface(
+        shape = RoundedCornerShape(PacklyRadius.lg),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Row(
+            modifier = Modifier.defaultMinSize(minHeight = 48.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs),
         ) {
-            Icon(
-                Icons.Rounded.Remove,
-                contentDescription = stringResource(R.string.a11y_decrease_quantity, itemName),
-                modifier = Modifier.size(18.dp),
+            IconButton(
+                onClick = { onQuantityChange(quantity - 1) },
+                enabled = quantity > 1,
+                modifier = Modifier.size(48.dp),
+            ) {
+                Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.a11y_decrease_quantity, itemName))
+            }
+            Text(
+                text = "$quantity",
+                modifier = Modifier.widthIn(min = 24.dp),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
             )
-        }
-        Text(
-            text = stringResource(R.string.quantity_times, quantity),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        IconButton(
-            onClick = { onQuantityChange(quantity + 1) },
-            modifier = Modifier.size(48.dp),
-        ) {
-            Icon(
-                Icons.Rounded.Add,
-                contentDescription = stringResource(R.string.a11y_increase_quantity, itemName),
-                modifier = Modifier.size(18.dp),
-            )
+            IconButton(
+                onClick = { onQuantityChange(quantity + 1) },
+                modifier = Modifier.size(48.dp),
+            ) {
+                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.a11y_increase_quantity, itemName))
+            }
         }
     }
 }

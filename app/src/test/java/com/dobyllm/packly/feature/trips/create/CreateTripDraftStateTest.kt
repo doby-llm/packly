@@ -28,6 +28,27 @@ class CreateTripDraftStateTest {
     }
 
     @Test
+    fun selectItemAddsStandaloneItemAndDefaultsQuantityToOne() {
+        val draftState = CreateTripDraftState(initialSelectedItemIds = emptySet())
+
+        draftState.selectItem("item_created")
+
+        assertEquals(setOf("item_created"), draftState.selectedItemIds)
+        assertEquals(1, draftState.itemQuantities["item_created"])
+    }
+
+    @Test
+    fun selectItemPreservesExistingQuantity() {
+        val draftState = CreateTripDraftState(initialSelectedItemIds = setOf("item_created"))
+
+        draftState.syncQuantitiesFor(draftState.selectedItemIds)
+        draftState.setQuantity("item_created", 3)
+        draftState.selectItem("item_created")
+
+        assertEquals(3, draftState.itemQuantities["item_created"])
+    }
+
+    @Test
     fun setQuantityIgnoresItemsThatAreNotPartOfTheReviewSet() {
         val draftState = CreateTripDraftState(initialSelectedItemIds = setOf("item_selected"))
 

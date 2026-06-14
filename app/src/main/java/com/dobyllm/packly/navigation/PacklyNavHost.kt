@@ -128,6 +128,7 @@ fun PacklyNavHost(
             else -> null
         },
         useCloseNavigationIcon = isTripDetailRoute || currentRoute == PacklyRoute.CreateTripDetails,
+        useTopLevelTitleStyle = currentRoute in createTripRoutes,
         onBack = {
             if (currentRoute == PacklyRoute.CreateTripDetails) {
                 createTripDraftState.requestClose { exitCreateTrip() }
@@ -278,6 +279,14 @@ fun PacklyNavHost(
                         doc = doc,
                         draftState = createTripDraftState,
                         contentPadding = shellPadding,
+                        onFabActionChange = { action ->
+                            routeFabAction = routeFabAction.updatedForRoute(PacklyRoute.CreateTripItems, action)
+                        },
+                        onAddItem = { name, categoryId, notes ->
+                            vm.addItemForTripDraft(name, categoryId, notes) { itemId ->
+                                createTripDraftState.selectItem(itemId)
+                            }
+                        },
                         onBack = { navController.popBackStack() },
                         onFinish = {
                             vm.createTrip(
