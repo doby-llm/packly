@@ -46,9 +46,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -114,6 +116,8 @@ fun TripDetailScreen(
     onDeadlineChange: (InstantString?) -> Unit,
     onToggleSourceList: (ListId) -> Unit,
     onToggleSourceItem: (ItemId) -> Unit,
+    onTopBarSaveActionChange: ((() -> Unit)?) -> Unit = {},
+    onClose: () -> Unit = {},
 ) {
     val trip = doc.trips.firstOrNull { it.id == tripId }
     var activeTab by rememberSaveable(tripId) { mutableStateOf(ModifyTripTab.CurrentPlan) }
@@ -130,6 +134,24 @@ fun TripDetailScreen(
         null
     }
     val hasDeadlineChange = trip != null && deadlineDraft != trip.packBy
+    val saveDeadlineIfChanged = {
+        if (hasDeadlineChange) {
+            if (deadlineDraft != null && !notificationPermissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                requestNotificationPermission?.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            onDeadlineChange(deadlineDraft)
+        }
+    }
+    val currentSaveDeadlineIfChanged by rememberUpdatedState(saveDeadlineIfChanged)
+    val currentOnClose by rememberUpdatedState(onClose)
+
+    DisposableEffect(onTopBarSaveActionChange) {
+        onTopBarSaveActionChange {
+            currentSaveDeadlineIfChanged()
+            currentOnClose()
+        }
+        onDispose { onTopBarSaveActionChange(null) }
+    }
 
     if (trip == null) {
         EmptyState(

@@ -62,6 +62,8 @@ fun PacklyNavHost(
     val currentRoute = backStackEntry?.destination?.route
     val isTopLevelRoute = packlyTopLevelDestinations().any { it.route == currentRoute }
     var routeFabAction by remember { mutableStateOf<RouteFabAction?>(null) }
+    var tripDetailSaveAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    val onTripDetailSaveActionChange = remember { { action: (() -> Unit)? -> tripDetailSaveAction = action } }
     val fabAction = routeFabAction?.takeIf { it.route == currentRoute }?.action
     val isTripDetailRoute = currentRoute == PacklyRoute.TripDetail
     val createTripDraftState = rememberCreateTripDraftState()
@@ -107,11 +109,11 @@ fun PacklyNavHost(
         canNavigateBack = !isTopLevelRoute,
         nestedTitle = currentRoute.nestedTitle(),
         fabAction = fabAction,
-        // Modify Trip persists edits immediately through PacklyAppViewModel, so MVP Save is a commit affordance that returns to the previous route.
+        // Modify Trip owns draft-only fields; its screen registers the Save action that commits them before returning.
         topBarAction = when {
             isTripDetailRoute -> PacklyTopBarAction(
                 label = stringResource(R.string.action_save),
-                onClick = { navController.popBackStack() },
+                onClick = { tripDetailSaveAction?.invoke() ?: navController.popBackStack() },
             )
             currentRoute == PacklyRoute.CreateTripDeadline -> PacklyTopBarAction(
                 label = stringResource(R.string.action_skip),
@@ -226,6 +228,8 @@ fun PacklyNavHost(
                     onDeadlineChange = { deadline -> vm.updateTripDeadline(id, deadline) },
                     onToggleSourceList = { sourceListId -> vm.toggleTripSourceList(id, sourceListId) },
                     onToggleSourceItem = { itemId -> vm.toggleTripSourceItem(id, itemId) },
+                    onTopBarSaveActionChange = onTripDetailSaveActionChange,
+                    onClose = { navController.popBackStack() },
                 )
             }
             composable(PacklyRoute.PackingMode) { backStack ->

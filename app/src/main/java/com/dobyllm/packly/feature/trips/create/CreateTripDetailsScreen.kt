@@ -3,6 +3,8 @@
 package com.dobyllm.packly.feature.trips.create
 
 import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivityResultRegistryOwner
@@ -85,6 +87,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.core.content.ContextCompat
 import com.dobyllm.packly.R
 import com.dobyllm.packly.core.model.CategoryId
 import com.dobyllm.packly.core.model.InstantString
@@ -212,16 +215,18 @@ fun CreateTripDeadlineScreen(
     fun requestNotificationPermissionIfNeeded() {
         notificationsAvailable = canPostPacklyNotifications(context)
         if (
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            !notificationsAvailable &&
-            !notificationPermissionRequested
+            shouldRequestPostNotificationsPermission(context) &&
+            !notificationPermissionRequested &&
+            requestNotificationPermission != null
         ) {
             notificationPermissionRequested = true
-            if (requestNotificationPermission != null) {
-                notificationPermissionRequestPending = true
-                requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
+            notificationPermissionRequestPending = true
+            requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
+    }
+
+    LaunchedEffect(draftState.packBy, requestNotificationPermission) {
+        if (draftState.packBy != null) requestNotificationPermissionIfNeeded()
     }
 
     BackHandler(onBack = onBack)
@@ -236,10 +241,7 @@ fun CreateTripDeadlineScreen(
                 onBack = onBack,
                 nextLabel = stringResource(R.string.action_continue),
                 nextEnabled = !draftState.reminderDraftIncomplete,
-                onNext = {
-                    if (draftState.packBy != null) requestNotificationPermissionIfNeeded()
-                    onNext()
-                },
+                onNext = onNext,
             )
         },
     ) {
@@ -251,10 +253,6 @@ fun CreateTripDeadlineScreen(
                 onDeadlineChange = draftState::updatePackBy,
                 onIncompleteChange = draftState::updateReminderDraftIncomplete,
                 onClear = draftState::clearPackBy,
-                onReminderComplete = {
-                    notificationsAvailable = canPostPacklyNotifications(context)
-                    requestNotificationPermissionIfNeeded()
-                },
             )
         }
     }
@@ -515,7 +513,6 @@ private fun PackByPickerCard(
     onDeadlineChange: (InstantString?) -> Unit,
     onIncompleteChange: (Boolean) -> Unit,
     onClear: () -> Unit,
-    onReminderComplete: () -> Unit,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -593,7 +590,6 @@ private fun PackByPickerCard(
                     onDeadlineChange(PacklyDeadlineFormatter.toInstantString(date, LocalTime.of(timePickerState.hour, timePickerState.minute)))
                     pendingDate = null
                     showTimePicker = false
-                    onReminderComplete()
                 }) { Text(stringResource(R.string.action_save_time)) }
             },
             dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text(stringResource(R.string.action_cancel)) } },
@@ -907,3 +903,7 @@ private fun CreateTripDiscardDialog(draftState: CreateTripDraftState, onCloseCon
 private fun deadlineDateMillis(date: LocalDate?): Long? = date?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli()
 private fun Long.toLocalDateUtc(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
 private fun LocalDate.formatCreateTripDate(): String = format(DateTimeFormatter.ofPattern("EEE, MMM d", Locale.getDefault()))
+
+private fun shouldRequestPostNotificationsPermission(context: Context): Boolean =
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
