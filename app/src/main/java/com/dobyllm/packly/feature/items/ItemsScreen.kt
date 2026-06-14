@@ -110,6 +110,7 @@ fun ItemsScreen(
                 query = query,
                 onQueryChange = { query = it },
                 onFilterClick = { showFilters = true },
+                hasActiveFilters = selectedCategoryIds.isNotEmpty(),
             )
         }
 

@@ -36,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.R
 import com.dobyllm.packly.core.model.PacklyCategory
@@ -63,6 +64,8 @@ fun ItemRow(
         note = item.notes,
         category = category,
         modifier = modifier,
+        minHeight = 48.dp,
+        verticalPadding = PacklySpacing.xs,
         onClick = onEdit,
         trailingContent = {
             if (hasDuplicate) DuplicateWarningIcon()
@@ -70,6 +73,7 @@ fun ItemRow(
                 Icon(
                     Icons.Rounded.Delete,
                     contentDescription = stringResource(R.string.a11y_archive_item, displayName),
+                    modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -132,6 +136,8 @@ private fun CatalogItemRow(
     showCompletionIndicator: Boolean = false,
     completedIndicatorColor: androidx.compose.ui.graphics.Color? = null,
     role: Role? = null,
+    minHeight: Dp = 52.dp,
+    verticalPadding: Dp = PacklySpacing.base,
     onClick: () -> Unit,
     trailingContent: @Composable () -> Unit,
 ) {
@@ -140,9 +146,9 @@ private fun CatalogItemRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 52.dp)
+            .heightIn(min = minHeight)
             .clickable(role = role, onClick = onClick)
-            .padding(horizontal = PacklySpacing.sm, vertical = PacklySpacing.base),
+            .padding(horizontal = PacklySpacing.sm, vertical = verticalPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
     ) {
@@ -224,7 +230,12 @@ private fun DuplicateWarningIcon() {
             .semantics { this.contentDescription = contentDescription },
         contentAlignment = Alignment.CenterEnd,
     ) {
-        Icon(Icons.Rounded.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+        Icon(
+            Icons.Rounded.Warning,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = MaterialTheme.colorScheme.error,
+        )
     }
 }
 

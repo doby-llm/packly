@@ -135,8 +135,13 @@ class I18nCoverageTest {
             ),
             "app/src/main/java/com/dobyllm/packly/ui/component/CategoryHeader.kt" to listOf(
                 "style = MaterialTheme.typography.titleMedium",
-                "fontWeight = FontWeight.SemiBold",
+                "fontWeight = FontWeight.Medium",
                 "style = MaterialTheme.typography.labelMedium",
+            ),
+            "app/src/main/java/com/dobyllm/packly/ui/component/PacklySearchBar.kt" to listOf(
+                "hasActiveFilters: Boolean = false",
+                "MaterialTheme.colorScheme.primaryFixed",
+                "MaterialTheme.colorScheme.onPrimaryFixed",
             ),
         )
         effectiveTypographySurfaces.forEach { (path, snippets) ->

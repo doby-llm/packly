@@ -46,7 +46,7 @@ fun CategoryHeader(category: PacklyCategory, countLabel: String, modifier: Modif
         Text(
             text = category.displayLabel(),
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )

@@ -77,16 +77,19 @@ fun PacklySearchBar(
 fun PacklyFilterButton(
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    isActive: Boolean = false,
 ) {
     val enabled = onClick != null
     val filterDescription = stringResource(R.string.a11y_filter_items)
     val filtersUnavailableDescription = stringResource(R.string.a11y_filters_unavailable)
+    val containerColor = if (isActive) MaterialTheme.colorScheme.primaryFixed else MaterialTheme.colorScheme.surfaceContainer
+    val contentColor = if (isActive) MaterialTheme.colorScheme.onPrimaryFixed else MaterialTheme.colorScheme.onSurface
     IconButton(
         onClick = { onClick?.invoke() },
         enabled = enabled,
         colors = IconButtonDefaults.iconButtonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.onSurface,
+            containerColor = containerColor,
+            contentColor = contentColor,
             disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
             disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
@@ -107,6 +110,7 @@ fun PacklySearchFilterRow(
     onQueryChange: (String) -> Unit,
     onFilterClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    hasActiveFilters: Boolean = false,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -114,6 +118,6 @@ fun PacklySearchFilterRow(
         horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
     ) {
         PacklySearchBar(query = query, onQueryChange = onQueryChange, modifier = Modifier.weight(1f))
-        PacklyFilterButton(onClick = onFilterClick)
+        PacklyFilterButton(onClick = onFilterClick, isActive = hasActiveFilters)
     }
 }
