@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.dobyllm.packly.R
@@ -67,6 +68,7 @@ data class PacklyTopLevelDestination(
 data class PacklyFabAction(
     val contentDescription: String,
     val onClick: () -> Unit,
+    val bottomPadding: Dp = 0.dp,
 )
 
 @Immutable
@@ -124,7 +126,10 @@ fun PacklyScaffold(
         },
         floatingActionButton = {
             if (fabAction != null) {
-                PacklyFab(action = fabAction)
+                PacklyFab(
+                    action = fabAction,
+                    modifier = Modifier.padding(bottom = fabAction.bottomPadding),
+                )
             }
         },
         content = content,

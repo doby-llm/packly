@@ -57,7 +57,7 @@
     <string name="trip_settings_title">Trip settings</string>
     <string name="deadline_pack_by">Pack by %1$s</string>
     <string name="deadline_pack_by_label">Pack by</string>
-    <string name="deadline_notifications_off">Notifications are off. We can still show the deadline in Packly.</string>
+    <string name="deadline_notifications_off">Notifications are off. Open Android settings to enable reminder alerts; Packly will still save the deadline.</string>
     <string name="deadline_supporting_text">Choose a date and time to enable the reminder.</string>
     <string name="current_plan_items_title">Items in this trip</string>
     <string name="empty_trip_items_title">Nothing in this trip yet</string>

@@ -57,7 +57,7 @@
     <string name="trip_settings_title">Reiseeinstellungen</string>
     <string name="deadline_pack_by">Packen bis %1$s</string>
     <string name="deadline_pack_by_label">Packen bis</string>
-    <string name="deadline_notifications_off">Benachrichtigungen sind aus. Wir können den Termin trotzdem in Packly anzeigen.</string>
+    <string name="deadline_notifications_off">Benachrichtigungen sind aus. Öffne die Android-Einstellungen, um Erinnerungshinweise zu aktivieren; Packly speichert den Termin trotzdem.</string>
     <string name="deadline_supporting_text">Wähle Datum und Uhrzeit, um die Erinnerung zu aktivieren.</string>
     <string name="current_plan_items_title">Gegenstände in dieser Reise</string>
     <string name="empty_trip_items_title">Noch nichts in dieser Reise</string>

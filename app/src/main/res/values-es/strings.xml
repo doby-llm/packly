@@ -57,7 +57,7 @@
     <string name="trip_settings_title">Ajustes del viaje</string>
     <string name="deadline_pack_by">Preparar antes de %1$s</string>
     <string name="deadline_pack_by_label">Preparar antes de</string>
-    <string name="deadline_notifications_off">Las notificaciones están desactivadas. Aun así podemos mostrar la fecha límite en Packly.</string>
+    <string name="deadline_notifications_off">Las notificaciones están desactivadas. Abre los ajustes de Android para activar los recordatorios; Packly guardará la fecha límite igualmente.</string>
     <string name="deadline_supporting_text">Elige una fecha y hora para activar el recordatorio.</string>
     <string name="current_plan_items_title">Objetos en este viaje</string>
     <string name="empty_trip_items_title">Aún no hay nada en este viaje</string>
