@@ -4,11 +4,8 @@ package com.dobyllm.packly.feature.trips.create
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
-import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -256,7 +253,6 @@ fun CreateTripDeadlineScreen(
                 onDeadlineChange = draftState::updatePackBy,
                 onIncompleteChange = draftState::updateReminderDraftIncomplete,
                 onClear = draftState::clearPackBy,
-                onOpenNotificationSettings = { openPacklyNotificationSettings(context) },
             )
         }
     }
@@ -523,7 +519,6 @@ private fun PackByPickerCard(
     onDeadlineChange: (InstantString?) -> Unit,
     onIncompleteChange: (Boolean) -> Unit,
     onClear: () -> Unit,
-    onOpenNotificationSettings: () -> Unit,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -554,13 +549,7 @@ private fun PackByPickerCard(
         )
         when {
             hasIncompleteDraft -> ReminderStatusText(R.string.create_trip_pack_by_incomplete, isError = true)
-            showNotificationsOffWarning -> {
-                ReminderStatusText(R.string.deadline_notifications_off)
-                TextButton(
-                    onClick = onOpenNotificationSettings,
-                    modifier = Modifier.align(Alignment.End).defaultMinSize(minHeight = 48.dp),
-                ) { Text(stringResource(R.string.action_open_settings)) }
-            }
+            showNotificationsOffWarning -> ReminderStatusText(R.string.deadline_notifications_off)
         }
         TextButton(
             enabled = deadline != null || hasIncompleteDraft,
@@ -925,10 +914,3 @@ private fun LocalDate.formatCreateTripDate(): String = format(DateTimeFormatter.
 private fun shouldRequestPostNotificationsPermission(context: Context): Boolean =
     Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
         ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-
-private fun openPacklyNotificationSettings(context: Context) {
-    val settingsIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-        data = Uri.parse("package:${context.packageName}")
-    }
-    context.startActivity(settingsIntent)
-}

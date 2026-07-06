@@ -266,7 +266,10 @@ class I18nCoverageTest {
         assertTrue(
             "Create-trip deadline step must not keep the crash-prone settings button path",
             !createTripDetailsSource.contains("ACTION_APP_NOTIFICATION_SETTINGS") &&
-                !createTripDetailsSource.contains("packlyNotificationSettingsIntent"),
+                !createTripDetailsSource.contains("packlyNotificationSettingsIntent") &&
+                !createTripDetailsSource.contains("openPacklyNotificationSettings") &&
+                !createTripDetailsSource.contains("onOpenNotificationSettings") &&
+                !createTripDetailsSource.contains("R.string.action_open_settings"),
         )
 
         assertTrue(notificationSource.contains("NotificationManagerCompat.from(context).areNotificationsEnabled()"))
