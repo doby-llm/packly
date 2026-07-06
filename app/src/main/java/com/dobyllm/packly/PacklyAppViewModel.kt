@@ -259,7 +259,7 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
                             sortOrderOffset = nextSortOrder,
                         )
 
-                        trip.withAdditionalEntriesForTripAction(newEntryCandidates, now)
+                        trip.withAdditionalEntriesForTripAction(newEntryCandidates, now, doc.categories)
                     }
                 },
             )
@@ -279,7 +279,7 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
             doc.copy(
                 trips = doc.trips.map { trip ->
                     if (trip.id == tripId) {
-                        trip.withToggledSourceListForTripAction(sourceList, newEntryCandidates, now)
+                        trip.withToggledSourceListForTripAction(sourceList, newEntryCandidates, now, doc.categories)
                     } else {
                         trip
                     }
@@ -301,7 +301,7 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
             doc.copy(
                 trips = doc.trips.map { trip ->
                     if (trip.id == tripId) {
-                        trip.withToggledSourceItemForTripAction(item, newEntryCandidates, now)
+                        trip.withToggledSourceItemForTripAction(item, newEntryCandidates, now, doc.categories)
                     } else {
                         trip
                     }
@@ -474,6 +474,7 @@ internal fun PacklyAppDocument.buildTripEntries(
 internal fun PacklyTrip.withAdditionalEntriesForTripAction(
     newEntryCandidates: List<TripEntry>,
     now: InstantString,
+    categories: List<PacklyCategory> = emptyList(),
 ): PacklyTrip {
     val existingItemIds = entries.mapNotNull { it.sourceItemId }.toMutableSet()
     val existingSnapshotKeys = entries.mapTo(mutableSetOf()) { it.snapshotDedupeKey() }
@@ -504,13 +505,18 @@ internal fun PacklyTrip.withAdditionalEntriesForTripAction(
         entry.copy(sortOrder = nextSortOrder + index)
     }
 
-    return if (newEntries.isEmpty()) this else copy(entries = entries + newEntries, updatedAt = now)
+    return if (newEntries.isEmpty()) {
+        this
+    } else {
+        copy(entries = (entries + newEntries).groupedForTripReview(categories), updatedAt = now)
+    }
 }
 
 internal fun PacklyTrip.withToggledSourceListForTripAction(
     sourceList: PacklyList,
     newEntryCandidates: List<TripEntry>,
     now: InstantString,
+    categories: List<PacklyCategory> = emptyList(),
 ): PacklyTrip {
     val sourceEntryKeys = sourceList.entries.mapTo(mutableSetOf()) { it.tripMembershipKey() }
     if (sourceEntryKeys.isEmpty()) return this
@@ -522,7 +528,7 @@ internal fun PacklyTrip.withToggledSourceListForTripAction(
     return if (allSourceEntriesPresent) {
         withoutEntriesMatching(now) { entry -> entry.matchesAnyTripMembership(sourceEntryKeys) }
     } else {
-        withAdditionalEntriesForTripAction(newEntryCandidates, now)
+        withAdditionalEntriesForTripAction(newEntryCandidates, now, categories)
     }
 }
 
@@ -530,12 +536,13 @@ internal fun PacklyTrip.withToggledSourceItemForTripAction(
     sourceItem: PacklyItem,
     newEntryCandidates: List<TripEntry>,
     now: InstantString,
+    categories: List<PacklyCategory> = emptyList(),
 ): PacklyTrip {
     val sourceKey = sourceItem.tripMembershipKey()
     return if (entries.any { it.matchesTripMembership(sourceKey) }) {
         withoutEntriesMatching(now) { entry -> entry.matchesTripMembership(sourceKey) }
     } else {
-        withAdditionalEntriesForTripAction(newEntryCandidates, now)
+        withAdditionalEntriesForTripAction(newEntryCandidates, now, categories)
     }
 }
 
@@ -580,6 +587,44 @@ private fun PacklyTrip.withoutEntriesMatching(now: InstantString, shouldRemove: 
     )
 }
 
+private data class TripCategorySortKey(
+    val sortOrder: Int,
+    val label: String,
+    val id: CategoryId,
+)
+
+private fun List<TripEntry>.groupedForTripReview(categories: List<PacklyCategory>): List<TripEntry> {
+    if (categories.isEmpty()) {
+        return sortedWith(compareBy<TripEntry> { it.sortOrder }.thenBy { it.id })
+            .mapIndexed { index, entry -> entry.copy(sortOrder = index) }
+    }
+
+    val categorySortKeys = categories
+        .filterNot { it.isArchived }
+        .associate { category ->
+            category.id to TripCategorySortKey(
+                sortOrder = category.sortOrder,
+                label = category.label.normalizedForSort(),
+                id = category.id,
+            )
+        }
+
+    return sortedWith(
+        compareBy<TripEntry> { entry -> entry.categorySortKey(categorySortKeys).sortOrder }
+            .thenBy { entry -> entry.categorySortKey(categorySortKeys).label }
+            .thenBy { entry -> entry.categorySortKey(categorySortKeys).id }
+            .thenBy { entry -> entry.sortOrder }
+            .thenBy { entry -> entry.id },
+    ).mapIndexed { index, entry -> entry.copy(sortOrder = index) }
+}
+
+private fun TripEntry.categorySortKey(categorySortKeys: Map<CategoryId, TripCategorySortKey>): TripCategorySortKey =
+    categorySortKeys[categoryIdSnapshot] ?: TripCategorySortKey(
+        sortOrder = Int.MAX_VALUE,
+        label = categoryIdSnapshot.normalizedForSort(),
+        id = categoryIdSnapshot,
+    )
+
 private fun TripEntry.snapshotDedupeKey(): String = snapshotDedupeKey(nameSnapshot, categoryIdSnapshot)
 
 private data class TripMembershipKey(
@@ -603,6 +648,8 @@ private fun snapshotDedupeKey(name: String, categoryId: CategoryId): String =
     "snapshot:${name.normalizedForDedupe()}\u0000$categoryId"
 
 private fun String.normalizedForDedupe(): String = trim().lowercase().replace(Regex("\\s+"), " ")
+
+private fun String.normalizedForSort(): String = normalizedForDedupe()
 
 internal fun PacklyList.renamedForListAction(name: String, now: InstantString): PacklyList =
     copy(name = name.trim(), updatedAt = now)

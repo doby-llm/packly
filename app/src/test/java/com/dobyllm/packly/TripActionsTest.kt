@@ -1,6 +1,7 @@
 package com.dobyllm.packly
 
 import com.dobyllm.packly.core.model.PacklyAppDocument
+import com.dobyllm.packly.core.model.PacklyCategory
 import com.dobyllm.packly.core.model.PacklyItem
 import com.dobyllm.packly.core.model.PacklyList
 import com.dobyllm.packly.core.model.PacklyListEntry
@@ -215,6 +216,59 @@ class TripActionsTest {
     }
 
     @Test
+    fun addTripEntriesGroupsAddedEntriesByCategoryAndPreservesEntryState() {
+        val packedAt = "2026-06-04T08:30:00Z"
+        val clothes = tripEntry(
+            id = "entry_shirt",
+            sourceItemId = "item_shirt",
+            name = "Shirt",
+            categoryId = "cat_clothes",
+            sortOrder = 0,
+        )
+        val documents = tripEntry(
+            id = "entry_passport",
+            sourceItemId = "item_passport",
+            sourceListEntryId = "list_entry_passport",
+            name = "Passport",
+            categoryId = "cat_documents",
+            notes = "keep safe",
+            quantity = 2,
+            isPacked = true,
+            packedAt = packedAt,
+            sortOrder = 1,
+        )
+        val trip = trip(entries = listOf(clothes, documents))
+
+        val updated = trip.withAdditionalEntriesForTripAction(
+            newEntryCandidates = listOf(
+                tripEntry(
+                    id = "entry_socks",
+                    sourceItemId = "item_socks",
+                    name = "Socks",
+                    categoryId = "cat_clothes",
+                    sortOrder = 2,
+                ),
+            ),
+            now = "2026-06-05T09:00:00Z",
+            categories = listOf(
+                category(id = "cat_clothes", label = "Clothes", sortOrder = 0),
+                category(id = "cat_documents", label = "Documents", sortOrder = 1),
+            ),
+        )
+
+        assertEquals(listOf("entry_shirt", "entry_socks", "entry_passport"), updated.entries.map { it.id })
+        assertEquals(listOf(0, 1, 2), updated.entries.map { it.sortOrder })
+        val movedDocuments = updated.entries.single { it.id == "entry_passport" }
+        assertEquals("item_passport", movedDocuments.sourceItemId)
+        assertEquals("list_entry_passport", movedDocuments.sourceListEntryId)
+        assertEquals("keep safe", movedDocuments.notes)
+        assertEquals(2, movedDocuments.quantity)
+        assertEquals(true, movedDocuments.isPacked)
+        assertEquals(packedAt, movedDocuments.packedAt)
+        assertEquals("2026-06-05T09:00:00Z", updated.updatedAt)
+    }
+
+    @Test
     fun updateTripEntryQuantityCoercesToOneAndPreservesPackedState() {
         val packedAt = "2026-06-04T08:30:00Z"
         val original = tripEntry(
@@ -414,6 +468,20 @@ class TripActionsTest {
         categoryId = categoryId,
         createdAt = "2026-06-01T09:00:00Z",
         updatedAt = "2026-06-01T09:00:00Z",
+    )
+
+    private fun category(
+        id: String,
+        label: String,
+        sortOrder: Int,
+    ) = PacklyCategory(
+        id = id,
+        key = id.removePrefix("cat_"),
+        label = label,
+        iconKey = "category",
+        accentColorHex = "#000000",
+        softColorHex = "#ffffff",
+        sortOrder = sortOrder,
     )
 
     private fun packingList(
