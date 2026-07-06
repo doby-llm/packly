@@ -152,7 +152,7 @@ private fun GoogleDriveSyncCard(settings: PacklyCloudSyncSettings, onSyncClick: 
                 Icon(Icons.Rounded.Settings, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.options_google_drive_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                    Text(stringResource(settings.statusLabelRes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(settings.status.statusLabelRes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     settings.lastError?.takeIf { it.isNotBlank() }?.let { error ->
                         Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                     }

@@ -25,7 +25,7 @@ private const val DRIVE_API = "https://www.googleapis.com/drive/v3"
 private const val DRIVE_UPLOAD_API = "https://www.googleapis.com/upload/drive/v3"
 private const val BOUNDARY = "PacklyDriveBoundary"
 
-class GoogleDrivePacklyRepository(
+class GoogleDrivePacklyRepository private constructor(
     private val authorizationClient: AuthorizationClient,
     private val driveScope: Scope = Scope(DRIVE_APPDATA_SCOPE),
     private val api: DriveSnapshotApi = HttpDriveSnapshotApi(),
