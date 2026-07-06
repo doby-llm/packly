@@ -21,6 +21,17 @@
     <string name="language_english">English</string>
     <string name="language_spanish">Spanish</string>
     <string name="language_german">German</string>
+    <string name="options_section_cloud_sync">Cloud sync</string>
+    <string name="options_google_drive_title">Google Drive sync</string>
+    <string name="options_google_drive_body">Packly syncs a private snapshot to your Google Drive app data folder. Real sync stays blocked until the Google Cloud OAuth values are configured.</string>
+    <string name="action_sync_now">Sync now</string>
+    <string name="cloud_sync_disabled">Cloud sync disabled</string>
+    <string name="cloud_sync_not_configured">Google Cloud setup required</string>
+    <string name="cloud_sync_disconnected">Google account disconnected</string>
+    <string name="cloud_sync_syncing">Syncing with Google Drive…</string>
+    <string name="cloud_sync_synced">Synced to Google Drive</string>
+    <string name="cloud_sync_offline">Offline — will retry later</string>
+    <string name="cloud_sync_needs_attention">Sync needs attention</string>
     <string name="action_rename">Rename</string>
     <string name="action_duplicate">Duplicate</string>
     <string name="action_archive">Archive</string>
@@ -335,4 +346,8 @@
     <string name="create_trip_step4_body">Select specific items you want to include in this trip.</string>
     <string name="create_trip_items_empty_title">No items yet</string>
     <string name="create_trip_items_empty_body">Create reusable items from the Items tab, or finish this trip with the selected lists.</string>
+    <string name="edit_trip_lists_title">Update lists</string>
+    <string name="edit_trip_lists_body">Choose which packing list entries belong in this trip. Existing trip details and reminders stay unchanged.</string>
+    <string name="edit_trip_items_title">Update items</string>
+    <string name="edit_trip_items_body">Add individual items or adjust quantities before saving this trip.</string>
 </resources>

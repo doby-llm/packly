@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,14 +33,15 @@ import androidx.navigation.compose.rememberNavController
 import com.dobyllm.packly.ListCopyNameTemplates
 import com.dobyllm.packly.PacklyAppViewModel
 import com.dobyllm.packly.R
+import com.dobyllm.packly.core.model.PacklyAppDocument
 import com.dobyllm.packly.feature.home.HomeScreen
 import com.dobyllm.packly.feature.items.ItemsScreen
 import com.dobyllm.packly.feature.lists.ListDetailScreen
 import com.dobyllm.packly.feature.lists.ListsScreen
 import com.dobyllm.packly.feature.options.OptionsScreen
 import com.dobyllm.packly.feature.packing.PackingModeScreen
-import com.dobyllm.packly.feature.trips.TripDetailScreen
 import com.dobyllm.packly.feature.trips.TripsScreen
+import com.dobyllm.packly.feature.trips.create.CreateTripDraftState
 import com.dobyllm.packly.feature.trips.create.CreateTripDeadlineScreen
 import com.dobyllm.packly.feature.trips.create.CreateTripDetailsScreen
 import com.dobyllm.packly.feature.trips.create.CreateTripItemsScreen
@@ -62,11 +64,11 @@ fun PacklyNavHost(
     val currentRoute = backStackEntry?.destination?.route
     val isTopLevelRoute = packlyTopLevelDestinations().any { it.route == currentRoute }
     var routeFabAction by remember { mutableStateOf<RouteFabAction?>(null) }
-    var tripDetailSaveAction by remember { mutableStateOf<(() -> Unit)?>(null) }
-    val onTripDetailSaveActionChange = remember { { action: (() -> Unit)? -> tripDetailSaveAction = action } }
+    var editTripSaveAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     val fabAction = routeFabAction?.takeIf { it.route == currentRoute }?.action
-    val isTripDetailRoute = currentRoute == PacklyRoute.TripDetail
+    val isEditTripRoute = currentRoute in editTripRoutes
     val createTripDraftState = rememberCreateTripDraftState()
+    val editTripDraftState = rememberCreateTripDraftState()
     val tripFromListDefaultName = stringResource(R.string.trip_from_list_default_name)
     val listCopyNameTemplates = ListCopyNameTemplates(
         unnumberedTemplate = stringResource(R.string.list_duplicate_copy_name),
@@ -88,11 +90,16 @@ fun PacklyNavHost(
     }
 
     fun navigateToTripDetail(tripId: String) {
-        if (doc.trips.any { it.id == tripId }) navigateSafely(PacklyRoute.tripDetail(tripId))
+        if (prepareTripEditDraft(doc, tripId, editTripDraftState)) navigateSafely(PacklyRoute.editTripLists(tripId))
     }
 
     fun navigateToPackingMode(tripId: String) {
         if (doc.trips.any { it.id == tripId }) navigateSafely(PacklyRoute.packingMode(tripId))
+    }
+
+    fun closeEditTrip() {
+        editTripDraftState.discard()
+        if (!navController.popBackStack(PacklyRoute.Trips, inclusive = false)) navController.popBackStack()
     }
 
     LaunchedEffect(initialTripId) {
@@ -111,9 +118,9 @@ fun PacklyNavHost(
         fabAction = fabAction,
         // Modify Trip owns draft-only fields; its screen registers the Save action that commits them before returning.
         topBarAction = when {
-            isTripDetailRoute -> PacklyTopBarAction(
+            isEditTripRoute -> PacklyTopBarAction(
                 label = stringResource(R.string.action_save),
-                onClick = { tripDetailSaveAction?.invoke() ?: navController.popBackStack() },
+                onClick = { editTripSaveAction?.invoke() ?: navController.popBackStack() },
             )
             currentRoute == PacklyRoute.CreateTripDeadline -> PacklyTopBarAction(
                 label = stringResource(R.string.action_skip),
@@ -129,10 +136,12 @@ fun PacklyNavHost(
             )
             else -> null
         },
-        useCloseNavigationIcon = isTripDetailRoute || currentRoute == PacklyRoute.CreateTripDetails,
-        useTopLevelTitleStyle = currentRoute in createTripRoutes,
+        useCloseNavigationIcon = isEditTripRoute || currentRoute == PacklyRoute.CreateTripDetails,
+        useTopLevelTitleStyle = currentRoute in createTripRoutes || currentRoute in editTripRoutes,
         onBack = {
-            if (currentRoute == PacklyRoute.CreateTripDetails) {
+            if (currentRoute in editTripRoutes) {
+                closeEditTrip()
+            } else if (currentRoute == PacklyRoute.CreateTripDetails) {
                 createTripDraftState.requestClose { exitCreateTrip() }
             } else {
                 navController.popBackStack()
@@ -217,19 +226,82 @@ fun PacklyNavHost(
             }
             composable(PacklyRoute.TripDetail) { backStack ->
                 val id = backStack.arguments?.getString("tripId") ?: ""
-                TripDetailScreen(
+                LaunchedEffect(id, doc.trips) {
+                    if (prepareTripEditDraft(doc, id, editTripDraftState)) {
+                        PacklyRoute.editTripLists(id)?.let { route ->
+                            navController.navigate(route) { popUpTo(PacklyRoute.TripDetail) { inclusive = true } }
+                        }
+                    }
+                }
+            }
+            composable(PacklyRoute.EditTripLists) { backStack ->
+                val id = backStack.arguments?.getString("tripId") ?: ""
+                DisposableEffect(id) {
+                    editTripSaveAction = {
+                        vm.updateTripContents(
+                            tripId = id,
+                            sourceListIds = editTripDraftState.selectedSourceListIds,
+                            sourceListEntryIds = editTripDraftState.selectedListEntryIds,
+                            itemIds = editTripDraftState.selectedItemIds,
+                            itemQuantities = editTripDraftState.itemQuantities,
+                        )
+                        editTripDraftState.discard()
+                        PacklyRoute.packingMode(id)?.let { route ->
+                            navController.navigate(route) { popUpTo(PacklyRoute.EditTripLists) { inclusive = true } }
+                        }
+                    }
+                    onDispose { editTripSaveAction = null }
+                }
+                CreateTripListsScreen(
                     doc = doc,
-                    tripId = id,
+                    draftState = editTripDraftState,
                     contentPadding = shellPadding,
-                    onPack = { navigateToPackingMode(id) },
-                    onReset = { vm.resetPacking(id) },
-                    onQuantityChange = { entryId, quantity -> vm.updateTripEntryQuantity(id, entryId, quantity) },
-                    onRemoveEntry = { entryId -> vm.removeTripEntry(id, entryId) },
-                    onDeadlineChange = { deadline -> vm.updateTripDeadline(id, deadline) },
-                    onToggleSourceList = { sourceListId -> vm.toggleTripSourceList(id, sourceListId) },
-                    onToggleSourceItem = { itemId -> vm.toggleTripSourceItem(id, itemId) },
-                    onTopBarSaveActionChange = onTripDetailSaveActionChange,
-                    onClose = { navController.popBackStack() },
+                    step = 1,
+                    totalSteps = 2,
+                    title = stringResource(R.string.edit_trip_lists_title),
+                    body = stringResource(R.string.edit_trip_lists_body),
+                    onBack = { closeEditTrip() },
+                    onNext = { PacklyRoute.editTripItems(id)?.let(navController::navigate) },
+                )
+            }
+            composable(PacklyRoute.EditTripItems) { backStack ->
+                val id = backStack.arguments?.getString("tripId") ?: ""
+                DisposableEffect(id) {
+                    editTripSaveAction = {
+                        vm.updateTripContents(
+                            tripId = id,
+                            sourceListIds = editTripDraftState.selectedSourceListIds,
+                            sourceListEntryIds = editTripDraftState.selectedListEntryIds,
+                            itemIds = editTripDraftState.selectedItemIds,
+                            itemQuantities = editTripDraftState.itemQuantities,
+                        )
+                        editTripDraftState.discard()
+                        PacklyRoute.packingMode(id)?.let { route ->
+                            navController.navigate(route) { popUpTo(PacklyRoute.EditTripLists) { inclusive = true } }
+                        }
+                    }
+                    onDispose { editTripSaveAction = null }
+                }
+                CreateTripItemsScreen(
+                    doc = doc,
+                    draftState = editTripDraftState,
+                    contentPadding = shellPadding,
+                    step = 2,
+                    totalSteps = 2,
+                    title = stringResource(R.string.edit_trip_items_title),
+                    body = stringResource(R.string.edit_trip_items_body),
+                    finishLabel = stringResource(R.string.action_save),
+                    finishEnabled = true,
+                    onFabActionChange = { action ->
+                        routeFabAction = routeFabAction.updatedForRoute(PacklyRoute.EditTripItems, action)
+                    },
+                    onAddItem = { name, categoryId, notes ->
+                        vm.addItemForTripDraft(name, categoryId, notes) { itemId ->
+                            editTripDraftState.selectItem(itemId)
+                        }
+                    },
+                    onBack = { navController.popBackStack() },
+                    onFinish = { editTripSaveAction?.invoke() },
                 )
             }
             composable(PacklyRoute.PackingMode) { backStack ->
@@ -244,8 +316,10 @@ fun PacklyNavHost(
             composable(PacklyRoute.Options) {
                 OptionsScreen(
                     languagePreference = doc.settings.languagePreference,
+                    cloudSyncSettings = doc.settings.cloudSync,
                     contentPadding = shellPadding,
                     onLanguagePreferenceChange = vm::updateLanguagePreference,
+                    onGoogleDriveSyncClick = vm::syncWithGoogleDrive,
                 )
             }
             navigation(
@@ -327,6 +401,41 @@ private val createTripRoutes = setOf(
     PacklyRoute.CreateTripItems,
 )
 
+private val editTripRoutes = setOf(
+    PacklyRoute.EditTripLists,
+    PacklyRoute.EditTripItems,
+)
+
+private fun prepareTripEditDraft(
+    doc: PacklyAppDocument,
+    tripId: String,
+    draftState: CreateTripDraftState,
+): Boolean {
+    val trip = doc.trips.firstOrNull { it.id == tripId } ?: return false
+    val selectedListEntryIds = trip.entries.mapNotNull { it.sourceListEntryId }.toSet()
+    val selectedSourceListIds = doc.lists
+        .filter { list -> list.entries.any { entry -> entry.id in selectedListEntryIds } }
+        .map { it.id }
+    val selectedItemIds = trip.entries
+        .filter { it.sourceListEntryId == null }
+        .mapNotNull { it.sourceItemId }
+        .toSet()
+    val itemQuantities = trip.entries
+        .mapNotNull { entry -> entry.sourceItemId?.let { itemId -> itemId to entry.quantity } }
+        .toMap()
+
+    draftState.replaceWith(
+        name = trip.name,
+        destination = trip.destination,
+        packBy = trip.packBy,
+        selectedSourceListIds = selectedSourceListIds,
+        selectedListEntryIds = selectedListEntryIds,
+        selectedItemIds = selectedItemIds,
+        itemQuantities = itemQuantities,
+    )
+    return true
+}
+
 private fun RouteFabAction?.updatedForRoute(route: String, action: PacklyFabAction?): RouteFabAction? = when {
     action != null -> RouteFabAction(route, action)
     this?.route == route -> null
@@ -337,6 +446,7 @@ private fun RouteFabAction?.updatedForRoute(route: String, action: PacklyFabActi
 private fun String?.nestedTitle(): String = when (this) {
     PacklyRoute.ListDetail -> stringResource(R.string.nav_lists)
     PacklyRoute.TripDetail -> stringResource(R.string.modify_trip_title)
+    in editTripRoutes -> stringResource(R.string.modify_trip_title)
     PacklyRoute.PackingMode -> stringResource(R.string.app_name)
     PacklyRoute.Options -> stringResource(R.string.options_title)
     in createTripRoutes -> stringResource(R.string.app_name)

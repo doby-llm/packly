@@ -5,6 +5,9 @@ plugins {
 }
 
 fun env(name: String): String? = providers.environmentVariable(name).orNull?.takeIf { it.isNotBlank() }
+fun propOrEnv(propName: String, envName: String): String =
+    providers.gradleProperty(propName).orElse(providers.environmentVariable(envName)).orNull.orEmpty()
+fun String.escapedForBuildConfig(): String = replace("\\", "\\\\").replace("\"", "\\\"")
 
 val releaseKeystoreFile = env("PACKLY_UPLOAD_KEYSTORE_FILE")
 val releaseKeystorePassword = env("PACKLY_UPLOAD_KEYSTORE_PASSWORD")
@@ -16,6 +19,8 @@ val hasReleaseSigningConfig = listOf(
     releaseKeyAlias,
     releaseKeyPassword,
 ).all { it != null }
+val googleAndroidClientId = propOrEnv("packly.google.androidClientId", "PACKLY_GOOGLE_ANDROID_CLIENT_ID")
+val driveSyncEnabled = propOrEnv("packly.driveSyncEnabled", "PACKLY_DRIVE_SYNC_ENABLED").toBooleanStrictOrNull() ?: false
 
 android {
     namespace = "com.dobyllm.packly"
@@ -28,6 +33,8 @@ android {
         versionCode = 3
         versionName = "0.1.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "PACKLY_GOOGLE_ANDROID_CLIENT_ID", "\"${googleAndroidClientId.escapedForBuildConfig()}\"")
+        buildConfigField("boolean", "PACKLY_DRIVE_SYNC_ENABLED", driveSyncEnabled.toString())
     }
 
     signingConfigs {
@@ -61,7 +68,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 }
 
 dependencies {
@@ -73,6 +83,7 @@ dependencies {
     implementation(libs.androidx.datastore)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.google.play.services.auth)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)

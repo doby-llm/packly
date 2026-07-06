@@ -15,6 +15,7 @@ data class PacklySettings(
     val selectedPaletteKey: String = "packly_default",
     val firstLaunchCompleted: Boolean = false,
     val languagePreference: LanguagePreference = LanguagePreference.System,
+    val cloudSync: PacklyCloudSyncSettings = PacklyCloudSyncSettings(),
 )
 
 @Serializable

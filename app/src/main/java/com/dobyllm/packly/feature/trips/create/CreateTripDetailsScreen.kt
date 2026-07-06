@@ -263,16 +263,23 @@ fun CreateTripListsScreen(
     doc: PacklyAppDocument,
     draftState: CreateTripDraftState,
     contentPadding: PaddingValues,
+    step: Int = 3,
+    totalSteps: Int = CREATE_TRIP_TOTAL_STEPS,
+    title: String? = null,
+    body: String? = null,
     onBack: () -> Unit,
     onNext: () -> Unit,
 ) {
     val activeLists = doc.lists.filterNot { it.isArchived }
+    val screenTitle = title ?: stringResource(R.string.create_trip_step3_title)
+    val screenBody = body ?: stringResource(R.string.create_trip_step3_body)
     val selectedEntryIds = draftState.selectedListEntryIds
     BackHandler(onBack = onBack)
     CreateTripStepScaffold(
-        step = 3,
-        title = stringResource(R.string.create_trip_step3_title),
-        body = stringResource(R.string.create_trip_step3_body),
+        step = step,
+        totalSteps = totalSteps,
+        title = screenTitle,
+        body = screenBody,
         contentPadding = contentPadding,
         contentVerticalSpacing = PacklySpacing.sm,
         footer = {
@@ -311,6 +318,12 @@ fun CreateTripItemsScreen(
     doc: PacklyAppDocument,
     draftState: CreateTripDraftState,
     contentPadding: PaddingValues,
+    step: Int = 4,
+    totalSteps: Int = CREATE_TRIP_TOTAL_STEPS,
+    title: String? = null,
+    body: String? = null,
+    finishLabel: String? = null,
+    finishEnabled: Boolean? = null,
     onFabActionChange: ((PacklyFabAction?) -> Unit)? = null,
     onAddItem: (String, CategoryId, String) -> Unit,
     onBack: () -> Unit,
@@ -333,7 +346,10 @@ fun CreateTripItemsScreen(
     }
     val filteredItemsByCategory = filteredItems.groupBy { it.categoryId }
     val hasVisibleItems = categories.any { category -> filteredItemsByCategory[category.id].orEmpty().isNotEmpty() }
-    val canFinish = draftState.name.trim().isNotEmpty() && !draftState.duplicateNameIn(doc) && !draftState.reminderDraftIncomplete
+    val canFinish = finishEnabled ?: (draftState.name.trim().isNotEmpty() && !draftState.duplicateNameIn(doc) && !draftState.reminderDraftIncomplete)
+    val screenTitle = title ?: stringResource(R.string.create_trip_step4_title)
+    val screenBody = body ?: stringResource(R.string.create_trip_step4_body)
+    val nextLabel = finishLabel ?: stringResource(R.string.action_create_trip)
     val addItemLabel = stringResource(R.string.action_add_item)
 
     DisposableEffect(onFabActionChange, addItemLabel) {
@@ -349,12 +365,13 @@ fun CreateTripItemsScreen(
 
     BackHandler(onBack = onBack)
     CreateTripStepScaffold(
-        step = 4,
-        title = stringResource(R.string.create_trip_step4_title),
-        body = stringResource(R.string.create_trip_step4_body),
+        step = step,
+        totalSteps = totalSteps,
+        title = screenTitle,
+        body = screenBody,
         contentPadding = contentPadding,
         footer = {
-            if (!canFinish) {
+            if (finishEnabled == null && !canFinish) {
                 DisabledReason(
                     when {
                         draftState.name.trim().isEmpty() -> R.string.create_trip_disabled_missing_name
@@ -365,7 +382,7 @@ fun CreateTripItemsScreen(
             }
             StepFooterButtons(
                 onBack = onBack,
-                nextLabel = stringResource(R.string.action_create_trip),
+                nextLabel = nextLabel,
                 nextEnabled = canFinish,
                 onNext = onFinish,
             )
@@ -438,6 +455,7 @@ fun CreateTripItemsScreen(
 @Composable
 private fun CreateTripStepScaffold(
     step: Int,
+    totalSteps: Int = CREATE_TRIP_TOTAL_STEPS,
     title: String,
     body: String,
     contentPadding: PaddingValues,
@@ -460,7 +478,7 @@ private fun CreateTripStepScaffold(
                 ),
                 verticalArrangement = Arrangement.spacedBy(contentVerticalSpacing),
             ) {
-                item { CreateTripProgressHeader(step = step, title = title, body = body) }
+                item { CreateTripProgressHeader(step = step, totalSteps = totalSteps, title = title, body = body) }
                 content()
             }
             Surface(
@@ -479,16 +497,16 @@ private fun CreateTripStepScaffold(
 }
 
 @Composable
-private fun CreateTripProgressHeader(step: Int, title: String, body: String) {
+private fun CreateTripProgressHeader(step: Int, totalSteps: Int = CREATE_TRIP_TOTAL_STEPS, title: String, body: String) {
     Column(verticalArrangement = Arrangement.spacedBy(PacklySpacing.sm)) {
         Text(
-            text = stringResource(R.string.create_trip_step_label, step, CREATE_TRIP_TOTAL_STEPS),
+            text = stringResource(R.string.create_trip_step_label, step, totalSteps),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.SemiBold,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(PacklySpacing.xs), modifier = Modifier.fillMaxWidth()) {
-            repeat(CREATE_TRIP_TOTAL_STEPS) { index ->
+            repeat(totalSteps) { index ->
                 Box(
                     modifier = Modifier
                         .weight(1f)

@@ -21,6 +21,17 @@
     <string name="language_english">Inglés</string>
     <string name="language_spanish">Español</string>
     <string name="language_german">Alemán</string>
+    <string name="options_section_cloud_sync">Sincronización en la nube</string>
+    <string name="options_google_drive_title">Sincronización con Google Drive</string>
+    <string name="options_google_drive_body">Packly sincroniza una copia privada en la carpeta de datos de app de Google Drive. La sincronización real queda bloqueada hasta configurar los valores OAuth de Google Cloud.</string>
+    <string name="action_sync_now">Sincronizar ahora</string>
+    <string name="cloud_sync_disabled">Sincronización en la nube desactivada</string>
+    <string name="cloud_sync_not_configured">Falta configurar Google Cloud</string>
+    <string name="cloud_sync_disconnected">Cuenta de Google desconectada</string>
+    <string name="cloud_sync_syncing">Sincronizando con Google Drive…</string>
+    <string name="cloud_sync_synced">Sincronizado con Google Drive</string>
+    <string name="cloud_sync_offline">Sin conexión — se reintentará más tarde</string>
+    <string name="cloud_sync_needs_attention">La sincronización necesita atención</string>
     <string name="action_rename">Renombrar</string>
     <string name="action_duplicate">Duplicar</string>
     <string name="action_archive">Archivar</string>
@@ -335,4 +346,8 @@
     <string name="create_trip_step4_body">Selecciona los artículos específicos que quieres incluir en este viaje.</string>
     <string name="create_trip_items_empty_title">Aún no hay artículos</string>
     <string name="create_trip_items_empty_body">Crea artículos reutilizables desde la pestaña Artículos, o termina este viaje con las listas seleccionadas.</string>
+    <string name="edit_trip_lists_title">Actualizar listas</string>
+    <string name="edit_trip_lists_body">Elige qué entradas de listas de equipaje pertenecen a este viaje. Los detalles y recordatorios existentes no cambian.</string>
+    <string name="edit_trip_items_title">Actualizar artículos</string>
+    <string name="edit_trip_items_body">Añade artículos individuales o ajusta cantidades antes de guardar este viaje.</string>
 </resources>

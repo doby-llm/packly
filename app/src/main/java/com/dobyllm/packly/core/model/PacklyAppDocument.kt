@@ -2,7 +2,7 @@ package com.dobyllm.packly.core.model
 
 import kotlinx.serialization.Serializable
 
-const val CurrentSchemaVersion = 2
+const val CurrentSchemaVersion = 3
 
 @Serializable
 data class PacklyAppDocument(
@@ -13,4 +13,5 @@ data class PacklyAppDocument(
     val categories: List<PacklyCategory> = emptyList(),
     val settings: PacklySettings = PacklySettings(),
     val session: PacklySessionState = PacklySessionState(),
+    val cloudSyncMetadata: PacklyCloudSyncMetadata = PacklyCloudSyncMetadata(),
 )

@@ -13,6 +13,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -31,14 +32,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.R
 import com.dobyllm.packly.core.model.LanguagePreference
+import com.dobyllm.packly.core.model.PacklyCloudSyncConnectionStatus
+import com.dobyllm.packly.core.model.PacklyCloudSyncSettings
 import com.dobyllm.packly.ui.token.PacklyRadius
 import com.dobyllm.packly.ui.token.PacklySpacing
 
 @Composable
 fun OptionsScreen(
     languagePreference: LanguagePreference,
+    cloudSyncSettings: PacklyCloudSyncSettings = PacklyCloudSyncSettings(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     onLanguagePreferenceChange: (LanguagePreference) -> Unit,
+    onGoogleDriveSyncClick: () -> Unit = {},
 ) {
     var showLanguagePicker by remember { mutableStateOf(false) }
 
@@ -115,6 +120,56 @@ fun OptionsScreen(
                 }
             }
         }
+        item {
+            GoogleDriveSyncCard(
+                settings = cloudSyncSettings,
+                onSyncClick = onGoogleDriveSyncClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun GoogleDriveSyncCard(settings: PacklyCloudSyncSettings, onSyncClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(PacklyRadius.lg),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHigh),
+        shadowElevation = 1.dp,
+    ) {
+        Column(modifier = Modifier.padding(PacklySpacing.marginMobile), verticalArrangement = Arrangement.spacedBy(PacklySpacing.base)) {
+            Text(
+                text = stringResource(R.string.options_section_cloud_sync),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(PacklySpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Rounded.Settings, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.options_google_drive_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(settings.statusLabelRes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    settings.lastError?.takeIf { it.isNotBlank() }?.let { error ->
+                        Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
+            Text(
+                text = stringResource(R.string.options_google_drive_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Button(
+                onClick = onSyncClick,
+                enabled = settings.status != PacklyCloudSyncConnectionStatus.Syncing,
+            ) {
+                Text(stringResource(R.string.action_sync_now))
+            }
+        }
     }
 }
 
@@ -144,4 +199,15 @@ private val LanguagePreference.labelRes: Int
         LanguagePreference.English -> R.string.language_english
         LanguagePreference.Spanish -> R.string.language_spanish
         LanguagePreference.German -> R.string.language_german
+    }
+
+private val PacklyCloudSyncConnectionStatus.statusLabelRes: Int
+    get() = when (this) {
+        PacklyCloudSyncConnectionStatus.Disabled -> R.string.cloud_sync_disabled
+        PacklyCloudSyncConnectionStatus.NotConfigured -> R.string.cloud_sync_not_configured
+        PacklyCloudSyncConnectionStatus.Disconnected -> R.string.cloud_sync_disconnected
+        PacklyCloudSyncConnectionStatus.Syncing -> R.string.cloud_sync_syncing
+        PacklyCloudSyncConnectionStatus.Synced -> R.string.cloud_sync_synced
+        PacklyCloudSyncConnectionStatus.Offline -> R.string.cloud_sync_offline
+        PacklyCloudSyncConnectionStatus.NeedsAttention -> R.string.cloud_sync_needs_attention
     }

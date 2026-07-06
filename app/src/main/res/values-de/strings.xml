@@ -21,6 +21,17 @@
     <string name="language_english">Englisch</string>
     <string name="language_spanish">Spanisch</string>
     <string name="language_german">Deutsch</string>
+    <string name="options_section_cloud_sync">Cloud-Synchronisierung</string>
+    <string name="options_google_drive_title">Google-Drive-Synchronisierung</string>
+    <string name="options_google_drive_body">Packly synchronisiert einen privaten Snapshot in den App-Datenordner von Google Drive. Die echte Synchronisierung bleibt blockiert, bis die Google-Cloud-OAuth-Werte konfiguriert sind.</string>
+    <string name="action_sync_now">Jetzt synchronisieren</string>
+    <string name="cloud_sync_disabled">Cloud-Synchronisierung deaktiviert</string>
+    <string name="cloud_sync_not_configured">Google-Cloud-Einrichtung erforderlich</string>
+    <string name="cloud_sync_disconnected">Google-Konto getrennt</string>
+    <string name="cloud_sync_syncing">Synchronisierung mit Google Drive…</string>
+    <string name="cloud_sync_synced">Mit Google Drive synchronisiert</string>
+    <string name="cloud_sync_offline">Offline — später erneut versuchen</string>
+    <string name="cloud_sync_needs_attention">Synchronisierung benötigt Aufmerksamkeit</string>
     <string name="action_rename">Umbenennen</string>
     <string name="action_duplicate">Duplizieren</string>
     <string name="action_archive">Archivieren</string>

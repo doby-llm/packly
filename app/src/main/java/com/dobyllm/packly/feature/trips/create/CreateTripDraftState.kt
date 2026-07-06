@@ -80,6 +80,26 @@ class CreateTripDraftState(
         reminderDraftIncomplete = false
     }
 
+    fun replaceWith(
+        name: String = "",
+        destination: String = "",
+        packBy: InstantString? = null,
+        selectedSourceListIds: List<ListId> = emptyList(),
+        selectedListEntryIds: Set<ListEntryId> = emptySet(),
+        selectedItemIds: Set<ItemId> = emptySet(),
+        itemQuantities: Map<ItemId, Int> = emptyMap(),
+    ) {
+        this.name = name
+        this.destination = destination
+        this.packBy = packBy
+        reminderDraftIncomplete = false
+        this.selectedSourceListIds = selectedSourceListIds.distinct()
+        this.selectedListEntryIds = selectedListEntryIds
+        this.selectedItemIds = selectedItemIds
+        this.itemQuantities = itemQuantities.mapValues { (_, quantity) -> quantity.coerceAtLeast(1) }
+        showDiscardDialog = false
+    }
+
     fun toggleSourceList(listId: ListId, entries: List<PacklyListEntry>) {
         val entryIds = entries.mapTo(mutableSetOf()) { it.id }
         val allEntriesSelected = entryIds.isNotEmpty() && entryIds.all { it in selectedListEntryIds }

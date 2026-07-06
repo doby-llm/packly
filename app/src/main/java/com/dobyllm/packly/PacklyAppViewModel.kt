@@ -3,6 +3,9 @@ package com.dobyllm.packly
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.dobyllm.packly.cloud.CloudSyncDeviceIdProvider
+import com.dobyllm.packly.cloud.PacklyCloudSyncCoordinator
+import com.dobyllm.packly.cloud.PacklyDriveRepositoryFactory
 import com.dobyllm.packly.core.model.*
 import com.dobyllm.packly.core.time.PacklyClock
 import com.dobyllm.packly.core.time.PacklyIds
@@ -18,6 +21,11 @@ import java.util.Locale
 class PacklyAppViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = DataStorePacklyRepository.get(application)
     private val deadlineReminderScheduler = DeadlineReminderScheduler(application)
+    private val cloudSyncCoordinator = PacklyCloudSyncCoordinator(
+        repository = repository,
+        driveRepository = PacklyDriveRepositoryFactory.create(application),
+        deviceIdProvider = CloudSyncDeviceIdProvider(application),
+    )
     val document: StateFlow<PacklyAppDocument> = repository.appState.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5_000), com.dobyllm.packly.data.seed.SeedDataProvider.initialDocument()
     )
@@ -310,6 +318,30 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun updateTripContents(
+        tripId: TripId,
+        sourceListIds: List<ListId>,
+        sourceListEntryIds: Set<ListEntryId>,
+        itemIds: Set<ItemId>,
+        itemQuantities: Map<ItemId, Int>,
+    ) = viewModelScope.launch {
+        val now = PacklyClock.now()
+        repository.updateDocument { doc ->
+            val rebuiltEntries = doc.buildTripEntries(
+                sourceListIds = doc.activeSourceListIdsInSelectedOrder(sourceListIds),
+                itemIds = itemIds,
+                sourceListEntryIds = sourceListEntryIds,
+                itemQuantities = itemQuantities,
+            )
+
+            doc.copy(
+                trips = doc.trips.map { trip ->
+                    if (trip.id == tripId) trip.withReplacedEntriesForTripAction(rebuiltEntries, now) else trip
+                },
+            )
+        }
+    }
+
     fun updateTripDeadline(tripId: TripId, packBy: InstantString?) = viewModelScope.launch {
         val now = PacklyClock.now()
         repository.updateTrips { trips ->
@@ -376,6 +408,8 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
     fun updateLanguagePreference(languagePreference: LanguagePreference) = viewModelScope.launch {
         repository.updateSettings { settings -> settings.copy(languagePreference = languagePreference) }
     }
+
+    fun syncWithGoogleDrive() = viewModelScope.launch { cloudSyncCoordinator.syncNow() }
 }
 
 private data class TripEntryDraft(
@@ -557,6 +591,21 @@ internal fun PacklyTrip.withUpdatedEntryQuantityForTripAction(
     updatedAt = now,
 )
 
+internal fun PacklyTrip.withReplacedEntriesForTripAction(newEntries: List<TripEntry>, now: InstantString): PacklyTrip {
+    val previousEntriesByKey = entries.associateBy { it.tripContentEditKey() }
+    val updatedEntries = newEntries.mapIndexed { index, entry ->
+        val previous = previousEntriesByKey[entry.tripContentEditKey()]
+        entry.copy(
+            id = previous?.id ?: entry.id,
+            isPacked = previous?.isPacked ?: false,
+            packedAt = previous?.packedAt,
+            sortOrder = index,
+        )
+    }
+
+    return if (updatedEntries == entries) this else copy(entries = updatedEntries, updatedAt = now)
+}
+
 internal fun PacklyTrip.withRemovedEntryForTripAction(entryId: TripEntryId, now: InstantString): PacklyTrip {
     var removed = false
     val updated = withoutEntriesMatching(now) { entry ->
@@ -626,6 +675,12 @@ private fun TripEntry.categorySortKey(categorySortKeys: Map<CategoryId, TripCate
     )
 
 private fun TripEntry.snapshotDedupeKey(): String = snapshotDedupeKey(nameSnapshot, categoryIdSnapshot)
+
+private fun TripEntry.tripContentEditKey(): String = when {
+    sourceListEntryId != null -> "list-entry:$sourceListEntryId"
+    sourceItemId != null -> "item:$sourceItemId"
+    else -> snapshotDedupeKey()
+}
 
 private data class TripMembershipKey(
     val sourceItemId: ItemId?,

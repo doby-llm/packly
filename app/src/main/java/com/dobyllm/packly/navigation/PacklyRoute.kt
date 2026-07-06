@@ -19,10 +19,14 @@ object PacklyRoute {
     const val CreateTripItems = "createTrip/items"
     const val ListDetail = "lists/{$ListIdArg}"
     const val TripDetail = "trips/{$TripIdArg}"
+    const val EditTripLists = "trips/{$TripIdArg}/edit/lists"
+    const val EditTripItems = "trips/{$TripIdArg}/edit/items"
     const val PackingMode = "trips/{$TripIdArg}/packing"
 
     fun listDetail(listId: String): String? = routeWithId("lists", listId)
     fun tripDetail(tripId: String): String? = routeWithId("trips", tripId)
+    fun editTripLists(tripId: String): String? = routeWithId("trips", tripId)?.let { "$it/edit/lists" }
+    fun editTripItems(tripId: String): String? = routeWithId("trips", tripId)?.let { "$it/edit/items" }
     fun packingMode(tripId: String): String? = routeWithId("trips", tripId)?.let { "$it/packing" }
 
     private fun routeWithId(prefix: String, id: String): String? {

@@ -13,7 +13,7 @@ interface PacklyJsonMigration {
 }
 
 object PacklyMigrationRunner {
-    private val migrations = listOf(V1ToV2QuantityMigration)
+    private val migrations = listOf(V1ToV2QuantityMigration, V2ToV3CloudSyncMigration)
 
     fun migrate(rawJson: JsonObject): JsonObject {
         var current = rawJson
@@ -33,6 +33,13 @@ object PacklyMigrationRunner {
 private object V1ToV2QuantityMigration : PacklyJsonMigration {
     override val fromVersion: Int = 1
     override val toVersion: Int = 2
+
+    override fun migrate(rawJson: JsonObject): JsonObject = rawJson.withSchemaVersion(toVersion)
+}
+
+private object V2ToV3CloudSyncMigration : PacklyJsonMigration {
+    override val fromVersion: Int = 2
+    override val toVersion: Int = 3
 
     override fun migrate(rawJson: JsonObject): JsonObject = rawJson.withSchemaVersion(toVersion)
 }
