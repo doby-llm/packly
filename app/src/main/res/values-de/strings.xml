@@ -346,4 +346,8 @@
     <string name="create_trip_step4_body">Wähle bestimmte Gegenstände aus, die du in diese Reise aufnehmen möchtest.</string>
     <string name="create_trip_items_empty_title">Noch keine Gegenstände</string>
     <string name="create_trip_items_empty_body">Erstelle wiederverwendbare Gegenstände im Tab Gegenstände, oder beende diese Reise mit den ausgewählten Listen.</string>
+    <string name="edit_trip_lists_title">Listen aktualisieren</string>
+    <string name="edit_trip_lists_body">Wähle aus, welche Packlisteneinträge zu dieser Reise gehören. Bestehende Reisedetails und Erinnerungen bleiben unverändert.</string>
+    <string name="edit_trip_items_title">Gegenstände aktualisieren</string>
+    <string name="edit_trip_items_body">Füge einzelne Gegenstände hinzu oder passe Mengen an, bevor du diese Reise speicherst.</string>
 </resources>
