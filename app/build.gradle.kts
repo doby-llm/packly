@@ -30,8 +30,8 @@ android {
         applicationId = "com.gusanitolabs.packly"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.1.2"
+        versionCode = 4
+        versionName = "0.1.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "PACKLY_GOOGLE_ANDROID_CLIENT_ID", "\"${googleAndroidClientId.escapedForBuildConfig()}\"")
         buildConfigField("boolean", "PACKLY_DRIVE_SYNC_ENABLED", driveSyncEnabled.toString())
