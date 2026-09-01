@@ -25,6 +25,12 @@
     <string name="options_google_drive_title">Google-Drive-Synchronisierung</string>
     <string name="options_google_drive_body">Packly synchronisiert einen privaten Snapshot in den App-Datenordner von Google Drive. Die echte Synchronisierung bleibt blockiert, bis die Google-Cloud-OAuth-Werte konfiguriert sind.</string>
     <string name="action_sync_now">Jetzt synchronisieren</string>
+    <string name="action_connect_google_drive">Google Drive verbinden</string>
+    <string name="action_delete_remote_backup">Remote-Sicherung löschen</string>
+    <string name="cloud_sync_delete_title">Google-Drive-Sicherung löschen?</string>
+    <string name="cloud_sync_delete_message">Nur die Remote-Sicherung von Packly wird gelöscht. Die Daten auf diesem Gerät bleiben unverändert.</string>
+    <string name="action_delete">Löschen</string>
+    <string name="action_cancel">Abbrechen</string>
     <string name="cloud_sync_disabled">Cloud-Synchronisierung deaktiviert</string>
     <string name="cloud_sync_not_configured">Google-Cloud-Einrichtung erforderlich</string>
     <string name="cloud_sync_disconnected">Google-Konto getrennt</string>
@@ -44,7 +50,6 @@
     <string name="a11y_duplicate_item_detected">Doppelter Gegenstand erkannt</string>
     <string name="snackbar_packed_item">Gepackt</string>
     <string name="snackbar_unpacked_item">Nicht gepackt</string>
-    <string name="action_cancel">Abbrechen</string>
     <string name="action_reset">Zurücksetzen</string>
     <string name="action_clear">Löschen</string>
     <string name="action_open_settings">Einstellungen öffnen</string>

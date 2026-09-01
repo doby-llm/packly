@@ -38,17 +38,17 @@ Keep `packly.driveSyncEnabled=false` until the Google Cloud project and Android 
 ## Drive storage contract
 
 ```text
-appDataFolder:/packly/
+appDataFolder
   packly_snapshot.json
 ```
 
-The snapshot contains:
+The remote snapshot is a versioned, sanitized user-data envelope containing:
 
-- `PacklyAppDocument` schema version and all local-first data: items, lists, trips, categories, settings, and session state.
-- Cloud metadata: monotonically increasing revision, device ID, dirty flag, upload/import revisions, outbox operation, and tombstones for app-side archive/delete events.
-- Snapshot metadata: app package `com.gusanitolabs.packly`, generated timestamp, Drive root, snapshot filename, revision, and last modified device.
+- Items (including archived items and notes), lists with entries/order, trips with dates, destination, status and packing progress.
+- User-modifiable categories and portable product preferences.
+- A separate control envelope containing only the revision and tombstones needed for deterministic reconciliation.
 
-The app requests only `https://www.googleapis.com/auth/drive.appdata`, so the file is private to Packly and not user-visible in Drive.
+Session state, account details, access tokens, device IDs, dirty/outbox/retry internals and other local-only controls are never serialized into the remote user-data envelope. The app requests only `https://www.googleapis.com/auth/drive.appdata`, so the file is private to Packly and not user-visible in Drive.
 
 ## Local-first safety policy
 
@@ -59,11 +59,12 @@ The app requests only `https://www.googleapis.com/auth/drive.appdata`, so the fi
 - Treat archive/delete actions as tombstones so missing local state is not confused with a fresh install.
 - If authorization needs user interaction, report blocked state instead of pretending sync succeeded.
 - If network fails, keep local dirty/outbox state and surface retryable offline status.
-- If the selected Google account changes later, block with `AccountChanged` until a follow-up UX explicitly confirms import/replace behavior.
+- Account changes remain a production gate: this slice does not persist account identifiers, so it must not silently mix accounts. Add an explicit account-binding/confirmation flow before enabling production sync across account changes.
 
-## What remains after this scaffold
+## Current implementation notes
 
-- Wire an ActivityResult flow for Google authorization resolutions when Play Services asks for user interaction.
-- Validate OAuth consent on a signed APK whose SHA-1 is registered in Google Cloud.
-- Add WorkManager for automatic background retries once product timing is decided.
-- Add GitHub Actions JVM/fake-provider tests for merge policy; do not require real Google credentials in CI.
+- The ActivityResult flow launches Google authorization resolutions and handles cancellation, missing data, parser failure, denied scope and blank-token outcomes without persisting credentials.
+- Manual sync, foreground sync and change-triggered sync are wired only after explicit opt-in. Network failures remain local-first and visible as offline state.
+- WorkManager is not yet included in this slice; retry after a later network return currently occurs on the next foreground/manual attempt rather than from a persistent background worker.
+- Validate OAuth on a signed APK whose SHA-1 is registered in Google Cloud, then add the corresponding CI/device evidence before release.
+- Add GitHub Actions JVM/fake-provider tests for the final merge policy; local Android Gradle builds are intentionally not used for this project.

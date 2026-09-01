@@ -25,6 +25,12 @@
     <string name="options_google_drive_title">Google Drive sync</string>
     <string name="options_google_drive_body">Packly syncs a private snapshot to your Google Drive app data folder. Real sync stays blocked until the Google Cloud OAuth values are configured.</string>
     <string name="action_sync_now">Sync now</string>
+    <string name="action_connect_google_drive">Connect Google Drive</string>
+    <string name="action_delete_remote_backup">Delete remote backup</string>
+    <string name="cloud_sync_delete_title">Delete Google Drive backup?</string>
+    <string name="cloud_sync_delete_message">This removes the Packly remote backup only. Your data on this device stays unchanged.</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_cancel">Cancel</string>
     <string name="cloud_sync_disabled">Cloud sync disabled</string>
     <string name="cloud_sync_not_configured">Google Cloud setup required</string>
     <string name="cloud_sync_disconnected">Google account disconnected</string>
@@ -44,7 +50,6 @@
     <string name="a11y_duplicate_item_detected">Duplicate item detected</string>
     <string name="snackbar_packed_item">Packed</string>
     <string name="snackbar_unpacked_item">Unpacked</string>
-    <string name="action_cancel">Cancel</string>
     <string name="action_reset">Reset</string>
     <string name="action_clear">Clear</string>
     <string name="action_open_settings">Open settings</string>

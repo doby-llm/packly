@@ -25,6 +25,12 @@
     <string name="options_google_drive_title">Sincronización con Google Drive</string>
     <string name="options_google_drive_body">Packly sincroniza una copia privada en la carpeta de datos de app de Google Drive. La sincronización real queda bloqueada hasta configurar los valores OAuth de Google Cloud.</string>
     <string name="action_sync_now">Sincronizar ahora</string>
+    <string name="action_connect_google_drive">Conectar Google Drive</string>
+    <string name="action_delete_remote_backup">Eliminar copia remota</string>
+    <string name="cloud_sync_delete_title">¿Eliminar la copia de Google Drive?</string>
+    <string name="cloud_sync_delete_message">Solo se eliminará la copia remota de Packly. Los datos de este dispositivo no cambiarán.</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="action_cancel">Cancelar</string>
     <string name="cloud_sync_disabled">Sincronización en la nube desactivada</string>
     <string name="cloud_sync_not_configured">Falta configurar Google Cloud</string>
     <string name="cloud_sync_disconnected">Cuenta de Google desconectada</string>
@@ -44,7 +50,6 @@
     <string name="a11y_duplicate_item_detected">Objeto duplicado detectado</string>
     <string name="snackbar_packed_item">Preparado</string>
     <string name="snackbar_unpacked_item">Sin preparar</string>
-    <string name="action_cancel">Cancelar</string>
     <string name="action_reset">Restablecer</string>
     <string name="action_clear">Borrar</string>
     <string name="action_open_settings">Abrir ajustes</string>

@@ -23,6 +23,25 @@ enum class PacklyCloudSyncDisabledReason {
     AuthorizationRequired,
 }
 
+/** Stable, non-user-visible error codes stored locally and mapped through resources in the UI. */
+@Serializable
+enum class PacklyCloudSyncErrorCode {
+    AuthorizationCancelled,
+    AuthorizationDataMissing,
+    AuthorizationParserFailed,
+    AuthorizationScopeDenied,
+    AuthorizationBlankToken,
+    AuthorizationRequired,
+    AccountChanged,
+    NetworkUnavailable,
+    RemoteServerError,
+    RemoteDataInvalid,
+    RemoteBackupDeleteFailed,
+    RemoteBackupDeleteUnverified,
+    GoogleCloudSetupRequired,
+    Unknown,
+}
+
 @Serializable
 enum class PacklyCloudSyncOperationType { UpsertSnapshot, DeleteEntity }
 
@@ -31,6 +50,7 @@ data class PacklyCloudSyncSettings(
     val enabled: Boolean = false,
     val status: PacklyCloudSyncConnectionStatus = PacklyCloudSyncConnectionStatus.NotConfigured,
     val disabledReason: PacklyCloudSyncDisabledReason = PacklyCloudSyncDisabledReason.GoogleCloudSetupRequired,
+    // Legacy fields remain local-only for forward-compatible decoding. Cloud snapshots use a separate user envelope.
     val accountEmail: String? = null,
     val accountId: String? = null,
     val lastSyncedAt: InstantString? = null,
@@ -72,7 +92,8 @@ data class PacklyCloudTombstone(
     val deviceId: String? = null,
 )
 
-const val PACKLY_CLOUD_SYNC_SCHEMA_VERSION = 1
+const val PACKLY_CLOUD_SYNC_SCHEMA_VERSION = 2
 const val PACKLY_DRIVE_APP_PACKAGE = "com.gusanitolabs.packly"
-const val PACKLY_DRIVE_APPDATA_ROOT = "appDataFolder:/packly/"
+const val PACKLY_DRIVE_APPDATA_ROOT = "appDataFolder"
 const val PACKLY_DRIVE_SNAPSHOT_NAME = "packly_snapshot.json"
+const val PACKLY_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata"

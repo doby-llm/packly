@@ -13,4 +13,5 @@ data class PacklyCategory(
     val sortOrder: Int,
     val isSeed: Boolean = true,
     val isArchived: Boolean = false,
+    val updatedAt: InstantString = "",
 )
