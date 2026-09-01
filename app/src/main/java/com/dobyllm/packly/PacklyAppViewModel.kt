@@ -324,6 +324,7 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
         sourceListEntryIds: Set<ListEntryId>,
         itemIds: Set<ItemId>,
         itemQuantities: Map<ItemId, Int>,
+        onCompleted: () -> Unit = {},
     ) = viewModelScope.launch {
         val now = PacklyClock.now()
         repository.updateDocument { doc ->
@@ -340,6 +341,7 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
                 },
             )
         }
+        onCompleted()
     }
 
     fun updateTripDeadline(tripId: TripId, packBy: InstantString?) = viewModelScope.launch {
