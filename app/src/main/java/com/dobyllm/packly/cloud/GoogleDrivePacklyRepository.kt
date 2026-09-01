@@ -201,7 +201,7 @@ private data class DriveFile(
 private fun JSONObject.toDriveFile(): DriveFile = DriveFile(
     id = getString("id"),
     name = optString("name"),
-    modifiedTime = optString("modifiedTime", null),
+    modifiedTime = optString("modifiedTime").takeIf { it.isNotEmpty() },
     revision = optJSONObject("appProperties")?.optString("packlyRevision")?.toLongOrNull() ?: 0L,
 )
 
