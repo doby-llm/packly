@@ -57,6 +57,7 @@ fun PacklyNavHost(
     navController: NavHostController = rememberNavController(),
     vm: PacklyAppViewModel = viewModel(),
     initialTripId: String? = null,
+    onGoogleDriveSyncClick: () -> Unit = vm::syncWithGoogleDrive,
 ) {
     val doc = vm.document.collectAsStateWithLifecycle().value
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -314,7 +315,8 @@ fun PacklyNavHost(
                     cloudSyncSettings = doc.settings.cloudSync,
                     contentPadding = shellPadding,
                     onLanguagePreferenceChange = vm::updateLanguagePreference,
-                    onGoogleDriveSyncClick = vm::syncWithGoogleDrive,
+                    onGoogleDriveSyncClick = onGoogleDriveSyncClick,
+                    onDeleteGoogleDriveBackupClick = vm::deleteRemoteGoogleDriveBackup,
                 )
             }
             navigation(

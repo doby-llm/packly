@@ -68,6 +68,32 @@ class GoogleDrivePacklyRepository private constructor(
         }
     }
 
+    override suspend fun deleteRemoteSnapshot(): DriveSyncResult<Unit> = withAccessToken { accessToken ->
+        when (val fileResult = api.findSnapshot(accessToken)) {
+            is DriveApiResult.Success -> {
+                val file = fileResult.value ?: return@withAccessToken DriveSyncResult.Success(Unit)
+                when (val deleteResult = api.deleteSnapshot(accessToken, file.id)) {
+                    is DriveApiResult.Success -> when (val verifyResult = api.findSnapshot(accessToken)) {
+                        is DriveApiResult.Success -> if (verifyResult.value == null) {
+                            DriveSyncResult.Success(Unit)
+                        } else {
+                            DriveSyncResult.Failure(
+                                IllegalStateException("Google Drive snapshot still exists after deletion."),
+                                retryable = true,
+                            )
+                        }
+                        is DriveApiResult.Unauthorized -> authBlocked()
+                        is DriveApiResult.Failure -> DriveSyncResult.Failure(verifyResult.throwable, verifyResult.retryable)
+                    }
+                    is DriveApiResult.Unauthorized -> authBlocked()
+                    is DriveApiResult.Failure -> DriveSyncResult.Failure(deleteResult.throwable, deleteResult.retryable)
+                }
+            }
+            is DriveApiResult.Unauthorized -> authBlocked()
+            is DriveApiResult.Failure -> DriveSyncResult.Failure(fileResult.throwable, fileResult.retryable)
+        }
+    }
+
     private suspend fun <T> withAccessToken(operation: suspend (String) -> DriveSyncResult<T>): DriveSyncResult<T> {
         val authResult = runCatching {
             authorizationClient.authorize(
@@ -100,6 +126,7 @@ private interface DriveSnapshotApi {
     suspend fun findSnapshot(accessToken: String): DriveApiResult<DriveFile?>
     suspend fun downloadSnapshot(accessToken: String, fileId: String): DriveApiResult<PacklyCloudSnapshot>
     suspend fun upsertSnapshot(accessToken: String, existingFileId: String?, snapshot: PacklyCloudSnapshot): DriveApiResult<DriveFile>
+    suspend fun deleteSnapshot(accessToken: String, fileId: String): DriveApiResult<Unit>
 }
 
 private class HttpDriveSnapshotApi : DriveSnapshotApi {
@@ -109,6 +136,13 @@ private class HttpDriveSnapshotApi : DriveSnapshotApi {
         val json = URL(url).authorizedConnection(accessToken).readTextResponse()
         val files = JSONObject(json).optJSONArray("files") ?: JSONArray()
         if (files.length() == 0) null else files.getJSONObject(0).toDriveFile()
+    }
+
+    override suspend fun deleteSnapshot(accessToken: String, fileId: String): DriveApiResult<Unit> = runDriveRequest {
+        URL("$DRIVE_API/files/${fileId.urlEncoded()}").authorizedConnection(accessToken).apply {
+            requestMethod = "DELETE"
+        }.readTextResponse()
+        Unit
     }
 
     override suspend fun downloadSnapshot(accessToken: String, fileId: String): DriveApiResult<PacklyCloudSnapshot> = runDriveRequest {

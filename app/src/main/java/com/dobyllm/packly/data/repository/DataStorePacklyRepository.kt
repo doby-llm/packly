@@ -62,7 +62,7 @@ class DataStorePacklyRepository private constructor(context: Context) : PacklyRe
     }
 
     private fun PacklyAppDocument.ensureSeeded(): PacklyAppDocument =
-        if (categories.isEmpty() && items.isEmpty() && lists.isEmpty()) com.dobyllm.packly.data.seed.SeedDataProvider.initialDocument() else this
+        if (categories.isEmpty() && items.isEmpty() && lists.isEmpty() && trips.isEmpty()) com.dobyllm.packly.data.seed.SeedDataProvider.initialDocument() else this
 
     companion object {
         @Volatile private var instance: DataStorePacklyRepository? = null

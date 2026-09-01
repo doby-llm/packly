@@ -13,12 +13,14 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +46,7 @@ fun OptionsScreen(
     contentPadding: PaddingValues = PaddingValues(0.dp),
     onLanguagePreferenceChange: (LanguagePreference) -> Unit,
     onGoogleDriveSyncClick: () -> Unit = {},
+    onDeleteGoogleDriveBackupClick: () -> Unit = {},
 ) {
     var showLanguagePicker by remember { mutableStateOf(false) }
 
@@ -124,13 +127,20 @@ fun OptionsScreen(
             GoogleDriveSyncCard(
                 settings = cloudSyncSettings,
                 onSyncClick = onGoogleDriveSyncClick,
+                onDeleteRemoteBackupClick = onDeleteGoogleDriveBackupClick,
             )
         }
     }
 }
 
 @Composable
-private fun GoogleDriveSyncCard(settings: PacklyCloudSyncSettings, onSyncClick: () -> Unit) {
+private fun GoogleDriveSyncCard(
+    settings: PacklyCloudSyncSettings,
+    onSyncClick: () -> Unit,
+    onDeleteRemoteBackupClick: () -> Unit,
+) {
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(PacklyRadius.lg),
@@ -153,8 +163,8 @@ private fun GoogleDriveSyncCard(settings: PacklyCloudSyncSettings, onSyncClick: 
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.options_google_drive_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     Text(stringResource(settings.status.statusLabelRes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    settings.lastError?.takeIf { it.isNotBlank() }?.let { error ->
-                        Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                    settings.lastError?.takeIf { it.isNotBlank() }?.let {
+                        Text(stringResource(R.string.cloud_sync_needs_attention), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -167,11 +177,36 @@ private fun GoogleDriveSyncCard(settings: PacklyCloudSyncSettings, onSyncClick: 
                 onClick = onSyncClick,
                 enabled = settings.status != PacklyCloudSyncConnectionStatus.Syncing,
             ) {
-                Text(stringResource(R.string.action_sync_now))
+                Text(stringResource(if (settings.enabled) R.string.action_sync_now else R.string.action_connect_google_drive))
+            }
+            TextButton(onClick = { showDeleteConfirmation = true }) {
+                Text(stringResource(R.string.action_delete_remote_backup))
             }
         }
     }
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text(stringResource(R.string.cloud_sync_delete_title)) },
+            text = { Text(stringResource(R.string.cloud_sync_delete_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirmation = false
+                    onDeleteRemoteBackupClick()
+                }) {
+                    Text(stringResource(R.string.action_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
 }
+
 
 @Composable
 private fun LanguageOptionRow(option: LanguagePreference, selected: Boolean, onClick: () -> Unit) {

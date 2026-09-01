@@ -11,6 +11,7 @@ interface DrivePacklyRepository {
     suspend fun fetchManifest(): DriveSyncResult<DriveManifest>
     suspend fun fetchSnapshot(): DriveSyncResult<PacklyCloudSnapshot?>
     suspend fun upsertSnapshot(snapshot: PacklyCloudSnapshot): DriveSyncResult<DriveManifest>
+    suspend fun deleteRemoteSnapshot(): DriveSyncResult<Unit>
 }
 
 data class DriveSyncTarget(
@@ -45,7 +46,7 @@ data class DriveManifest(
             snapshotName = snapshot.metadata.snapshotName,
             driveFileId = driveFileId,
             updatedAt = snapshot.metadata.generatedAt,
-            revision = snapshot.metadata.revision,
+            revision = maxOf(snapshot.metadata.revision, snapshot.control.revision),
         )
     }
 }
@@ -57,27 +58,41 @@ class NotConfiguredDrivePacklyRepository(
     override suspend fun fetchManifest(): DriveSyncResult<DriveManifest> = notConfigured()
     override suspend fun fetchSnapshot(): DriveSyncResult<PacklyCloudSnapshot?> = notConfigured()
     override suspend fun upsertSnapshot(snapshot: PacklyCloudSnapshot): DriveSyncResult<DriveManifest> = notConfigured()
+    override suspend fun deleteRemoteSnapshot(): DriveSyncResult<Unit> = notConfigured()
 
     private fun <T> notConfigured(): DriveSyncResult<T> = DriveSyncResult.Blocked(
         reason = reason,
-        message = "Google Drive sync is not configured. Add the Android OAuth client ID and enable the Drive appDataFolder scope first.",
+        message = "not_configured",
     )
 }
 
+/** Deterministic fake provider used by JVM tests and local merge verification. */
 class InMemoryDrivePacklyRepository(
     initialSnapshot: PacklyCloudSnapshot? = null,
     override val target: DriveSyncTarget = DriveSyncTarget(),
+    private val verifyDeletes: Boolean = true,
 ) : DrivePacklyRepository {
     private var snapshot: PacklyCloudSnapshot? = initialSnapshot
 
     override suspend fun fetchManifest(): DriveSyncResult<DriveManifest> = DriveSyncResult.Success(
-        snapshot?.let { DriveManifest.fromSnapshot(it) } ?: DriveManifest(target = target),
+        snapshot?.let { DriveManifest.fromSnapshot(it, driveFileId = "in-memory-packly-file") }
+            ?: DriveManifest(target = target),
     )
 
     override suspend fun fetchSnapshot(): DriveSyncResult<PacklyCloudSnapshot?> = DriveSyncResult.Success(snapshot)
 
     override suspend fun upsertSnapshot(snapshot: PacklyCloudSnapshot): DriveSyncResult<DriveManifest> {
         this.snapshot = snapshot
-        return DriveSyncResult.Success(DriveManifest.fromSnapshot(snapshot))
+        return DriveSyncResult.Success(DriveManifest.fromSnapshot(snapshot, driveFileId = "in-memory-packly-file"))
+    }
+
+    override suspend fun deleteRemoteSnapshot(): DriveSyncResult<Unit> {
+        snapshot = null
+        val readBackSnapshot = snapshot
+        return if (readBackSnapshot == null) {
+            DriveSyncResult.Success(Unit)
+        } else {
+            DriveSyncResult.Failure(IllegalStateException("remote_delete_unverified"), retryable = false)
+        }
     }
 }

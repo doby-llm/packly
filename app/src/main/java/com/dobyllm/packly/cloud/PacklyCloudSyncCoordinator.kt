@@ -18,13 +18,21 @@ import com.dobyllm.packly.core.model.TripId
 import com.dobyllm.packly.core.time.PacklyClock
 import com.dobyllm.packly.data.repository.DataStorePacklyRepository
 import java.util.UUID
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class PacklyCloudSyncCoordinator(
     private val repository: DataStorePacklyRepository,
     private val driveRepository: DrivePacklyRepository,
     private val deviceIdProvider: CloudSyncDeviceIdProvider,
 ) {
-    suspend fun syncNow() {
+    private val syncMutex = Mutex()
+
+    suspend fun syncNow() = syncMutex.withLock {
+        syncNowLocked()
+    }
+
+    private suspend fun syncNowLocked() {
         val deviceId = deviceIdProvider.getOrCreateDeviceId()
         repository.updateCloudSyncStatus(PacklyCloudSyncConnectionStatus.Syncing, lastError = null)
         when (val remote = driveRepository.fetchSnapshot()) {
@@ -41,6 +49,30 @@ class PacklyCloudSyncCoordinator(
         }
     }
 
+    suspend fun deleteRemoteBackup() = syncMutex.withLock {
+        when (val result = driveRepository.deleteRemoteSnapshot()) {
+            is DriveSyncResult.Success -> repository.updateSettings { settings ->
+                settings.copy(
+                    cloudSync = settings.cloudSync.copy(
+                        enabled = false,
+                        status = PacklyCloudSyncConnectionStatus.Disconnected,
+                        disabledReason = com.dobyllm.packly.core.model.PacklyCloudSyncDisabledReason.UserNotConnected,
+                        lastError = null,
+                    ),
+                )
+            }
+            is DriveSyncResult.Blocked -> repository.updateCloudSyncStatus(
+                status = PacklyCloudSyncConnectionStatus.NeedsAttention,
+                disabledReason = result.reason,
+                lastError = result.message,
+            )
+            is DriveSyncResult.Failure -> repository.updateCloudSyncStatus(
+                status = if (result.retryable) PacklyCloudSyncConnectionStatus.Offline else PacklyCloudSyncConnectionStatus.NeedsAttention,
+                lastError = result.throwable.message ?: result.throwable::class.java.simpleName,
+            )
+        }
+    }
+
     private suspend fun reconcile(remote: PacklyCloudSnapshot?, deviceId: String) {
         val local = repository.currentDocument()
         if (remote == null) {
@@ -48,12 +80,36 @@ class PacklyCloudSyncCoordinator(
             return
         }
 
-        val remoteDocument = remote.document.copy(cloudSyncMetadata = remote.syncMetadata())
-        val merged = mergeDocuments(local, remoteDocument, deviceId)
-        val localIsStaleOrEmpty = !local.hasUserContent() || remote.metadata.revision > local.cloudSyncMetadata.lastImportedCloudRevision && !local.cloudSyncMetadata.dirty
+        if (!remote.isSupported()) {
+            repository.updateCloudSyncStatus(
+                status = PacklyCloudSyncConnectionStatus.NeedsAttention,
+                lastError = "remote_data_unsupported",
+            )
+            return
+        }
+        val remoteDocument = remote.toAppDocument(local)
+        if (!local.hasUserContent()) {
+            val imported = remoteDocument.copy(
+                cloudSyncMetadata = remoteDocument.cloudSyncMetadata.copy(
+                    tombstones = mergeTombstones(
+                        local.cloudSyncMetadata.tombstones,
+                        remoteDocument.cloudSyncMetadata.tombstones,
+                    ),
+                ),
+            ).markImported(remote.control.revision, deviceId)
+            repository.replaceFromCloud(imported)
+            repository.updateCloudSyncStatus(
+                PacklyCloudSyncConnectionStatus.Synced,
+                lastSyncedAt = PacklyClock.now(),
+                lastError = null,
+            )
+            return
+        }
 
-        if (localIsStaleOrEmpty || merged.cloudSyncMetadata.revision == remoteDocument.cloudSyncMetadata.revision) {
-            repository.replaceFromCloud(merged.markImported(remote.metadata.revision, deviceId))
+        val merged = mergeDocuments(local, remoteDocument, deviceId)
+
+        if (merged.hasSameUserDataAs(remoteDocument)) {
+            repository.replaceFromCloud(merged.markImported(remote.control.revision, deviceId))
             repository.updateCloudSyncStatus(PacklyCloudSyncConnectionStatus.Synced, lastSyncedAt = PacklyClock.now(), lastError = null)
             return
         }
@@ -120,14 +176,17 @@ fun PacklyAppDocument.markCloudDirty(deviceId: String, now: InstantString): Pack
 
 private fun PacklyAppDocument.preparedForUpload(deviceId: String): PacklyAppDocument {
     val now = PacklyClock.now()
-    val metadata = if (cloudSyncMetadata.dirty) cloudSyncMetadata else cloudSyncMetadata.copy(
-        revision = cloudSyncMetadata.revision + 1,
+    val nextRevision = cloudSyncMetadata.revision + 1
+    val metadata = if (cloudSyncMetadata.dirty && cloudSyncMetadata.outbox.isNotEmpty()) {
+        cloudSyncMetadata
+    } else cloudSyncMetadata.copy(
+        revision = nextRevision,
         dirty = true,
         outbox = listOf(
             PacklyCloudSyncOperation(
                 id = UUID.randomUUID().toString(),
                 type = PacklyCloudSyncOperationType.UpsertSnapshot,
-                revision = cloudSyncMetadata.revision + 1,
+                revision = nextRevision,
                 createdAt = now,
             ),
         ),
@@ -139,6 +198,7 @@ private fun PacklyAppDocument.preparedForUpload(deviceId: String): PacklyAppDocu
 
 private fun PacklyAppDocument.markImported(remoteRevision: Long, deviceId: String): PacklyAppDocument = copy(
     cloudSyncMetadata = cloudSyncMetadata.copy(
+        revision = maxOf(cloudSyncMetadata.revision, remoteRevision),
         dirty = false,
         outbox = emptyList(),
         lastImportedCloudRevision = remoteRevision,
@@ -147,7 +207,13 @@ private fun PacklyAppDocument.markImported(remoteRevision: Long, deviceId: Strin
 )
 
 private fun PacklyAppDocument.hasUserContent(): Boolean =
-    items.any { !it.isSeed } || lists.any { !it.isSeed } || trips.isNotEmpty()
+    items.any { !it.isSeed } || lists.any { !it.isSeed } || trips.isNotEmpty() || categories.any { !it.isSeed }
+
+private fun PacklyAppDocument.hasSameUserDataAs(other: PacklyAppDocument): Boolean =
+    copy(
+        cloudSyncMetadata = other.cloudSyncMetadata,
+        settings = settings.copy(cloudSync = other.settings.cloudSync),
+    ) == other
 
 private fun mergeDocuments(local: PacklyAppDocument, remote: PacklyAppDocument, deviceId: String): PacklyAppDocument {
     val localRevisionWins = local.cloudSyncMetadata.revision >= remote.cloudSyncMetadata.revision
@@ -158,17 +224,25 @@ private fun mergeDocuments(local: PacklyAppDocument, remote: PacklyAppDocument, 
         categories = mergeCategories(local.categories, remote.categories),
         settings = if (localRevisionWins) local.settings else remote.settings,
     )
-    val nextRevision = maxOf(local.cloudSyncMetadata.revision, remote.cloudSyncMetadata.revision) + if (merged != remote) 1 else 0
+    val changedFromRemote = !merged.hasSameUserDataAs(remote)
+    val nextRevision = maxOf(local.cloudSyncMetadata.revision, remote.cloudSyncMetadata.revision) + if (changedFromRemote) 1 else 0
     return merged.copy(
-        cloudSyncMetadata = merged.cloudSyncMetadata.copy(
+        // Cloud control state is local-only. Never replace the local outbox with
+        // the remote envelope while merging user data.
+        cloudSyncMetadata = local.cloudSyncMetadata.copy(
             revision = nextRevision,
-            dirty = merged != remote,
-            lastModifiedDeviceId = if (merged != remote) deviceId else merged.cloudSyncMetadata.lastModifiedDeviceId,
-            tombstones = (local.cloudSyncMetadata.tombstones + remote.cloudSyncMetadata.tombstones)
-                .distinctBy { "${it.entityType}:${it.entityId}:${it.revision}" },
+            dirty = changedFromRemote,
+            lastModifiedDeviceId = if (changedFromRemote) deviceId else local.cloudSyncMetadata.lastModifiedDeviceId,
+            tombstones = mergeTombstones(local.cloudSyncMetadata.tombstones, remote.cloudSyncMetadata.tombstones),
         ),
     )
 }
+
+private fun mergeTombstones(
+    local: List<PacklyCloudTombstone>,
+    remote: List<PacklyCloudTombstone>,
+): List<PacklyCloudTombstone> = (local + remote)
+    .distinctBy { "${it.entityType}:${it.entityId}:${it.revision}" }
 
 private fun <T, K> mergeById(
     local: List<T>,
@@ -190,12 +264,9 @@ private fun <T, K> mergeById(
     }.sortedBy { id(it).toString() }
 }
 
-private fun mergeCategories(local: List<PacklyCategory>, remote: List<PacklyCategory>): List<PacklyCategory> {
-    val remoteById = remote.associateBy(PacklyCategory::id)
-    val localById = local.associateBy(PacklyCategory::id)
-    return (localById.keys + remoteById.keys).mapNotNull { key -> localById[key] ?: remoteById[key] }
+private fun mergeCategories(local: List<PacklyCategory>, remote: List<PacklyCategory>): List<PacklyCategory> =
+    mergeById(local, remote, PacklyCategory::id, PacklyCategory::updatedAt)
         .sortedWith(compareBy(PacklyCategory::sortOrder, PacklyCategory::id))
-}
 
 private fun PacklyAppDocument.deletedEntityTombstones(revision: Long, deviceId: String, now: InstantString): List<PacklyCloudTombstone> {
     val existing = cloudSyncMetadata.tombstones.map { it.entityType to it.entityId }.toSet()

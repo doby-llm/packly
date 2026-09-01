@@ -30,9 +30,21 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope, SharingStarted.WhileSubscribed(5_000), com.dobyllm.packly.data.seed.SeedDataProvider.initialDocument()
     )
 
+    private var lastAutoSyncRevision: Long? = null
+
     init {
         viewModelScope.launch {
-            document.collectLatest { doc -> deadlineReminderScheduler.syncAll(doc.trips) }
+            document.collectLatest { doc ->
+                deadlineReminderScheduler.syncAll(doc.trips)
+                val revision = doc.cloudSyncMetadata.revision
+                if (doc.settings.cloudSync.enabled &&
+                    doc.cloudSyncMetadata.dirty &&
+                    lastAutoSyncRevision != revision
+                ) {
+                    lastAutoSyncRevision = revision
+                    cloudSyncCoordinator.syncNow()
+                }
+            }
         }
     }
 
@@ -412,6 +424,49 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun syncWithGoogleDrive() = viewModelScope.launch { cloudSyncCoordinator.syncNow() }
+
+    fun syncIfGoogleDriveEnabled() = viewModelScope.launch {
+        if (repository.currentDocument().settings.cloudSync.enabled) {
+            cloudSyncCoordinator.syncNow()
+        }
+    }
+
+    fun deleteRemoteGoogleDriveBackup() = viewModelScope.launch {
+        cloudSyncCoordinator.deleteRemoteBackup()
+    }
+
+    fun onGoogleDriveAuthorized() = viewModelScope.launch {
+        repository.updateSettings { settings ->
+            settings.copy(
+                cloudSync = settings.cloudSync.copy(
+                    enabled = true,
+                    status = PacklyCloudSyncConnectionStatus.Disconnected,
+                    disabledReason = PacklyCloudSyncDisabledReason.UserNotConnected,
+                    lastError = null,
+                ),
+            )
+        }
+        cloudSyncCoordinator.syncNow()
+    }
+
+    fun onGoogleDriveAuthorizationCancelled() = recordGoogleDriveAuthorizationFailure("authorization_cancelled")
+    fun onGoogleDriveAuthorizationDataMissing() = recordGoogleDriveAuthorizationFailure("authorization_data_missing")
+    fun onGoogleDriveAuthorizationParserFailed() = recordGoogleDriveAuthorizationFailure("authorization_parser_failed")
+    fun onGoogleDriveAuthorizationScopeDenied() = recordGoogleDriveAuthorizationFailure("authorization_scope_denied")
+    fun onGoogleDriveAuthorizationBlankToken() = recordGoogleDriveAuthorizationFailure("authorization_blank_token")
+
+    private fun recordGoogleDriveAuthorizationFailure(code: String) = viewModelScope.launch {
+        repository.updateSettings { settings ->
+            settings.copy(
+                cloudSync = settings.cloudSync.copy(
+                    enabled = false,
+                    status = PacklyCloudSyncConnectionStatus.Disconnected,
+                    disabledReason = PacklyCloudSyncDisabledReason.AuthorizationRequired,
+                    lastError = code,
+                ),
+            )
+        }
+    }
 }
 
 private data class TripEntryDraft(

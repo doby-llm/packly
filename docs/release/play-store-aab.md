@@ -108,6 +108,24 @@ Manu should manually upload the artifact to internal testing, complete Data safe
 privacy policy, content rating, target audience, store listing assets, and then
 promote only after validation.
 
+For the optional Google Drive feature, complete these additional gates before
+production promotion:
+
+- Re-check Data safety against the exact signed AAB. Describe the optional transfer
+  of Packly user content to the user's private Google Drive `appDataFolder` and the
+  use of the `drive.appdata` scope, including retention and deletion behavior.
+- Add a public HTTPS privacy-policy URL that names the Drive integration. Do not
+  submit a placeholder URL. Explain that deleting the remote backup does not erase
+  local device data.
+- Confirm the Google Cloud OAuth consent screen, Drive API, package name and
+  Play App Signing SHA-1 are configured for the release client. Keep the feature
+  disabled until these values are ready for a signed-device test.
+- Exercise connect, denied/cancelled authorization, sync, offline retry/foreground
+  retry and remote-backup deletion on the internal track. CI compilation alone
+  cannot prove the Google account flow.
+- Packly does not create a first-party account in this feature. Revisit Play's
+  account-deletion fields if a Packly account is introduced later.
+
 ## Versioning reminders
 
 `versionCode` must increase monotonically for every Play upload. `versionCode = 1`
