@@ -50,7 +50,6 @@
     <string name="a11y_duplicate_item_detected">Duplicate item detected</string>
     <string name="snackbar_packed_item">Packed</string>
     <string name="snackbar_unpacked_item">Unpacked</string>
-    <string name="action_cancel">Cancel</string>
     <string name="action_reset">Reset</string>
     <string name="action_clear">Clear</string>
     <string name="action_open_settings">Open settings</string>

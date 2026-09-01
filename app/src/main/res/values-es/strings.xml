@@ -50,7 +50,6 @@
     <string name="a11y_duplicate_item_detected">Objeto duplicado detectado</string>
     <string name="snackbar_packed_item">Preparado</string>
     <string name="snackbar_unpacked_item">Sin preparar</string>
-    <string name="action_cancel">Cancelar</string>
     <string name="action_reset">Restablecer</string>
     <string name="action_clear">Borrar</string>
     <string name="action_open_settings">Abrir ajustes</string>

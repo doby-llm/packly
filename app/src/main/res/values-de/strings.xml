@@ -50,7 +50,6 @@
     <string name="a11y_duplicate_item_detected">Doppelter Gegenstand erkannt</string>
     <string name="snackbar_packed_item">Gepackt</string>
     <string name="snackbar_unpacked_item">Nicht gepackt</string>
-    <string name="action_cancel">Abbrechen</string>
     <string name="action_reset">Zurücksetzen</string>
     <string name="action_clear">Löschen</string>
     <string name="action_open_settings">Einstellungen öffnen</string>
