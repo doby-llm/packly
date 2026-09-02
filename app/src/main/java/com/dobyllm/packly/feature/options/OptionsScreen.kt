@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.dobyllm.packly.R
 import com.dobyllm.packly.core.model.LanguagePreference
@@ -165,6 +166,13 @@ private fun GoogleDriveSyncCard(
                     Text(stringResource(settings.status.statusLabelRes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     settings.lastError?.takeIf { it.isNotBlank() }?.let {
                         Text(stringResource(R.string.cloud_sync_needs_attention), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                        Text(
+                            text = stringResource(R.string.cloud_sync_error_detail, it.take(500)),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
                 }
             }
