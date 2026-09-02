@@ -42,6 +42,8 @@ appDataFolder
   packly_snapshot.json
 ```
 
+Packly's logical app-data path is `appDataFolder:/packly/`; this is an internal namespace, not a user-visible Google Drive folder.
+
 The remote snapshot is a versioned, sanitized user-data envelope containing:
 
 - Items (including archived items and notes), lists with entries/order, trips with dates, destination, status and packing progress.
