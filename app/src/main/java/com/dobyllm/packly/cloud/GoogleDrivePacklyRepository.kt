@@ -14,7 +14,9 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import kotlin.coroutines.resume
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.json.JSONArray
@@ -107,7 +109,7 @@ class GoogleDrivePacklyRepository private constructor(
         val grantedDriveScope = authResult.grantedScopes.any { it == driveScope.scopeUri }
         val accessToken = authResult.accessToken
         if (!grantedDriveScope || accessToken.isNullOrBlank()) return authBlocked()
-        return operation(accessToken)
+        return withContext(Dispatchers.IO) { operation(accessToken) }
     }
 
     private fun <T> authBlocked(): DriveSyncResult<T> = DriveSyncResult.Blocked(
