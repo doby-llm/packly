@@ -35,6 +35,6 @@ class GoogleDrivePacklyRepositoryThreadingContractTest {
             Path.of(relativePath),
             Path.of("..").resolve(relativePath),
         )
-        return Files.readString(candidates.first(Files::exists))
+        return candidates.first(Files::exists).toFile().readText(Charsets.UTF_8)
     }
 }
