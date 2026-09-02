@@ -38,7 +38,7 @@ class GoogleDrivePacklyRepository private constructor(
             is DriveApiResult.Success -> DriveSyncResult.Success(
                 result.value?.toManifest() ?: DriveManifest(target = target),
             )
-            is DriveApiResult.Unauthorized -> authBlocked()
+            is DriveApiResult.Unauthorized -> authBlocked(result.message)
             is DriveApiResult.Failure -> DriveSyncResult.Failure(result.throwable, result.retryable)
         }
     }
@@ -49,11 +49,11 @@ class GoogleDrivePacklyRepository private constructor(
                 val file = fileResult.value ?: return@withAccessToken DriveSyncResult.Success(null)
                 when (val download = api.downloadSnapshot(accessToken, file.id)) {
                     is DriveApiResult.Success -> DriveSyncResult.Success(download.value)
-                    is DriveApiResult.Unauthorized -> authBlocked()
+                    is DriveApiResult.Unauthorized -> authBlocked(download.message)
                     is DriveApiResult.Failure -> DriveSyncResult.Failure(download.throwable, download.retryable)
                 }
             }
-            is DriveApiResult.Unauthorized -> authBlocked()
+            is DriveApiResult.Unauthorized -> authBlocked(fileResult.message)
             is DriveApiResult.Failure -> DriveSyncResult.Failure(fileResult.throwable, fileResult.retryable)
         }
     }
@@ -62,10 +62,10 @@ class GoogleDrivePacklyRepository private constructor(
         when (val fileResult = api.findSnapshot(accessToken)) {
             is DriveApiResult.Success -> when (val upload = api.upsertSnapshot(accessToken, fileResult.value?.id, snapshot)) {
                 is DriveApiResult.Success -> DriveSyncResult.Success(upload.value.toManifest(snapshot))
-                is DriveApiResult.Unauthorized -> authBlocked()
+                is DriveApiResult.Unauthorized -> authBlocked(upload.message)
                 is DriveApiResult.Failure -> DriveSyncResult.Failure(upload.throwable, upload.retryable)
             }
-            is DriveApiResult.Unauthorized -> authBlocked()
+            is DriveApiResult.Unauthorized -> authBlocked(fileResult.message)
             is DriveApiResult.Failure -> DriveSyncResult.Failure(fileResult.throwable, fileResult.retryable)
         }
     }
@@ -84,14 +84,14 @@ class GoogleDrivePacklyRepository private constructor(
                                 retryable = true,
                             )
                         }
-                        is DriveApiResult.Unauthorized -> authBlocked()
+                        is DriveApiResult.Unauthorized -> authBlocked(verifyResult.message)
                         is DriveApiResult.Failure -> DriveSyncResult.Failure(verifyResult.throwable, verifyResult.retryable)
                     }
-                    is DriveApiResult.Unauthorized -> authBlocked()
+                    is DriveApiResult.Unauthorized -> authBlocked(deleteResult.message)
                     is DriveApiResult.Failure -> DriveSyncResult.Failure(deleteResult.throwable, deleteResult.retryable)
                 }
             }
-            is DriveApiResult.Unauthorized -> authBlocked()
+            is DriveApiResult.Unauthorized -> authBlocked(fileResult.message)
             is DriveApiResult.Failure -> DriveSyncResult.Failure(fileResult.throwable, fileResult.retryable)
         }
     }
@@ -112,9 +112,11 @@ class GoogleDrivePacklyRepository private constructor(
         return withContext(Dispatchers.IO) { operation(accessToken) }
     }
 
-    private fun <T> authBlocked(): DriveSyncResult<T> = DriveSyncResult.Blocked(
+    private fun <T> authBlocked(
+        message: String = "Google Drive authorization requires user interaction before Packly can access appDataFolder.",
+    ): DriveSyncResult<T> = DriveSyncResult.Blocked(
         reason = PacklyCloudSyncDisabledReason.AuthorizationRequired,
-        message = "Google Drive authorization requires user interaction before Packly can access appDataFolder.",
+        message = message,
     )
 
     companion object {
@@ -185,7 +187,7 @@ private class HttpDriveSnapshotApi : DriveSnapshotApi {
 
 private sealed interface DriveApiResult<out T> {
     data class Success<T>(val value: T) : DriveApiResult<T>
-    data object Unauthorized : DriveApiResult<Nothing>
+    data class Unauthorized(val message: String) : DriveApiResult<Nothing>
     data class Failure(val throwable: Throwable, val retryable: Boolean = true) : DriveApiResult<Nothing>
 }
 
@@ -211,7 +213,7 @@ private inline fun <T> runDriveRequest(block: () -> T): DriveApiResult<T> = try 
     DriveApiResult.Success(block())
 } catch (throwable: DriveHttpException) {
     if (throwable.statusCode == HttpURLConnection.HTTP_UNAUTHORIZED || throwable.statusCode == HttpURLConnection.HTTP_FORBIDDEN) {
-        DriveApiResult.Unauthorized
+        DriveApiResult.Unauthorized(throwable.message ?: "Drive API authorization failed.")
     } else {
         DriveApiResult.Failure(throwable, retryable = throwable.statusCode >= 500)
     }

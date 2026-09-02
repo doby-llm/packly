@@ -38,6 +38,7 @@
     <string name="cloud_sync_synced">Synced to Google Drive</string>
     <string name="cloud_sync_offline">Offline — will retry later</string>
     <string name="cloud_sync_needs_attention">Sync needs attention</string>
+    <string name="cloud_sync_error_detail">Technical detail: %1$s</string>
     <string name="action_rename">Rename</string>
     <string name="action_duplicate">Duplicate</string>
     <string name="action_archive">Archive</string>

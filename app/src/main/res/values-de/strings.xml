@@ -38,6 +38,7 @@
     <string name="cloud_sync_synced">Mit Google Drive synchronisiert</string>
     <string name="cloud_sync_offline">Offline — später erneut versuchen</string>
     <string name="cloud_sync_needs_attention">Synchronisierung benötigt Aufmerksamkeit</string>
+    <string name="cloud_sync_error_detail">Technisches Detail: %1$s</string>
     <string name="action_rename">Umbenennen</string>
     <string name="action_duplicate">Duplizieren</string>
     <string name="action_archive">Archivieren</string>

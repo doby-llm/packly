@@ -10,12 +10,17 @@ class GoogleDrivePacklyRepositoryThreadingContractTest {
     @Test
     fun driveHttpOperationsStayOnIoAfterMainThreadAuthorization() {
         val source = source("app/src/main/java/com/dobyllm/packly/cloud/GoogleDrivePacklyRepository.kt")
+        val optionsSource = source("app/src/main/java/com/dobyllm/packly/feature/options/OptionsScreen.kt")
         val accessTokenBoundary = source
             .substringAfter("private suspend fun <T> withAccessToken")
             .substringBefore("private fun <T> authBlocked")
 
         assertTrue(source.contains("import kotlinx.coroutines.Dispatchers"))
         assertTrue(source.contains("import kotlinx.coroutines.withContext"))
+        assertTrue(source.contains("data class Unauthorized(val message: String)"))
+        assertTrue(source.contains("DriveApiResult.Unauthorized(throwable.message ?: \"Drive API authorization failed.\")"))
+        assertTrue(optionsSource.contains("settings.lastError"))
+        assertTrue(optionsSource.contains("R.string.cloud_sync_error_detail"))
         assertTrue(accessTokenBoundary.contains("authorizationClient.authorize("))
         assertTrue(accessTokenBoundary.contains("return withContext(Dispatchers.IO) { operation(accessToken) }"))
         assertFalse(accessTokenBoundary.contains("return operation(accessToken)"))
