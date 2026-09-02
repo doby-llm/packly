@@ -30,7 +30,7 @@ android {
         applicationId = "com.gusanitolabs.packly"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
+        versionCode = 7
         versionName = "0.1.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "PACKLY_GOOGLE_ANDROID_CLIENT_ID", "\"${googleAndroidClientId.escapedForBuildConfig()}\"")
