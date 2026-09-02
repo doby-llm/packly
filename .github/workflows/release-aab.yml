@@ -84,6 +84,8 @@ jobs:
           PACKLY_UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           PACKLY_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           PACKLY_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          PACKLY_GOOGLE_ANDROID_CLIENT_ID: 533175480500-cnbal3ukihgg0roai2hln7d7nf572lli.apps.googleusercontent.com
+          PACKLY_DRIVE_SYNC_ENABLED: true
         run: ./gradlew --no-daemon :app:bundleRelease :app:assembleRelease
 
       - name: Upload signed release AAB
