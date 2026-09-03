@@ -49,11 +49,11 @@ class MainActivity : ComponentActivity() {
     private val driveAuthorizationLauncher = registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult(),
     ) { result ->
-        if (result.resultCode != RESULT_OK) {
+        val data = result.data
+        if (data == null && result.resultCode == RESULT_CANCELED) {
             packlyViewModel.onGoogleDriveAuthorizationCancelled()
             return@registerForActivityResult
         }
-        val data = result.data
         if (data == null) {
             packlyViewModel.onGoogleDriveAuthorizationDataMissing()
             return@registerForActivityResult
