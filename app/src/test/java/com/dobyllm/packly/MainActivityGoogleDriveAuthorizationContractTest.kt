@@ -2,6 +2,7 @@ package com.dobyllm.packly
 
 import java.nio.file.Files
 import java.nio.file.Path
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -27,11 +28,43 @@ class MainActivityGoogleDriveAuthorizationContractTest {
     @Test
     fun driveAuthorizationCallbackKeepsNullCancellationAndMissingDataExplicit() {
         val callback = driveAuthorizationCallbackSource()
+        val parserCall = "authorizationClient.getAuthorizationResultFromIntent(data)"
+        val cancellationCall = "packlyViewModel.onGoogleDriveAuthorizationCancelled()"
 
         assertTrue(callback.contains("data == null && result.resultCode == RESULT_CANCELED"))
-        assertTrue(callback.contains("packlyViewModel.onGoogleDriveAuthorizationCancelled()"))
+        assertTrue(callback.contains(cancellationCall))
+        assertTrue(callback.indexOf(cancellationCall) in 0 until callback.indexOf(parserCall))
         assertTrue(callback.contains("if (data == null)"))
         assertTrue(callback.contains("packlyViewModel.onGoogleDriveAuthorizationDataMissing()"))
+    }
+
+    @Test
+    fun driveAuthorizationFailuresUseDistinctSafeStatusCodes() {
+        val activitySource = source("app/src/main/java/com/dobyllm/packly/MainActivity.kt")
+        val viewModelSource = source("app/src/main/java/com/dobyllm/packly/PacklyAppViewModel.kt")
+        val callback = driveAuthorizationCallbackSource()
+        val authorizeBlock = activitySource
+            .substringAfter("authorizationClient.authorize(request)")
+            .substringBefore("private fun persistDriveAuthorizationResult")
+
+        assertTrue(activitySource.contains("import com.google.android.gms.common.api.ApiException"))
+        assertFalse(activitySource.contains("import com.google.android.gms.common.api.CommonStatusCodes"))
+        assertEquals(2, activitySource.lines().count { it.contains("(error as? ApiException)?.statusCode") })
+        assertTrue(callback.contains("packlyViewModel.onGoogleDriveAuthorizationParserFailed(statusCode)"))
+        assertFalse(callback.contains("CommonStatusCodes"))
+        assertFalse(callback.contains("packlyViewModel.onGoogleDriveAuthorizationCancelled(statusCode)"))
+        assertTrue(authorizeBlock.contains("packlyViewModel.onGoogleDriveAuthorizationRequestFailed(statusCode)"))
+        assertFalse(callback.contains("error.message"))
+        assertFalse(callback.contains("error.toString()"))
+        assertFalse(authorizeBlock.contains("error.message"))
+        assertFalse(authorizeBlock.contains("error.toString()"))
+
+        assertTrue(viewModelSource.contains("fun onGoogleDriveAuthorizationParserFailed(statusCode: Int? = null)"))
+        assertTrue(viewModelSource.contains("fun onGoogleDriveAuthorizationRequestFailed(statusCode: Int? = null)"))
+        assertTrue(viewModelSource.contains("recordGoogleDriveAuthorizationFailure(\"authorization_parser_failed\", statusCode)"))
+        assertTrue(viewModelSource.contains("recordGoogleDriveAuthorizationFailure(\"authorization_request_failed\", statusCode)"))
+        assertTrue(viewModelSource.contains("\"\${baseCode}_status_\$it\""))
+        assertTrue(viewModelSource.contains("lastError = code"))
     }
 
     @Test

@@ -18,6 +18,7 @@ import com.google.android.gms.auth.api.identity.AuthorizationClient
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.AuthorizationResult
 import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -60,7 +61,10 @@ class MainActivity : ComponentActivity() {
         }
         runCatching { authorizationClient.getAuthorizationResultFromIntent(data) }
             .onSuccess { persistDriveAuthorizationResult(it) }
-            .onFailure { packlyViewModel.onGoogleDriveAuthorizationParserFailed() }
+            .onFailure { error ->
+                val statusCode = (error as? ApiException)?.statusCode
+                packlyViewModel.onGoogleDriveAuthorizationParserFailed(statusCode)
+            }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -126,7 +130,10 @@ class MainActivity : ComponentActivity() {
                     persistDriveAuthorizationResult(result)
                 }
             }
-            .addOnFailureListener { packlyViewModel.onGoogleDriveAuthorizationParserFailed() }
+            .addOnFailureListener { error ->
+                val statusCode = (error as? ApiException)?.statusCode
+                packlyViewModel.onGoogleDriveAuthorizationRequestFailed(statusCode)
+            }
     }
 
     private fun persistDriveAuthorizationResult(result: AuthorizationResult) {

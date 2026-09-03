@@ -451,11 +451,13 @@ class PacklyAppViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun onGoogleDriveAuthorizationCancelled() = recordGoogleDriveAuthorizationFailure("authorization_cancelled")
     fun onGoogleDriveAuthorizationDataMissing() = recordGoogleDriveAuthorizationFailure("authorization_data_missing")
-    fun onGoogleDriveAuthorizationParserFailed() = recordGoogleDriveAuthorizationFailure("authorization_parser_failed")
+    fun onGoogleDriveAuthorizationParserFailed(statusCode: Int? = null) = recordGoogleDriveAuthorizationFailure("authorization_parser_failed", statusCode)
+    fun onGoogleDriveAuthorizationRequestFailed(statusCode: Int? = null) = recordGoogleDriveAuthorizationFailure("authorization_request_failed", statusCode)
     fun onGoogleDriveAuthorizationScopeDenied() = recordGoogleDriveAuthorizationFailure("authorization_scope_denied")
     fun onGoogleDriveAuthorizationBlankToken() = recordGoogleDriveAuthorizationFailure("authorization_blank_token")
 
-    private fun recordGoogleDriveAuthorizationFailure(code: String) = viewModelScope.launch {
+    private fun recordGoogleDriveAuthorizationFailure(baseCode: String, statusCode: Int? = null) = viewModelScope.launch {
+        val code = statusCode?.let { "${baseCode}_status_$it" } ?: baseCode
         repository.updateSettings { settings ->
             settings.copy(
                 cloudSync = settings.cloudSync.copy(
